@@ -1,18 +1,55 @@
 
 
-# netlify.toml
 [build]
-  command = "npm run build"
-  publish = "dist"
+  # Configuration pour site statique (pas de build nécessaire)
+  publish = "."          # Racine du projet
+  command = " "           # Aucune commande de build
 
 [context.production.environment]
+  # Variables d'environnement (exemple)
   NODE_ENV = "production"
+  # AJOUTEZ ICI VOS VARIABLES SI NÉCESSAIRE (ex: API_KEY)
 
+# Redirections SPA (Single Page Application)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
+# Exemple de redirection personnalisée (à adapter)
+[[redirects]]
+  from = "/old-contact"
+  to = "/#contact"
+  status = 301
+
+# Headers de sécurité (recommandés)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    Content-Security-Policy = "default-src 'self' https:"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Optimisation des assets (automatique)
+[build.processing]
+  css = { minify = true }    # Minification CSS
+  js = { minify = true }     # Minification JS
+  html = { pretty_urls = true }
+  images = { compress = true }
+
+# Paramètres de développement
 [dev]
   autoLaunch = false
-  framework = "#static"
+  framework = "#static"      # Détection comme site statique
+  targetPort = 3000          # Port local (optionnel)
+  
+  # Proxy pour API locale (exemple)
+  # [[dev.proxy]]
+  #   from = "/api"
+  #   to = "http://localhost:5000"
+
+# Fonctions serverless (optionnel)
+[functions]
+  directory = "netlify/functions"  # Dossier vide si non utilisé
+  node_bundler = "esbuild"         # Optimisation des fonctions
