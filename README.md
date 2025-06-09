@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 btece-formation/
 ├── index.html
 ├── styles/
@@ -14,3 +15,7 @@ btece-formation/
 │       └── img5.jpg
 ├── netlify.toml
 └── README.md
+=======
+# btece-formations-
+Site d'inscription aux formations BTECE
+>>>>>>> 91c09e7f1654eaec3e0f2465d7ed5e0b9464f736
