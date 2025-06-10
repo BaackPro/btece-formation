@@ -3,7 +3,7 @@
 [build]
   # Configuration pour site statique (pas de build nécessaire)
   publish = "."          # Racine du projet
-  command = " "           # Aucune commande de build
+  command = ""           # Aucune commande de build
 
 [context.production.environment]
   # Variables d'environnement (exemple)
