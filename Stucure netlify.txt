@@ -1,0 +1,163 @@
+
+btece-formation/
+├── .github/
+│   └── workflows/          # Fichiers CI/CD optionnels
+├── assets/
+│   ├── css/
+│   │   └── style.css       # Extraire le CSS du HTML si possible
+│   ├── js/
+│   │   └── script.js       # Votre JavaScript
+│   └── images/             # Toutes les images
+├── index.html          # Votre fichier HTML principal
+├── .gitignore
+├── netlify.toml            # Configuration Netlify
+├── package.json            # Si vous utilisez des dépendances
+└── README.md
+
+
+_____________________________________________________________________________________
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/votre-utilisateur/btece-formation.git
+git push -u origin main
+
+
+________________________________________________________________
+
+Étapes pour configurer Netlify avec GitHub :
+Préparer votre dépôt GitHub
+
+Créez un nouveau dépôt sur GitHub
+
+Initialisez localement :
+
+bash
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/votre-utilisateur/btece-formation.git
+git push -u origin main
+Configuration Netlify
+
+Connectez-vous à Netlify
+
+Choisissez "New site from Git"
+
+Sélectionnez GitHub comme provider
+
+Autorisez l'accès à votre dépôt
+
+Choisissez le dépôt btece-formation
+
+Configuration du build (netlify.toml)
+
+toml
+[build]
+  command = "echo 'No build needed'"
+  publish = "src"  # Ou "." si votre HTML est à la racine
+
+[context.production.environment]
+  NODE_ENV = "production"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+Variables d'environnement (si besoin)
+
+Dans Netlify : Site settings > Build & deploy > Environment
+
+Ajoutez :
+
+NODE_ENV = production
+
+Domain personnalisé (optionnel)
+
+Dans Netlify : Domain settings
+
+Ajoutez votre domaine (ex: formation.btece.com)
+
+Bonnes pratiques :
+Séparation des ressources :
+
+Extrayez le CSS dans un fichier séparé
+
+Déplacez les scripts JS vers assets/js/
+
+Optimisation des images :
+
+Compressez les images avant de les ajouter
+
+Utilisez le format WebP quand possible
+
+Continuous Deployment :
+
+Netlify déploiera automatiquement à chaque git push
+
+Activez "Deploy previews" pour les PR
+
+Fonctionnalités avancées (optionnelles) :
+
+Ajoutez un formulaire Netlify pour gérer les inscriptions
+
+Activez les fonctions serverless si besoin
+
+Configurez des redirections dans netlify.toml
+
+Pour extraire le CSS (recommandé) :
+Créez assets/css/style.css et déplacez-y tout le contenu entre <style> et </style>
+
+Dans votre HTML, remplacez par :
+
+html
+<link rel="stylesheet" href="/assets/css/style.css">
+Cette structure vous donnera :
+
+Un déploiement continu via GitHub
+
+Une gestion simple des mises à jour
+
+Une bonne organisation du code
+
+La possibilité d'ajouter facilement des fonctionnalités
+
+
+
+
+----------------------------------------------------------------------------------------------------------
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Formations Professionnelles | BTECE - Expertise Technique et Certifiante</title>
+    <meta name="description" content="Formations professionnelles certifiantes en conception technique, électronique, architecture 3D et programmation à Cotonou ou en ligne. Boostez votre carrière avec nos experts!">
+    
+    <!-- Préchargement des polices -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap" as="style">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+    
+    <!-- FullCalendar CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Votre contenu HTML reste inchangé -->
+    
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/fr.min.js"></script>
+    
+    <!-- Votre JS -->
+    <script src="/assets/js/script.js" defer></script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 
+
 /* Styles communs */
 body {
     font-family: 'Arial', sans-serif;
@@ -12,8 +13,7 @@ body {
 
 header {
     background-color: #3d6076;
-    padding: 2rem;
-    text-align: center;
+    padding: 1rem 2rem;
     background-image: linear-gradient(to right, #f9fafa, #f7fafa);
     display: flex;
     flex-direction: row;
@@ -52,6 +52,7 @@ header {
 .header-content {
     flex: 1;
     min-width: 60%;
+    text-align: center;
 }
 
 .header-content h1 {
@@ -489,6 +490,9 @@ footer {
 
 .social-links {
     margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .social-links a {
@@ -496,6 +500,7 @@ footer {
     margin: 0 10px;
     font-size: 1.2rem;
     transition: color 0.3s;
+    display: inline-block;
 }
 
 .social-links a:hover {
@@ -1129,16 +1134,22 @@ footer {
 /* Responsive styles */
 @media (max-width: 768px) {
     header {
-        flex-direction: column;
         padding: 1rem;
+        flex-direction: row; /* Changé de column à row pour garder les logos côte à côte */
+        justify-content: space-between;
+        align-items: center;
     }
     
     .logo {
-        margin-bottom: 1rem;
+        margin-bottom: 0;
+        width: 120px; /* Taille réduite pour mobile */
     }
     
     .header-content {
         min-width: 100%;
+        order: 3; /* Place le contenu en dessous des logos */
+        width: 100%;
+        margin-top: 1rem;
     }
     
     .payment-method {
@@ -1208,5 +1219,25 @@ footer {
     
     .header-content h2 {
         font-size: 1.2rem;
+    }
+    
+    /* Correction spécifique pour les logos sur très petits écrans */
+    header {
+        flex-wrap: wrap;
+    }
+    
+    .logo {
+        width: 100px; /* Taille encore plus réduite pour très petits écrans */
+    }
+    
+    /* Correction pour les liens sociaux */
+    .social-links {
+        flex-direction: row;
+        display: flex;
+    }
+    
+    .social-links a {
+        margin: 5px;
+        font-size: 1rem;
     }
 }
