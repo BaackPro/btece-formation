@@ -1,9 +1,9 @@
 
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="google-site-verification" content="qUbJAxl_mSPBvEA3eEXiMy-IX7UKLf9ZLqxxpqyazOY" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Formations Professionnelles | BTECE - Expertise Technique et Certifiante</title>
     <meta name="description" content="Formations professionnelles certifiantes en conception technique, électronique, architecture 3D et programmation à Cotonou ou en ligne. Boostez votre carrière avec nos experts!">
@@ -84,10 +84,15 @@
             text-align: center;
             background-image: linear-gradient(to right, #f9fafa, #f7fafa);
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             flex-wrap: wrap;
+        }
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
         }
         .logo {
             width: 150px;
@@ -160,6 +165,7 @@
         input[type="text"],
         input[type="email"],
         input[type="tel"],
+        input[type="date"],
         select,
         textarea {
             width: 100%;
@@ -1183,6 +1189,21 @@
             .header-content {
                 min-width: 100%;
             }
+
+            .rappel-message {
+                position: static;
+                opacity: 1;
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .rappel-container {
+                padding: 10px;
+            }
+
+            .rappel-title {
+                font-size: 0.8em;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1275,7 +1296,9 @@
     <!-- Page principale (formulaire d'inscription) -->
     <div id="main-page">
         <header>
-            <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy">
+            <div class="logo-container">
+                <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy">
+            </div>
             
             <div class="header-content">
                 <div class="company-name">BTECE</div>
@@ -1285,8 +1308,6 @@
                 <p>Sessions disponibles : Juillet à Décembre 2025 - Présentiel à Cotonou (Bénin) ou en ligne</p>
                 <p style="font-size: 0.9rem; margin-top: 10px;">Veuillez lire la documentation complète en bas du formulaire avant de vous inscrire</p>
             </div>
-            
-            <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy">
         </header>
 
         <main>
@@ -1344,7 +1365,10 @@
                     </div>
                 </div>
                 
-                <form id="registration-form" action="#" method="POST">
+                <form id="registration-form" action="#" method="POST" data-netlify="true" netlify>
+                    <!-- Champ caché pour le nom du formulaire -->
+                    <input type="hidden" name="form-name" value="Inscription Formation BTECE">
+                    
                     <!-- CSRF Token -->
                     <input type="hidden" id="csrf_token" name="csrf_token" value="a1b2c3d4e5f6g7h8i9j0">
                     
@@ -1363,6 +1387,17 @@
                         <div class="form-group">
                             <label for="email" class="required">Email</label>
                             <input type="email" id="email" name="email" required aria-required="true" class="keyboard-support">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="date_naissance" class="required">Date de naissance</label>
+                            <input type="date" id="date_naissance" name="date_naissance" required aria-required="true" class="keyboard-support">
+                            <div id="age-error" style="color: #e74c3c; display: none; margin-top: 5px;">Vous devez avoir au moins 13 ans pour vous inscrire.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lieu_naissance" class="required">Lieu de naissance</label>
+                            <input type="text" id="lieu_naissance" name="lieu_naissance" required aria-required="true" class="keyboard-support">
                         </div>
 
                         <div class="form-group">
@@ -2092,12 +2127,14 @@
     <!-- Page de confirmation (masquée par défaut) -->
     <div id="confirmation-page" style="display: none;">
         <header>
-            <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy">
+            <div class="logo-container">
+                <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy">
+            </div>
+            
             <div style="flex-grow: 1;">
                 <div class="company-name">BTECE</div>
                 <div style="font-size: 1.2rem; color: #081177;">BAACK TECHNOLOGY ENERGY and CONCEPTION ENGINEERING</div>
             </div>
-            <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy">
         </header>
 
         <main class="confirmation-main">
@@ -2161,6 +2198,8 @@
                 <div id="modal-user-info" style="margin-bottom: 1rem; padding-left: 1.5rem;">
                     <p><strong>Nom complet :</strong> <span id="modal-nom-complet"></span></p>
                     <p><strong>Email :</strong> <span id="modal-email"></span></p>
+                    <p><strong>Date de naissance :</strong> <span id="modal-date-naissance"></span></p>
+                    <p><strong>Lieu de naissance :</strong> <span id="modal-lieu-naissance"></span></p>
                     <p><strong>Téléphone :</strong> <span id="modal-telephone"></span></p>
                     <p><strong>Pays :</strong> <span id="modal-pays"></span></p>
                     <p><strong>Profession :</strong> <span id="modal-profession"></span></p>
@@ -2449,6 +2488,8 @@
         const modalTotalPriceEur = document.getElementById('modal-total-price-eur');
         const modalNomComplet = document.getElementById('modal-nom-complet');
         const modalEmail = document.getElementById('modal-email');
+        const modalDateNaissance = document.getElementById('modal-date-naissance');
+        const modalLieuNaissance = document.getElementById('modal-lieu-naissance');
         const modalTelephone = document.getElementById('modal-telephone');
         const modalPays = document.getElementById('modal-pays');
         const modalProfession = document.getElementById('modal-profession');
@@ -2477,6 +2518,9 @@
         const rappelContainer = document.querySelector('.rappel-container');
         const objectifsTextarea = document.getElementById('objectifs');
         const objectifsCounter = document.getElementById('objectifs-counter');
+        const dateNaissanceInput = document.getElementById('date_naissance');
+        const lieuNaissanceInput = document.getElementById('lieu_naissance');
+        const ageError = document.getElementById('age-error');
 
         // Variables pour la sauvegarde automatique
         let saveTimeout;
@@ -2516,6 +2560,37 @@
             
             // Passer au message suivant
             currentRappelIndex = (currentRappelIndex + 1) % rappelMessages.length;
+        }
+
+        // Fonction pour calculer l'âge à partir de la date de naissance
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birthDateObj = new Date(birthDate);
+            let age = today.getFullYear() - birthDateObj.getFullYear();
+            const monthDiff = today.getMonth() - birthDateObj.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+
+        // Fonction pour valider l'âge
+        function validateAge() {
+            const birthDate = dateNaissanceInput.value;
+            if (!birthDate) return true;
+            
+            const age = calculateAge(birthDate);
+            if (age < 13) {
+                ageError.style.display = 'block';
+                dateNaissanceInput.style.borderColor = '#e74c3c';
+                return false;
+            } else {
+                ageError.style.display = 'none';
+                dateNaissanceInput.style.borderColor = '#ddd';
+                return true;
+            }
         }
 
         // Initialiser le calendrier avec toutes les sessions
@@ -2647,6 +2722,9 @@
             // Initialiser le compteur de mots
             objectifsTextarea.addEventListener('input', updateWordCounter);
             updateWordCounter();
+            
+            // Valider l'âge lors du changement de date de naissance
+            dateNaissanceInput.addEventListener('change', validateAge);
         });
 
         // Sauvegarder automatiquement les données du formulaire
@@ -2662,6 +2740,8 @@
                 nom: document.getElementById('nom').value,
                 prenom: document.getElementById('prenom').value,
                 email: document.getElementById('email').value,
+                date_naissance: document.getElementById('date_naissance').value,
+                lieu_naissance: document.getElementById('lieu_naissance').value,
                 pays: document.getElementById('pays').value,
                 telephone: document.getElementById('telephone').value,
                 profession: document.querySelector('input[name="profession"]:checked')?.value,
@@ -2698,6 +2778,8 @@
                 if (formData.nom) document.getElementById('nom').value = formData.nom;
                 if (formData.prenom) document.getElementById('prenom').value = formData.prenom;
                 if (formData.email) document.getElementById('email').value = formData.email;
+                if (formData.date_naissance) document.getElementById('date_naissance').value = formData.date_naissance;
+                if (formData.lieu_naissance) document.getElementById('lieu_naissance').value = formData.lieu_naissance;
                 if (formData.pays) {
                     document.getElementById('pays').value = formData.pays;
                     paysSelect.dispatchEvent(new Event('change'));
@@ -2908,12 +2990,14 @@
                 const nom = document.getElementById('nom').value;
                 const prenom = document.getElementById('prenom').value;
                 const email = document.getElementById('email').value;
+                const dateNaissance = document.getElementById('date_naissance').value;
+                const lieuNaissance = document.getElementById('lieu_naissance').value;
                 const pays = document.getElementById('pays').value;
                 const telephone = document.getElementById('telephone').value;
                 const profession = document.querySelector('input[name="profession"]:checked');
                 const objectifs = document.getElementById('objectifs').value;
                 
-                if(!nom || !prenom || !email || !pays || !telephone || !profession || !objectifs) {
+                if(!nom || !prenom || !email || !dateNaissance || !lieuNaissance || !pays || !telephone || !profession || !objectifs) {
                     alert('Veuillez remplir tous les champs obligatoires');
                     isValid = false;
                 }
@@ -2933,6 +3017,11 @@
                 const wordCount = countWords(objectifs);
                 if (wordCount > 100) {
                     alert('Veuillez limiter vos objectifs à 100 mots maximum');
+                    isValid = false;
+                }
+                
+                // Valider l'âge
+                if (!validateAge()) {
                     isValid = false;
                 }
             } else if(current === 2) {
@@ -3017,6 +3106,8 @@
             const nom = document.getElementById('nom').value;
             const prenom = document.getElementById('prenom').value;
             const email = document.getElementById('email').value;
+            const dateNaissance = document.getElementById('date_naissance').value;
+            const lieuNaissance = document.getElementById('lieu_naissance').value;
             const pays = document.getElementById('pays').options[document.getElementById('pays').selectedIndex].text;
             const telephone = phonePrefix.textContent + ' ' + document.getElementById('telephone').value;
             const profession = document.querySelector('input[name="profession"]:checked').nextElementSibling.textContent;
@@ -3027,6 +3118,8 @@
             
             modalNomComplet.textContent = `${prenom} ${nom}`;
             modalEmail.textContent = email;
+            modalDateNaissance.textContent = dateNaissance;
+            modalLieuNaissance.textContent = lieuNaissance;
             modalTelephone.textContent = telephone;
             modalPays.textContent = pays;
             modalProfession.textContent = profession;
@@ -3058,14 +3151,43 @@
             loadingIndicator.style.display = 'block';
             submitBtn.disabled = true;
             
-            // Simuler l'envoi au serveur
-            setTimeout(() => {
+            // Envoyer les données via fetch
+            sendFormData();
+        });
+
+        // Fonction pour envoyer les données du formulaire
+        function sendFormData() {
+            // Récupérer toutes les données du formulaire
+            const formData = new FormData(registrationForm);
+            
+            // URL de votre Google Apps Script
+            const scriptUrl = 'https://script.google.com/macros/s/AKfycbw9LNZTz3TVV-omzZL4BBrpUJ2oyTjuTkcdQ9iiT9Cy/dev';
+            
+            // Envoyer les données via fetch
+            fetch(scriptUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Succès:', data);
                 showConfirmationPage();
                 
                 // Effacer les données sauvegardées après soumission
                 localStorage.removeItem('bteceFormData');
-            }, 1500);
-        });
+            })
+            .catch((error) => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue lors de l\'envoi du formulaire. Veuillez réessayer.');
+                loadingIndicator.style.display = 'none';
+                submitBtn.disabled = false;
+            });
+        }
 
         // Afficher la page de confirmation
         function showConfirmationPage() {
@@ -3085,6 +3207,8 @@
             const nom = document.getElementById('nom').value;
             const prenom = document.getElementById('prenom').value;
             const email = document.getElementById('email').value;
+            const dateNaissance = document.getElementById('date_naissance').value;
+            const lieuNaissance = document.getElementById('lieu_naissance').value;
             const pays = document.getElementById('pays').value;
             const telephone = document.getElementById('telephone').value;
             const profession = document.querySelector('input[name="profession"]:checked')?.value;
@@ -3104,6 +3228,8 @@
                 <h4>Récapitulatif de votre inscription</h4>
                 <p><strong>Nom complet :</strong> ${prenom} ${nom}</p>
                 <p><strong>Email :</strong> ${email}</p>
+                <p><strong>Date de naissance :</strong> ${dateNaissance}</p>
+                <p><strong>Lieu de naissance :</strong> ${lieuNaissance}</p>
                 <p><strong>Téléphone :</strong> ${phonePrefix.textContent} ${telephone}</p>
                 <p><strong>Pays :</strong> ${paysSelect.options[paysSelect.selectedIndex].text}</p>
                 <p><strong>Profession :</strong> ${profession}</p>
