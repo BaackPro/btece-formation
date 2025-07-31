@@ -1,4 +1,3 @@
-
 /**
  * Module principal de l'application d'inscription aux formations BTECE
  * @module btece-registration
@@ -452,7 +451,9 @@ const DOM = (() => {
             dateNaissanceInput: document.getElementById('date_naissance'),
             lieuNaissanceInput: document.getElementById('lieu_naissance'),
             ageError: document.getElementById('age-error'),
-            calendarEl: document.getElementById('calendar')
+            calendarEl: document.getElementById('calendar'),
+            nextButtons: document.querySelectorAll('.next-btn'),
+            prevButtons: document.querySelectorAll('.prev-btn')
         };
     };
 
@@ -810,6 +811,23 @@ const FormManager = (() => {
             if (e.key === 'Enter') sendChatMessage();
         });
 
+        // Boutons Suivant/Précédent
+        elements.nextButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const currentStep = parseInt(button.closest('.form-step').dataset.step);
+                nextStep(currentStep);
+            });
+        });
+
+        elements.prevButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const currentStep = parseInt(button.closest('.form-step').dataset.step);
+                prevStep(currentStep);
+            });
+        });
+
         // Gestion des gestes tactiles
         document.addEventListener('touchstart', handleTouchStart, false);
         document.addEventListener('touchend', handleTouchEnd, false);
@@ -1039,6 +1057,8 @@ const FormManager = (() => {
         if (Validator.validateStep(current)) {
             AppState.setCurrentStep(current + 1);
             DOM.showStep(current + 1);
+        } else {
+            alert('Veuillez compléter tous les champs obligatoires avant de continuer');
         }
     };
 
@@ -1105,7 +1125,7 @@ const FormManager = (() => {
         };
         
         localStorage.setItem('pendingRegistration', JSON.stringify(formData));
-        alert('Votre inscription a été enregistrée localement. Nous vous contacterons sous peu.');
+        alert('Votre inscription a été enregistrée localement. Veuillez cliquer sur OK après vérification de votre connexion internet.');
     };
 
     /**
@@ -1211,7 +1231,7 @@ const FormManager = (() => {
             elements.chatInput.value = '';
             
             setTimeout(() => {
-                addChatMessage('Merci pour votre message. Veuillez laisser votre adresse e-mail, Notre équipe vous répondra dans les plus brefs délais.', 'bot');
+                addChatMessage('Merci pour votre message. Veuillez laisser votre préocupation par e-mail via notre adresse, Notre équipe vous répondra dans les plus brefs délais.', 'bot');
             }, 1000);
         }
     };
@@ -1273,6 +1293,8 @@ const FormManager = (() => {
      */
     const initCalendar = () => {
         const elements = DOM.getElements();
+        if (!elements.calendarEl) return;
+
         const calendar = new FullCalendar.Calendar(elements.calendarEl, {
             initialView: 'dayGridMonth',
             initialDate: '2025-07-01',
@@ -1288,7 +1310,86 @@ const FormManager = (() => {
                 }
             },
             events: [
-                // ... (tous les événements du calendrier existants)
+                {
+                    title: 'Session Printemps',
+                    start: '2025-03-01',
+                    end: '2025-05-31',
+                    color: '#4CAF50',
+                    description: 'Session de printemps 2025'
+                },
+                {
+                    title: 'Session Été',
+                    start: '2025-06-01',
+                    end: '2025-08-31',
+                    color: '#2196F3',
+                    description: 'Session d\'été 2025'
+                },
+                {
+                    title: 'Session Automne',
+                    start: '2025-09-01',
+                    end: '2025-11-30',
+                    color: '#FF9800',
+                    description: 'Session d\'automne 2025'
+                },
+                {
+                    title: 'Session Hiver',
+                    start: '2025-12-01',
+                    end: '2026-02-28',
+                    color: '#9C27B0',
+                    description: 'Session d\'hiver 2025-2026'
+                },
+                {
+                    title: 'Formation Plans Archi/Élec',
+                    start: '2025-07-05',
+                    end: '2025-07-09',
+                    color: '#4CAF50',
+                    description: 'Formation intensive sur les plans architecturaux et électriques'
+                },
+                {
+                    title: 'Formation Conception Élec',
+                    start: '2025-07-12',
+                    end: '2025-07-16',
+                    color: '#2196F3',
+                    description: 'Formation sur la conception électronique'
+                },
+                {
+                    title: 'Formation Réalisation 3D',
+                    start: '2025-07-19',
+                    end: '2025-07-23',
+                    color: '#FF9800',
+                    description: 'Formation sur la réalisation 3D'
+                },
+                {
+                    title: 'Formation Programmation',
+                    start: '2025-07-26',
+                    end: '2025-07-30',
+                    color: '#9C27B0',
+                    description: 'Formation en programmation'
+                },
+                {
+                    title: 'Date limite inscription Printemps',
+                    start: '2025-02-15',
+                    color: '#F44336',
+                    description: 'Dernier jour pour s\'inscrire à la session de printemps'
+                },
+                {
+                    title: 'Date limite inscription Été',
+                    start: '2025-05-15',
+                    color: '#F44336',
+                    description: 'Dernier jour pour s\'inscrire à la session d\'été'
+                },
+                {
+                    title: 'Date limite inscription Automne',
+                    start: '2025-08-15',
+                    color: '#F44336',
+                    description: 'Dernier jour pour s\'inscrire à la session d\'automne'
+                },
+                {
+                    title: 'Date limite inscription Hiver',
+                    start: '2025-11-15',
+                    color: '#F44336',
+                    description: 'Dernier jour pour s\'inscrire à la session d\'hiver'
+                }
             ],
             eventTimeFormat: { 
                 hour: '2-digit',
@@ -1321,6 +1422,7 @@ const FormManager = (() => {
      */
     const initWordCounter = () => {
         const elements = DOM.getElements();
+        if (!elements.objectifsTextarea || !elements.objectifsCounter) return;
         
         const updateWordCounter = () => {
             const wordCount = Validator.countWords(elements.objectifsTextarea.value);
@@ -1345,6 +1447,8 @@ const FormManager = (() => {
      */
     const initRappelMessages = () => {
         const elements = DOM.getElements();
+        if (!elements.rappelMessages || !elements.rappelContainer) return;
+        
         const state = AppState.getState();
         
         const rotateRappelMessages = () => {
@@ -1362,6 +1466,7 @@ const FormManager = (() => {
      */
     const initAgeValidation = () => {
         const elements = DOM.getElements();
+        if (!elements.dateNaissanceInput || !elements.ageError) return;
         
         elements.dateNaissanceInput.addEventListener('change', () => {
             const isValid = Validator.validateAge(elements.dateNaissanceInput.value);
@@ -1406,7 +1511,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Configurer le mode de formation au chargement
     const elements = DOM.getElements();
-    elements.modeFormationSelect.dispatchEvent(new Event('change'));
+    if (elements.modeFormationSelect) {
+        elements.modeFormationSelect.dispatchEvent(new Event('change'));
+    }
     
     // Protection contre le clic droit et le glisser-déposer
     document.addEventListener('contextmenu', (e) => {
