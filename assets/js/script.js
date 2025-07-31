@@ -267,7 +267,7 @@ const paymentMethodNames = {
     'Orange Money': 'Paiement par Orange Money',
     'Airtel Money': 'Paiement par Airtel Money',
     'Wari': 'Paiement par Wari',
-    'Cripto Money': 'Paiement par Bitcoin',
+    'Crypto Currency': 'Paiement par Bitcoin',
     'Paiement sur place': 'Paiement sur place (espèces/chèque)'
 };
 
@@ -1029,7 +1029,7 @@ function saveToLocalStorage() {
     
     // Sauvegarder dans localStorage
     localStorage.setItem('pendingRegistration', JSON.stringify(formData));
-    alert('Votre inscription a été enregistrée localement. Veuillez vérifier votre connexion internet.');
+    alert('Votre inscription a été enregistrée localement. Veuillez cliquer sur OK après vérification de votre connexion internet.');
 }
 
 // Afficher la page de confirmation
@@ -1216,3 +1216,24 @@ calculateTotal();
 
 // Afficher les méthodes de paiement appropriées au chargement
 modeFormationSelect.dispatchEvent(new Event('change'));
+
+// Envoie de l'email de confirmation
+document.getElementById('votre-formulaire').addEventListener('submit', function(event) {
+  event.preventDefault();
+  
+  // Récupérez les données du formulaire
+  const formData = {
+    name: this.name.value,
+    email: this.email.value,
+    // autres champs...
+  };
+  
+  // Envoyez l'email
+  emailjs.send('service_qg02cut', 'template_125rlc5', formData)
+    .then(function(response) {
+      console.log('Email envoyé avec succès!', response);
+      // Redirigez ou affichez un message de succès
+    }, function(error) {
+      console.log('Erreur lors de l\'envoi de l\'email:', error);
+    });
+});

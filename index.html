@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap">
     <link rel="canonical" href="https://btece-formation.netlify.app/">
     
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph / Facebook --> 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://btece-formation.netlify.app/">
     <meta property="og:title" content="BTECE - Formations Professionnelles Techniques 2025">
@@ -83,6 +83,12 @@
     <!-- Remplacer par -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+    (function() {
+    emailjs.init("43b4me_OTEicELK5"); // Remplacez par votre User ID trouvé dans l'onglet Integration d'EmailJS
+  })();
+</script>
 </head>
 <body>
     
@@ -164,6 +170,7 @@
                     
                     <!-- CSRF Token -->
                     <input type="hidden" id="csrf_token" name="csrf_token" value="a1b2c3d4e5f6g7h8i9j0">
+                    <form name="inscription" netlify data-netlify="true" action="/.netlify/functions/notify-admin"></form>
                     
                     <!-- Étape 1: Informations personnelles -->
                     <div class="form-step active" id="form-step-1">
@@ -641,6 +648,7 @@
                             <button type="button" class="btn-next keyboard-support" onclick="nextStep(4)">Suivant</button>
                         </div>
                     </div>
+                    
 
                     <!-- Étape 5: Confirmation -->
                     <div class="form-step" id="form-step-5">
