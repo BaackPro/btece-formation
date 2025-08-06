@@ -267,7 +267,7 @@ const paymentMethodNames = {
     'Orange Money': 'Paiement par Orange Money',
     'Airtel Money': 'Paiement par Airtel Money',
     'Wari': 'Paiement par Wari',
-    'Crypto Currency': 'Paiement par Bitcoin',
+    'Bitcoin': 'Paiement par Crypto Currency',
     'Paiement sur place': 'Paiement sur place (espèces/chèque)'
 };
 
@@ -1023,13 +1023,24 @@ function saveToLocalStorage() {
         nom: document.getElementById('nom').value,
         prenom: document.getElementById('prenom').value,
         email: document.getElementById('email').value,
-        // ... autres champs
+        dateNaissance: document.getElementById('date_naissance').value,
+        lieuNaissance: document.getElementById('lieu_naissance').value,
+        pays: document.getElementById('pays').value,
+        telephone: document.getElementById('telephone').value,
+        profession: document.getElementById('input[name="profession"]:checked')?.value,
+        objectifs: document.getElementById('objectifs').value,
+        checkedFormations: Array.from(document.querySelectorAll('input[name="formations[]"]:checked')).map(cb => formationNames[cb.value]),
+        session: document.getElementById('input[name="session"]:checked')?.value,
+        modeFormation: document.getElementById('mode-formation').value,
+        paymentMethod: document.getElementById('input[name="payment_method"]:checked')?.value,
+        total: document.getElementById('checkbox').totalEur.value,
+        
         timestamp: new Date().toISOString()
     };
     
     // Sauvegarder dans localStorage
     localStorage.setItem('pendingRegistration', JSON.stringify(formData));
-    alert('Votre inscription a été enregistrée localement. Veuillez cliquer sur OK après vérification de votre connexion internet.');
+    alert('Votre inscription a été enregistrée localement. Veuillez cliquer sur OK si vous n\'êtes pas un robot');
 }
 
 // Afficher la page de confirmation
@@ -1223,16 +1234,31 @@ document.getElementById('votre-formulaire').addEventListener('submit', function(
   
   // Récupérez les données du formulaire
   const formData = {
-    name: this.name.value,
+    nom: this.nom.value,
+    prenom: this.prenom.value,
     email: this.email.value,
-    // autres champs...
+    date_naissance: this.date_naissance.value,
+    lieu_naissance: this.lieu_naissance.value,
+    pays: this.pays.value,
+    telephone: this.telephone.value,
+    profession: this.profession.value,
+    objectifs: this.objectifs.value,
+    checkedFormations: this.formations.value,
+    session: this.session.value,
+    modeFormation: this.modeFormation.value,
+    paymentMethod: this.payment_method.value,
+    total: this.totalFCfa.totalEur.value,
+    
+    
   };
   
   // Envoyez l'email
+  emailjs.init("43b4me_OTEicELK5");
   emailjs.send('service_qg02cut', 'template_125rlc5', formData)
+  // Redirigez ou affichez un message de succès
     .then(function(response) {
       console.log('Email envoyé avec succès!', response);
-      // Redirigez ou affichez un message de succès
+      
     }, function(error) {
       console.log('Erreur lors de l\'envoi de l\'email:', error);
     });
