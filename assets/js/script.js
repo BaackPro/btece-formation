@@ -1,3 +1,4 @@
+
 // Configuration des prix des formations en FCFA
 const formationPrices = {
     'plans_archi_elec': 130000,
@@ -414,6 +415,31 @@ function sanitizeInput(input) {
     return input.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// Efface le contenu du formulaire après soumission
+function clearForm() {
+    DOM.registrationForm.reset();
+    DOM.priceDisplay.style.display = 'none';
+    DOM.totalPriceFCFA.textContent = '0';
+    DOM.totalPriceEUR.textContent = '0.00';
+    DOM.submitBtn.textContent = "S'inscrire maintenant";
+    DOM.checkboxes.forEach(checkbox => checkbox.checked = false);
+    DOM.phonePrefix.textContent = '+';
+    DOM.phoneFormat.style.display = 'none';
+    DOM.objectifsCounter.textContent = '0/100 mots';
+    DOM.objectifsCounter.style.color = '#666';
+    DOM.objectifsTextarea.style.borderColor = '#ddd';
+    DOM.ageError.style.display = 'none';
+    DOM.dateNaissanceInput.style.borderColor = '#ddd';
+    DOM.onlinePaymentMethods.style.display = 'none';
+    DOM.presentielPaymentMethod.style.display = 'none';
+    document.getElementById('consentement').checked = false;
+    document.querySelectorAll('input[name="profession"]').forEach(radio => radio.checked = false);
+    document.querySelectorAll('input[name="session"]').forEach(radio => radio.checked = false);
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => radio.checked = false);
+    DOM.modeFormationSelect.value = '';
+    DOM.paysSelect.value = '';
+}
+
 /**
  * Fonctions de gestion du formulaire
  */
@@ -806,18 +832,20 @@ function sendFormData() {
         showConfirmationPage();
         localStorage.removeItem('bteceFormData');
         sendConfirmationEmail();
+        clearForm(); // Effacer le formulaire après soumission
     })
     .catch(error => {
         console.error('Erreur:', error);
         saveToLocalStorage();
         showConfirmationPage();
+        clearForm(); // Effacer le formulaire même en cas d'erreur
     })
     .finally(() => {
         state.isSubmitting = false;
     });
 }
 
-// Envoie un email de confirmation
+// Envoie un email de confirmation via EmailJS
 function sendConfirmationEmail() {
     const formData = {
         nom: sanitizeInput(document.getElementById('nom').value),
@@ -830,15 +858,16 @@ function sendConfirmationEmail() {
         total: DOM.totalPriceFCFA.textContent + ' FCFA'
     };
     
-    if (typeof emailjs !== 'undefined') {
-        emailjs.init("43b4me_OTEicELK5");
-        emailjs.send('service_qg02cut', 'template_125rlc5', formData)
-            .then(response => {
-                console.log('Email envoyé avec succès!', response);
-            }, error => {
-                console.log('Erreur lors de l\'envoi de l\'email:', error);
-            });
-    }
+    // Initialisation d'EmailJS avec votre User ID
+    emailjs.init('43b4me_OTEicELK5'); // Remplacez par votre User ID EmailJS
+    
+    // Envoi de l'email
+    emailjs.send('service_qg02cut', 'template_125rlc5', formData) // Remplacez par votre Service ID et Template ID
+        .then(function(response) {
+            console.log('Email de confirmation envoyé avec succès!', response.status, response.text);
+        }, function(error) {
+            console.log('Échec de l\'envoi de l\'email de confirmation:', error);
+        });
 }
 
 // Sauvegarde locale en cas d'échec
