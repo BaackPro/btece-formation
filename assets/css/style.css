@@ -10,9 +10,6 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Chargement des polices d'icônes */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-
 header {
     background-color: #3d6076;
     padding: 1rem 2rem;
@@ -35,6 +32,16 @@ header {
     -o-user-drag: none;
     user-drag: none;
 }
+.logo-container-centered-confirmation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    text-align: center;
+    padding: 20px 0;
+}
+
 
 .company-name {
     font-size: 2.5rem;
@@ -205,7 +212,6 @@ input:focus, select:focus, textarea:focus {
 
 .youtube-btn i {
     margin-right: 8px;
-    font-size: 1.2rem; /* Taille explicite pour les icônes */
 }
 
 .selected-price {
@@ -545,11 +551,6 @@ footer p {
     background-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-3px);
     text-decoration: none;
-}
-
-/* Correction spécifique pour les icônes */
-.social-links a i {
-    font-size: 1.2rem; /* Taille cohérente pour toutes les icônes */
 }
 
 /* Calendar styles */
@@ -1472,6 +1473,12 @@ footer p {
         height: 35px;
     }
     
+    .confirmation-header {
+    text-align: center;
+    padding: 20px 0;
+    background-color: #f8f9fa;
+    width: 100%;
+}
     .confirmation-box {
         padding: 1rem;
     }

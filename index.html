@@ -149,7 +149,7 @@
                 </div>
 
                 <!-- Formulaire unique et bien structuré -->
-                <form id="registration-form" name="inscription" method="POST" data-netlify="true" netlify action="/.netlify/functions/notify-admin">
+                <form id="registration-form" name="inscription" method="POST" data-netlify="true" netlify action="/.netlify/functions/notify-admin" onsubmit="clearFormAfterSubmission()">
                     <input type="hidden" name="form-name" value="inscription">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="a1b2c3d4e5f6g7h8i9j0">
                     
@@ -1005,7 +1005,7 @@
     <!-- Page de confirmation (masquée par défaut) -->
     <div id="confirmation-page" style="display: none;">
         <header class="confirmation-header">
-            <div class="logo-container-centered">
+            <div class="logo-container-centered-confirmation">
                 <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy" width="120" height="120">
                 <div class="company-name">BTECE</div>
             </div>
@@ -1154,6 +1154,33 @@
         (function() {
             emailjs.init("process.env.USER_ID");
         })();
+
+        // Fonction pour effacer le formulaire après soumission
+        function clearFormAfterSubmission() {
+            document.getElementById('registration-form').reset();
+        }
+
+        // Fonction pour afficher la page de confirmation
+        function showConfirmationPage(userData) {
+            document.getElementById('main-page').style.display = 'none';
+            document.getElementById('confirmation-page').style.display = 'block';
+            
+            // Remplir les informations de l'utilisateur
+            const userSummary = document.getElementById('user-summary');
+            if (userSummary) {
+                userSummary.innerHTML = `
+                    <p><strong>Nom complet :</strong> ${userData.nom} ${userData.prenom}</p>
+                    <p><strong>Email :</strong> ${userData.email}</p>
+                    <p><strong>Téléphone :</strong> ${userData.telephone}</p>
+                    <p><strong>Formations :</strong> ${userData.formations.join(', ')}</p>
+                    <p><strong>Session :</strong> ${userData.session}</p>
+                    <p><strong>Mode :</strong> ${userData.mode}</p>
+                `;
+            }
+            
+            // Faire défiler vers le haut de la page de confirmation
+            window.scrollTo(0, 0);
+        }
     </script>
     <script src="assets/js/script.js" defer></script>
 </body>
