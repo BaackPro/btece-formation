@@ -12,13 +12,13 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap" as="style">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" as="style">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" as="style">
-    <link rel="preload" href="/assets/css/style.css" as="style">
+    <link rel="preload" href="assets/css/style.css" as="style">
     
     <!-- Polices et styles -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <link rel="canonical" href="https://btece-formation.netlify.app/">
     
     <!-- Métadonnées SEO -->
@@ -78,12 +78,12 @@
     <!-- Page principale (formulaire d'inscription) -->
     <div id="main-page">
         <header>
-            <div class="logo-container">
+            <div class="logo-container-centered">
                 <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy" width="120" height="120">
+                <div class="company-name">BTECE</div>
             </div>
             
             <div class="header-content">
-                <div class="company-name">BTECE</div>
                 <div class="btece-full">BAACK TECHNOLOGY ENERGY and CONCEPTION ENGINEERING</div>
                 <h1>Formations Professionnelles</h1>
                 <h2>Développez vos compétences techniques</h2>
@@ -1004,13 +1004,9 @@
     <!-- Page de confirmation (masquée par défaut) -->
     <div id="confirmation-page" style="display: none;">
         <header>
-            <div class="logo-container">
+            <div class="logo-container-centered">
                 <img src="assets/images/logo.png" alt="Logo BTECE - Retour à l'accueil" class="logo" loading="lazy" width="120" height="120">
-            </div>
-            
-            <div style="flex-grow: 1;">
                 <div class="company-name">BTECE</div>
-                <div class="btece-full">BAACK TECHNOLOGY ENERGY and CONCEPTION ENGINEERING</div>
             </div>
         </header>
 
@@ -1158,6 +1154,6 @@
             emailjs.init("43b4me_OTEicELK5");
         })();
     </script>
-    <script src="/assets/js/script.js" defer></script>
+    <script src="assets/js/script.js" defer></script>
 </body>
 </html>
