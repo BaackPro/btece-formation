@@ -1,10 +1,35 @@
 
-
 {
   "name": "btece-formation",
   "version": "1.0.0",
   "description": "Formulaire de formation en ligne",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"No build needed\"",
+    "start": "echo \"Server not required for static site\""
+  },
+  "dependencies": {
+    "emailjs-com": "^3.2.0",
+    "fullcalendar": "^5.11.3",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "netlify-cli": "^12.0.0"
+  },
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "keywords": [
+    "formation",
+    "elearning",
+    "btece"
+  ],
+  "author": "BTECE",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BaackPro/btece-formation.git"
   }
 }
