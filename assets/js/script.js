@@ -249,6 +249,7 @@ const phoneConfigurations = {
     'other': { code: '+', pattern: '[0-9]{8,15}', format: '+XXX XXX XXXX' }
 };
 
+
 // Noms des formations pour l'affichage
 const formationNames = {
     'plans_archi_elec': 'Plans architecturaux et électricité',
@@ -327,7 +328,8 @@ const DOM = {
     objectifsCounter: document.getElementById('objectifs-counter'),
     dateNaissanceInput: document.getElementById('date_naissance'),
     lieuNaissanceInput: document.getElementById('lieu_naissance'),
-    ageError: document.getElementById('age-error')
+    ageError: document.getElementById('age-error'),
+    resendEmailBtn: document.getElementById('resend-email-btn')
 };
 
 // Variables d'état
@@ -338,7 +340,8 @@ const state = {
     currentRappelIndex: 0,
     isSubmitting: false,
     touchStartX: 0,
-    touchEndX: 0
+    touchEndX: 0,
+    emailSent: false
 };
 
 /**
@@ -858,16 +861,40 @@ function sendConfirmationEmail() {
         total: DOM.totalPriceFCFA.textContent + ' FCFA'
     };
     
-    // Initialisation d'EmailJS avec votre User ID
-    emailjs.init('43b4me_OTEicELK5'); // Remplacez par votre User ID EmailJS
+    // Utilisation des variables d'environnement pour EmailJS
+    emailjs.init(process.env.USER_ID);
     
-    // Envoi de l'email
-    emailjs.send('service_qg02cut', 'template_125rlc5', formData) // Remplacez par votre Service ID et Template ID
+    emailjs.send(process.env.SERVICE_ID, process.env.TEMPLATE_ID, formData)
         .then(function(response) {
             console.log('Email de confirmation envoyé avec succès!', response.status, response.text);
+            state.emailSent = true;
         }, function(error) {
             console.log('Échec de l\'envoi de l\'email de confirmation:', error);
+            state.emailSent = false;
         });
+}
+
+// Fonction pour renvoyer l'email de confirmation
+function resendConfirmationEmail() {
+    if (state.emailSent) {
+        alert('Un email de confirmation vous a déjà été envoyé. Veuillez vérifier votre boîte de réception ou vos spams.');
+        return;
+    }
+
+    DOM.resendEmailBtn.disabled = true;
+    DOM.resendEmailBtn.textContent = 'Envoi en cours...';
+    
+    sendConfirmationEmail();
+    
+    setTimeout(() => {
+        if (state.emailSent) {
+            alert('Un nouveau email de confirmation vous a été envoyé');
+        } else {
+            alert('Échec de l\'envoi du nouvel email. Veuillez réessayer plus tard.');
+        }
+        DOM.resendEmailBtn.disabled = false;
+        DOM.resendEmailBtn.textContent = 'Renvoyer l\'email de confirmation';
+    }, 2000);
 }
 
 // Sauvegarde locale en cas d'échec
@@ -1058,6 +1085,9 @@ function init() {
     DOM.closeChat.addEventListener('click', () => DOM.chatContainer.style.display = 'none');
     DOM.sendMessage.addEventListener('click', sendChatMessage);
     DOM.chatInput.addEventListener('keypress', e => e.key === 'Enter' && sendChatMessage());
+    
+    // Bouton de renvoi d'email
+    DOM.resendEmailBtn.addEventListener('click', resendConfirmationEmail);
     
     // Protection contre le clic droit et le glisser-déposer
     document.addEventListener('contextmenu', function(e) {
