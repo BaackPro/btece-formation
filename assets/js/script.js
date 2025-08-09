@@ -829,6 +829,14 @@ function sendFormData() {
     const corsApiUrl = "https://cors-anywhere.herokuapp.com/"; // Proxy CORS
     const API_URL = `https://script.google.com/.../exec?key= Baack08`;  // Mon code secret
     const fullUrl = corsApiUrl + API_URL;
+    const response = {
+  "status": "success",
+  "sheetUrl": "https://docs.google.com/spreadsheets/d/14VgMGuRowc7OtrroVUBGRpV-i_GAtrjAojUjlDQMw_Q/edit"
+    };
+
+    const sheetUrl = response.sheetUrl; 
+    console.log("URL à utiliser :", sheetUrl);
+    // Output: https://docs.google.com/spreadsheets/d/14VgMGuRowc7OtrroVUBGRpV-i_GAtrjAojUjlDQMw_Q/edit
 
 // Utilisez fullUrl dans votre fetch()
     
