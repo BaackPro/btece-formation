@@ -877,9 +877,9 @@ function sendConfirmationEmail() {
     };
     
     // Configuration EmailJS
-    emailjs.init('USER_ID'); // Remplacez par votre User ID EmailJS
+    emailjs.init(process.env.USER_ID); // Remplacez par votre User ID EmailJS
     
-    emailjs.send('SERVICE_ID', 'TEMPLATE_ID', formData) // Remplacez par vos IDs
+    emailjs.send(process.env.SERVICE_ID, process.env.TEMPLATE_ID, formData) // Remplacez par vos IDs
         .then(function(response) {
             console.log('Email de confirmation envoyé avec succès!', response.status, response.text);
             state.emailSent = true;
