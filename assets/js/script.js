@@ -825,40 +825,41 @@ function sendFormData() {
     
     const formData = new FormData(DOM.registrationForm);
     const scriptUrl = 'https://script.google.com/macros/s/AKfycbx684D00HrPRq1IuoXWBj8Xgg0TAHCp6ccug55c6-1sAXaci4wi82OW7ANt6KdOgXW4cQ/exec';
-    // Ajoutez ceci AVANT votre fetch()
-    const corsApiUrl = "https://cors-anywhere.herokuapp.com/"; // Proxy CORS
-    const API_URL = `https://script.google.com/.../exec?key= Baack08`;  // Mon code secret
-    const fullUrl = corsApiUrl + API_URL;
-    const response = {
-  "status": "success",
-  "sheetUrl": "https://docs.google.com/spreadsheets/d/14VgMGuRowc7OtrroVUBGRpV-i_GAtrjAojUjlDQMw_Q/edit"
-    };
-
-    const sheetUrl = response.sheetUrl; 
-    console.log("URL à utiliser :", sheetUrl);
-    // Output: https://docs.google.com/spreadsheets/d/14VgMGuRowc7OtrroVUBGRpV-i_GAtrjAojUjlDQMw_Q/edit
-
-// Utilisez fullUrl dans votre fetch()
     
-    fetch(scriptUrl, {
+    // Utilisation d'un proxy CORS si nécessaire
+    const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+    const fullUrl = corsProxy + scriptUrl;
+    
+    fetch(fullUrl, {
         method: 'POST',
         body: formData,
-        mode: 'no-cors'
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     })
-    .then(() => {
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Succès:', data);
         showConfirmationPage();
         localStorage.removeItem('bteceFormData');
         sendConfirmationEmail();
-        clearForm(); // Effacer le formulaire après soumission
+        clearForm();
     })
     .catch(error => {
         console.error('Erreur:', error);
         saveToLocalStorage();
         showConfirmationPage();
-        clearForm(); // Effacer le formulaire même en cas d'erreur
+        clearForm();
     })
     .finally(() => {
         state.isSubmitting = false;
+        DOM.loadingIndicator.style.display = 'none';
+        DOM.submitBtn.disabled = false;
     });
 }
 
@@ -875,10 +876,10 @@ function sendConfirmationEmail() {
         total: DOM.totalPriceFCFA.textContent + ' FCFA'
     };
     
-    // Utilisation des variables d'environnement pour EmailJS
-    emailjs.init(process.env.USER_ID);
+    // Configuration EmailJS
+    emailjs.init('43b4me_OTEicELK5'); // Remplacez par votre User ID EmailJS
     
-    emailjs.send(process.env.SERVICE_ID, process.env.TEMPLATE_ID, formData)
+    emailjs.send('service_qg02cut', 'template_125rlc5', formData) // Remplacez par vos IDs
         .then(function(response) {
             console.log('Email de confirmation envoyé avec succès!', response.status, response.text);
             state.emailSent = true;
@@ -934,7 +935,7 @@ function saveToLocalStorage() {
     };
     
     localStorage.setItem('pendingRegistration', JSON.stringify(formData));
-    alert('Votre inscription a été enregistrée localement. Veuillez cliquer sur OK si vous n\'êtes pas un robot');
+    alert('Votre inscription a été enregistrée localement. Nous essaierons de la soumettre à nouveau lorsque vous serez en ligne.');
 }
 
 // Affiche la page de confirmation
