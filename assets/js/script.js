@@ -824,7 +824,13 @@ function sendFormData() {
     DOM.submitBtn.disabled = true;
     
     const formData = new FormData(DOM.registrationForm);
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbw9LNZTz3TVV-omzZL4BBrpUJ2oyTjuTkcdQ9iiT9Cy/dev';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbx684D00HrPRq1IuoXWBj8Xgg0TAHCp6ccug55c6-1sAXaci4wi82OW7ANt6KdOgXW4cQ/exec';
+    // Ajoutez ceci AVANT votre fetch()
+    const corsApiUrl = "https://cors-anywhere.herokuapp.com/"; // Proxy CORS
+    const API_URL = `https://script.google.com/.../exec?key= Baack08`;  // Mon code secret
+    const fullUrl = corsApiUrl + API_URL;
+
+// Utilisez fullUrl dans votre fetch()
     
     fetch(scriptUrl, {
         method: 'POST',
