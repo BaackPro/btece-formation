@@ -869,6 +869,14 @@ function sendConfirmationEmail() {
         nom: sanitizeInput(document.getElementById('nom').value),
         prenom: sanitizeInput(document.getElementById('prenom').value),
         email: sanitizeInput(document.getElementById('email').value),
+        date_naissance: sanitizeInput(document.getElementById('date_naissance').value),
+        lieu_naissance: sanitizeInput(document.getElementById('lieu_naissance').value),
+        pays: sanitizeInput(document.getElementById('paysSelect').value),
+        profession: sanitizeInput(document.getElementById('profession').value),
+        objectifs: sanitizeInput(document.getElementById('objectifs').value),
+        session: sanitizeInput(document.getElementById('session').value),
+        payment_method: sanitizeInput(document.getElementById('payment_method').value),
+
         formations: Array.from(DOM.checkboxes)
             .filter(cb => cb.checked)
             .map(cb => formationNames[cb.value])

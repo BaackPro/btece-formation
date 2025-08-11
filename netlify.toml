@@ -1,24 +1,25 @@
 
-
 [build]
   command = "echo 'No build needed'"
-  publish = "."  # Ou "src" si votre HTML est dans un dossier src
+  publish = "."
+
+[build.environment]
+  USER_ID = "43b4me_OTEicELK5"  # Remplacez par votre vrai User ID
+  SERVICE_ID = "service_qg02cut"  # Remplacez par votre Service ID
+  TEMPLATE_ID = "template_125rlc5"  # Remplacez par votre Template ID
+  NODE_ENV = "production"
 
 [context.production.environment]
+  USER_ID = "43b4me_OTEicELK5"
+  SERVICE_ID = "service_qg02cut"
+  TEMPLATE_ID = "template_125rlc5"
   NODE_ENV = "production"
-  # Sécurité HTTP
   SECURE_ORIGIN = "true"
-  REFERRER_POLICY = "strict-origin-when-cross-origin"
-  PERMISSIONS_POLICY = "geolocation=(), microphone=()"
-  X_FRAME_OPTIONS = "DENY"
-  X_CONTENT_TYPE_OPTIONS = "nosniff"
-  X_XSS_PROTECTION = "1; mode=block"
 
 [[headers]]
   for = "/*"
   [headers.values]
-    # Headers de sécurité
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.emailjs.com; frame-ancestors 'none'; form-action 'self';"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=()"
@@ -31,8 +32,7 @@
   to = "/index.html"
   status = 200
   force = true
-  # Protection contre l'open redirect
-  conditions = {Host = "btece-formation.com"}  # Remplacez par votre vrai domaine
+  conditions = {Host = "btece-formation.netlify.app"}  # Votre domaine réel
 
 [[redirects]]
   from = "/.env"
@@ -45,3 +45,15 @@
   to = "/404.html"
   status = 404
   force = true
+
+[[redirects]]
+  from = "/.well-known/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Protection contre les attaques courantes
+[[headers]]
+  for = "/*.php"
+  [headers.values]
+    Content-Type = "text/plain"
