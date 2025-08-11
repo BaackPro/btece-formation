@@ -1,4 +1,3 @@
-
 // Configuration des prix des formations en FCFA
 const formationPrices = {
     'plans_archi_elec': 130000,
@@ -863,61 +862,30 @@ function sendFormData() {
     });
 }
 
-// Envoie un email de confirmation via EmailJS
+// Envoie un email de confirmation
 function sendConfirmationEmail() {
-    const formData = {
-        nom: sanitizeInput(document.getElementById('nom').value),
-        prenom: sanitizeInput(document.getElementById('prenom').value),
-        email: sanitizeInput(document.getElementById('email').value),
-        date_naissance: sanitizeInput(document.getElementById('date_naissance').value),
-        lieu_naissance: sanitizeInput(document.getElementById('lieu_naissance').value),
-        pays: sanitizeInput(document.getElementById('paysSelect').value),
-        profession: sanitizeInput(document.getElementById('profession').value),
-        objectifs: sanitizeInput(document.getElementById('objectifs').value),
-        session: sanitizeInput(document.getElementById('session').value),
-        payment_method: sanitizeInput(document.getElementById('payment_method').value),
-
+    const emailData = {
+        to_name: `${document.getElementById('prenom').value} ${document.getElementById('nom').value}`,
+        to_email: document.getElementById('email').value,
         formations: Array.from(DOM.checkboxes)
             .filter(cb => cb.checked)
             .map(cb => formationNames[cb.value])
             .join(', '),
-        total: DOM.totalPriceFCFA.textContent + ' FCFA'
+        total_price: DOM.totalPriceFCFA.textContent,
+        total_price_eur: DOM.totalPriceEUR.textContent,
+        session: document.querySelector('input[name="session"]:checked')?.nextElementSibling?.textContent,
+        mode_formation: DOM.modeFormationSelect.options[DOM.modeFormationSelect.selectedIndex].text
     };
-    
-    // Configuration EmailJS
-    emailjs.init(process.env.USER_ID); // Remplacez par votre User ID EmailJS
-    
-    emailjs.send(process.env.SERVICE_ID, process.env.TEMPLATE_ID, formData) // Remplacez par vos IDs
+
+    // Utilisation d'EmailJS pour envoyer l'email
+    emailjs.send('service_your_service_id', 'template_your_template_id', emailData)
         .then(function(response) {
-            console.log('Email de confirmation envoyé avec succès!', response.status, response.text);
+            console.log('Email envoyé avec succès', response.status, response.text);
             state.emailSent = true;
         }, function(error) {
-            console.log('Échec de l\'envoi de l\'email de confirmation:', error);
+            console.error('Échec de l\'envoi de l\'email', error);
             state.emailSent = false;
         });
-}
-
-// Fonction pour renvoyer l'email de confirmation
-function resendConfirmationEmail() {
-    if (state.emailSent) {
-        alert('Un email de confirmation vous a déjà été envoyé. Veuillez vérifier votre boîte de réception ou vos spams.');
-        return;
-    }
-
-    DOM.resendEmailBtn.disabled = true;
-    DOM.resendEmailBtn.textContent = 'Envoi en cours...';
-    
-    sendConfirmationEmail();
-    
-    setTimeout(() => {
-        if (state.emailSent) {
-            alert('Un nouveau email de confirmation vous a été envoyé');
-        } else {
-            alert('Échec de l\'envoi du nouvel email. Veuillez réessayer plus tard.');
-        }
-        DOM.resendEmailBtn.disabled = false;
-        DOM.resendEmailBtn.textContent = 'Renvoyer l\'email de confirmation';
-    }, 2000);
 }
 
 // Sauvegarde locale en cas d'échec
@@ -1040,6 +1008,24 @@ function handleSwipe() {
     } else if (state.touchEndX > state.touchStartX + threshold && state.currentStep > 1) {
         prevStep(state.currentStep);
     }
+}
+
+// Renvoie l'email de confirmation
+function resendConfirmationEmail() {
+    DOM.resendEmailBtn.disabled = true;
+    DOM.resendEmailBtn.textContent = 'Envoi en cours...';
+    
+    sendConfirmationEmail();
+    
+    setTimeout(() => {
+        if (state.emailSent) {
+            alert('Un nouveau email de confirmation vous a été envoyé');
+        } else {
+            alert('Échec de l\'envoi du nouvel email. Veuillez réessayer plus tard.');
+        }
+        DOM.resendEmailBtn.disabled = false;
+        DOM.resendEmailBtn.textContent = 'Renvoyer l\'email de confirmation';
+    }, 2000);
 }
 
 // Initialisation
