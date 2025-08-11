@@ -1,20 +1,14 @@
-
 [build]
   command = "echo 'No build needed'"
   publish = "."
 
 [build.environment]
-  USER_ID = "43b4me_OTEicELK5"  # Remplacez par votre vrai User ID
-  SERVICE_ID = "service_qg02cut"  # Remplacez par votre Service ID
-  TEMPLATE_ID = "template_125rlc5"  # Remplacez par votre Template ID
   NODE_ENV = "production"
 
 [context.production.environment]
-  USER_ID = "43b4me_OTEicELK5"
-  SERVICE_ID = "service_qg02cut"
-  TEMPLATE_ID = "template_125rlc5"
   NODE_ENV = "production"
   SECURE_ORIGIN = "true"
+  ADMIN_EMAIL = "contactbtece@gmail.com"
 
 [[headers]]
   for = "/*"
@@ -32,7 +26,7 @@
   to = "/index.html"
   status = 200
   force = true
-  conditions = {Host = "btece-formation.netlify.app"}  # Votre domaine réel
+  conditions = {Host = "btece-formation.netlify.app"}
 
 [[redirects]]
   from = "/.env"
@@ -52,7 +46,6 @@
   status = 404
   force = true
 
-# Protection contre les attaques courantes
 [[headers]]
   for = "/*.php"
   [headers.values]
