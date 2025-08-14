@@ -1548,6 +1548,60 @@
                 e.preventDefault();
                 submitForm(e);
             });
+
+            // Initialisation du calendrier
+            document.addEventListener('DOMContentLoaded', function() {
+                const calendarEl = document.getElementById('calendar');
+                if (calendarEl) {
+                    const calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                        },
+                        events: [
+                            {
+                                title: 'Session Juillet 2025',
+                                start: '2025-07-07',
+                                end: '2025-08-01',
+                                color: '#6e48aa'
+                            },
+                            {
+                                title: 'Session Août 2025',
+                                start: '2025-08-04',
+                                end: '2025-08-29',
+                                color: '#9d50bb'
+                            },
+                            {
+                                title: 'Session Septembre 2025',
+                                start: '2025-09-01',
+                                end: '2025-09-26',
+                                color: '#6e48aa'
+                            },
+                            {
+                                title: 'Session Octobre 2025',
+                                start: '2025-10-06',
+                                end: '2025-10-31',
+                                color: '#9d50bb'
+                            },
+                            {
+                                title: 'Session Novembre 2025',
+                                start: '2025-11-03',
+                                end: '2025-11-28',
+                                color: '#6e48aa'
+                            },
+                            {
+                                title: 'Session Décembre 2025',
+                                start: '2025-12-01',
+                                end: '2025-12-19',
+                                color: '#9d50bb'
+                            }
+                        ]
+                    });
+                    calendar.render();
+                }
+            });
         });
     </script>
     <script src="assets/js/script.js" defer></script>
