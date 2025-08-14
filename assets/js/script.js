@@ -1,3 +1,4 @@
+
 // Configuration des prix des formations en FCFA
 const formationPrices = {
     'plans_archi_elec': 130000,
@@ -248,7 +249,6 @@ const phoneConfigurations = {
     'other': { code: '+', pattern: '[0-9]{8,15}', format: '+XXX XXX XXXX' }
 };
 
-
 // Noms des formations pour l'affichage
 const formationNames = {
     'plans_archi_elec': 'Plans architecturaux et électricité',
@@ -328,7 +328,8 @@ const DOM = {
     dateNaissanceInput: document.getElementById('date_naissance'),
     lieuNaissanceInput: document.getElementById('lieu_naissance'),
     ageError: document.getElementById('age-error'),
-    resendEmailBtn: document.getElementById('resend-email-btn')
+    resendEmailBtn: document.getElementById('resend-email-btn'),
+    csrfToken: document.querySelector('meta[name="csrf-token"]')?.content
 };
 
 // Variables d'état
@@ -414,7 +415,12 @@ function validatePhone(phone, country) {
 
 // Nettoie les entrées pour prévenir les attaques XSS
 function sanitizeInput(input) {
-    return input.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    if (!input) return '';
+    return input.toString()
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 // Efface le contenu du formulaire après soumission
@@ -454,19 +460,21 @@ function autoSave() {
     
     state.formData = {
         step: state.currentStep,
-        nom: document.getElementById('nom').value,
-        prenom: document.getElementById('prenom').value,
-        email: document.getElementById('email').value,
-        date_naissance: DOM.dateNaissanceInput.value,
-        lieu_naissance: DOM.lieuNaissanceInput.value,
-        pays: DOM.paysSelect.value,
-        telephone: DOM.telephoneInput.value,
-        profession: document.querySelector('input[name="profession"]:checked')?.value,
-        objectifs: DOM.objectifsTextarea.value,
-        formations: Array.from(DOM.checkboxes).filter(cb => cb.checked).map(cb => cb.value),
-        session: document.querySelector('input[name="session"]:checked')?.value,
-        modeFormation: DOM.modeFormationSelect.value,
-        paymentMethod: document.querySelector('input[name="payment_method"]:checked')?.value,
+        nom: sanitizeInput(document.getElementById('nom').value),
+        prenom: sanitizeInput(document.getElementById('prenom').value),
+        email: sanitizeInput(document.getElementById('email').value),
+        date_naissance: sanitizeInput(DOM.dateNaissanceInput.value),
+        lieu_naissance: sanitizeInput(DOM.lieuNaissanceInput.value),
+        pays: sanitizeInput(DOM.paysSelect.value),
+        telephone: sanitizeInput(DOM.telephoneInput.value),
+        profession: sanitizeInput(document.querySelector('input[name="profession"]:checked')?.value),
+        objectifs: sanitizeInput(DOM.objectifsTextarea.value),
+        formations: Array.from(DOM.checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => sanitizeInput(cb.value)),
+        session: sanitizeInput(document.querySelector('input[name="session"]:checked')?.value),
+        modeFormation: sanitizeInput(DOM.modeFormationSelect.value),
+        paymentMethod: sanitizeInput(document.querySelector('input[name="payment_method"]:checked')?.value),
         consentement: document.getElementById('consentement').checked
     };
     
@@ -666,82 +674,191 @@ function validateStep1() {
         { id: 'telephone', name: 'Téléphone' }
     ];
 
+    const errorMessages = [];
+    let isValid = true;
+
     for (const field of requiredFields) {
         const value = document.getElementById(field.id).value.trim();
         if (!value) {
-            alert(`Veuillez remplir le champ "${field.name}"`);
-            return false;
+            errorMessages.push(`Veuillez remplir le champ "${field.name}"`);
+            document.getElementById(field.id).setAttribute('aria-invalid', 'true');
+            isValid = false;
+        } else {
+            document.getElementById(field.id).setAttribute('aria-invalid', 'false');
         }
     }
 
     // Validation de l'email
     const email = document.getElementById('email').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alert('Veuillez entrer une adresse email valide');
-        return false;
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errorMessages.push('Veuillez entrer une adresse email valide');
+        document.getElementById('email').setAttribute('aria-invalid', 'true');
+        isValid = false;
+    } else if (email) {
+        document.getElementById('email').setAttribute('aria-invalid', 'false');
     }
 
     // Validation du téléphone
     const pays = DOM.paysSelect.value;
     const telephone = DOM.telephoneInput.value.trim();
-    if (!validatePhone(telephone, pays)) {
+    if (telephone && !validatePhone(telephone, pays)) {
         const config = phoneConfigurations[pays] || phoneConfigurations['other'];
-        alert(`Veuillez entrer un numéro de téléphone valide pour votre pays (format: ${config.format})`);
-        return false;
+        errorMessages.push(`Veuillez entrer un numéro de téléphone valide pour votre pays (format: ${config.format})`);
+        DOM.telephoneInput.setAttribute('aria-invalid', 'true');
+        isValid = false;
+    } else if (telephone) {
+        DOM.telephoneInput.setAttribute('aria-invalid', 'false');
     }
 
     // Validation de la profession
     if (!document.querySelector('input[name="profession"]:checked')) {
-        alert('Veuillez sélectionner une profession');
-        return false;
+        errorMessages.push('Veuillez sélectionner une profession');
+        isValid = false;
     }
 
     // Validation des objectifs
     const objectifs = DOM.objectifsTextarea.value.trim();
     const wordCount = countWords(objectifs);
     if (wordCount > 100) {
-        alert('Veuillez limiter vos objectifs à 100 mots maximum');
-        return false;
+        errorMessages.push('Veuillez limiter vos objectifs à 100 mots maximum');
+        DOM.objectifsTextarea.setAttribute('aria-invalid', 'true');
+        isValid = false;
+    } else {
+        DOM.objectifsTextarea.setAttribute('aria-invalid', 'false');
     }
 
     // Validation de l'âge
     if (!validateAge()) {
-        return false;
+        errorMessages.push('Vous devez avoir au moins 13 ans pour vous inscrire');
+        isValid = false;
     }
 
-    return true;
+    // Afficher toutes les erreurs en une fois
+    if (errorMessages.length > 0) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.setAttribute('role', 'alert');
+        errorContainer.setAttribute('aria-live', 'assertive');
+        
+        const errorList = document.createElement('ul');
+        errorMessages.forEach(msg => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            errorList.appendChild(li);
+        });
+        
+        errorContainer.appendChild(errorList);
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const firstStep = DOM.formSteps[0];
+        firstStep.insertBefore(errorContainer, firstStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo(0, 0);
+    }
+
+    return isValid;
 }
 
 // Valide l'étape 2 (Formations)
 function validateStep2() {
     if (DOM.checkboxes.length === 0 || !Array.from(DOM.checkboxes).some(cb => cb.checked)) {
-        alert('Veuillez sélectionner au moins une formation');
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.setAttribute('aria-live', 'assertive');
+        errorMessage.textContent = 'Veuillez sélectionner au moins une formation';
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const secondStep = DOM.formSteps[1];
+        secondStep.insertBefore(errorMessage, secondStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo(0, 0);
+        
         return false;
     }
+    
     return true;
 }
 
 // Valide l'étape 3 (Session & Mode)
 function validateStep3() {
+    const errorMessages = [];
+    let isValid = true;
+
     if (!document.querySelector('input[name="session"]:checked')) {
-        alert('Veuillez sélectionner une session');
-        return false;
+        errorMessages.push('Veuillez sélectionner une session');
+        isValid = false;
     }
 
     if (!DOM.modeFormationSelect.value) {
-        alert('Veuillez sélectionner un mode de formation');
-        return false;
+        errorMessages.push('Veuillez sélectionner un mode de formation');
+        isValid = false;
     }
 
-    return true;
+    // Afficher toutes les erreurs en une fois
+    if (errorMessages.length > 0) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.setAttribute('role', 'alert');
+        errorContainer.setAttribute('aria-live', 'assertive');
+        
+        const errorList = document.createElement('ul');
+        errorMessages.forEach(msg => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            errorList.appendChild(li);
+        });
+        
+        errorContainer.appendChild(errorList);
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const thirdStep = DOM.formSteps[2];
+        thirdStep.insertBefore(errorContainer, thirdStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo(0, 0);
+    }
+
+    return isValid;
 }
 
 // Valide l'étape 4 (Paiement)
 function validateStep4() {
     if (!document.querySelector('input[name="payment_method"]:checked')) {
-        alert('Veuillez sélectionner une méthode de paiement');
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.setAttribute('aria-live', 'assertive');
+        errorMessage.textContent = 'Veuillez sélectionner une méthode de paiement';
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const fourthStep = DOM.formSteps[3];
+        fourthStep.insertBefore(errorMessage, fourthStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo(0, 0);
+        
         return false;
     }
+    
     return true;
 }
 
@@ -753,12 +870,27 @@ function prevStep(current) {
 // Valide l'étape finale avant soumission
 function validateFinalStep() {
     if (!document.getElementById('consentement').checked) {
-        alert('Veuillez accepter les conditions générales');
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.setAttribute('aria-live', 'assertive');
+        errorMessage.textContent = 'Veuillez accepter les conditions générales';
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const fifthStep = DOM.formSteps[4];
+        fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo(0, 0);
+        
         return false;
     }
 
     if (!validateAllSteps()) {
-        alert('Veuillez compléter toutes les étapes du formulaire');
         return false;
     }
 
@@ -810,7 +942,15 @@ function showConfirmationModal(checkedFormations) {
     const totalEur = (total / exchangeRate).toFixed(2);
     DOM.modalTotalPrice.textContent = total.toLocaleString('fr-FR');
     DOM.modalTotalPriceEur.textContent = totalEur;
+    
+    // Ajout des attributs ARIA pour l'accessibilité
+    DOM.modal.setAttribute('aria-modal', 'true');
+    DOM.modal.setAttribute('role', 'dialog');
+    DOM.modal.setAttribute('aria-labelledby', 'modal-title');
+    
+    // Focus sur le premier élément interactif de la modal
     DOM.modal.style.display = 'block';
+    DOM.modalConfirm.focus();
 }
 
 // Envoie les données du formulaire
@@ -823,6 +963,12 @@ function sendFormData() {
     DOM.submitBtn.disabled = true;
     
     const formData = new FormData(DOM.registrationForm);
+    
+    // Ajout du token CSRF si disponible
+    if (DOM.csrfToken) {
+        formData.append('_token', DOM.csrfToken);
+    }
+    
     const scriptUrl = 'https://script.google.com/macros/s/AKfycbx684D00HrPRq1IuoXWBj8Xgg0TAHCp6ccug55c6-1sAXaci4wi82OW7ANt6KdOgXW4cQ/exec';
     
     // Utilisation d'un proxy CORS si nécessaire
@@ -865,26 +1011,53 @@ function sendFormData() {
 // Envoie un email de confirmation
 function sendConfirmationEmail() {
     const emailData = {
-        to_name: `${document.getElementById('prenom').value} ${document.getElementById('nom').value}`,
-        to_email: document.getElementById('email').value,
+        to_name: `${sanitizeInput(document.getElementById('prenom').value)} ${sanitizeInput(document.getElementById('nom').value)}`,
+        to_email: sanitizeInput(document.getElementById('email').value),
         formations: Array.from(DOM.checkboxes)
             .filter(cb => cb.checked)
             .map(cb => formationNames[cb.value])
             .join(', '),
         total_price: DOM.totalPriceFCFA.textContent,
         total_price_eur: DOM.totalPriceEUR.textContent,
-        session: document.querySelector('input[name="session"]:checked')?.nextElementSibling?.textContent,
-        mode_formation: DOM.modeFormationSelect.options[DOM.modeFormationSelect.selectedIndex].text
+        session: sanitizeInput(document.querySelector('input[name="session"]:checked')?.nextElementSibling?.textContent),
+        mode_formation: sanitizeInput(DOM.modeFormationSelect.options[DOM.modeFormationSelect.selectedIndex].text)
     };
 
+    // Initialisation d'EmailJS avec l'ID utilisateur depuis les variables d'environnement
+    emailjs.init(process.env.EMAILJS_USER_ID);
+
     // Utilisation d'EmailJS pour envoyer l'email
-    emailjs.send('service_your_service_id', 'template_your_template_id', emailData)
+    emailjs.send(process.env.EMAILJS_SERVICE_ID, process.env.EMAILJS_TEMPLATE_ID, emailData)
         .then(function(response) {
             console.log('Email envoyé avec succès', response.status, response.text);
             state.emailSent = true;
+            
+            // Notification accessible
+            const notification = document.createElement('div');
+            notification.className = 'aria-notification';
+            notification.setAttribute('role', 'status');
+            notification.setAttribute('aria-live', 'polite');
+            notification.textContent = 'Email de confirmation envoyé avec succès';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
         }, function(error) {
             console.error('Échec de l\'envoi de l\'email', error);
             state.emailSent = false;
+            
+            // Notification accessible
+            const notification = document.createElement('div');
+            notification.className = 'aria-notification error';
+            notification.setAttribute('role', 'alert');
+            notification.setAttribute('aria-live', 'assertive');
+            notification.textContent = 'Échec de l\'envoi de l\'email de confirmation';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
         });
 }
 
@@ -911,7 +1084,18 @@ function saveToLocalStorage() {
     };
     
     localStorage.setItem('pendingRegistration', JSON.stringify(formData));
-    alert('Votre inscription a été enregistrée localement. Nous essaierons de la soumettre à nouveau lorsque vous serez en ligne.');
+    
+    // Notification accessible
+    const notification = document.createElement('div');
+    notification.className = 'aria-notification';
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
+    notification.textContent = 'Votre inscription a été enregistrée localement. Nous essaierons de la soumettre à nouveau lorsque vous serez en ligne.';
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
 }
 
 // Affiche la page de confirmation
@@ -994,6 +1178,8 @@ function sendChatMessage() {
 function addChatMessage(text, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${sender}-message`;
+    messageDiv.setAttribute('role', sender === 'user' ? 'status' : 'alert');
+    messageDiv.setAttribute('aria-live', 'polite');
     messageDiv.innerHTML = `<p>${sanitizeInput(text)}</p>`;
     DOM.chatMessages.appendChild(messageDiv);
     DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
@@ -1019,9 +1205,27 @@ function resendConfirmationEmail() {
     
     setTimeout(() => {
         if (state.emailSent) {
-            alert('Un nouveau email de confirmation vous a été envoyé');
+            const notification = document.createElement('div');
+            notification.className = 'aria-notification';
+            notification.setAttribute('role', 'status');
+            notification.setAttribute('aria-live', 'polite');
+            notification.textContent = 'Un nouveau email de confirmation vous a été envoyé';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
         } else {
-            alert('Échec de l\'envoi du nouvel email. Veuillez réessayer plus tard.');
+            const notification = document.createElement('div');
+            notification.className = 'aria-notification error';
+            notification.setAttribute('role', 'alert');
+            notification.setAttribute('aria-live', 'assertive');
+            notification.textContent = 'Échec de l\'envoi du nouvel email. Veuillez réessayer plus tard.';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
         }
         DOM.resendEmailBtn.disabled = false;
         DOM.resendEmailBtn.textContent = 'Renvoyer l\'email de confirmation';
@@ -1038,88 +1242,104 @@ function init() {
     // Rotation des messages du rappel
     setInterval(rotateRappelMessages, 2000);
     
-    // Écouteurs d'événements
-    DOM.objectifsTextarea.addEventListener('input', updateWordCounter);
-    DOM.dateNaissanceInput.addEventListener('change', validateAge);
-    
-    DOM.modeFormationSelect.addEventListener('change', function() {
-        DOM.onlinePaymentMethods.style.display = this.value === 'en-ligne' ? 'block' : 'none';
-        DOM.presentielPaymentMethod.style.display = this.value === 'presentiel' ? 'block' : 'none';
-        autoSave();
-    });
-    
-    DOM.paysSelect.addEventListener('change', function() {
-        const selectedCountry = this.value;
-        const config = phoneConfigurations[selectedCountry] || phoneConfigurations['other'];
-        
-        DOM.phonePrefix.textContent = config.code;
-        DOM.telephoneInput.pattern = config.pattern;
-        DOM.telephoneInput.title = `Numéro valide (format: ${config.format})`;
-        DOM.phoneFormat.textContent = `Format: ${config.format}`;
-        DOM.phoneFormat.style.display = 'block';
-        DOM.telephoneInput.value = '';
-        autoSave();
-    });
-    
-    DOM.checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', calculateTotal);
-    });
-    
-    document.querySelectorAll('input, select, textarea').forEach(element => {
-        element.addEventListener('change', () => {
+    // Optimisation des écouteurs d'événements
+    function setupEventListeners() {
+        // Écouteurs pour les champs de formulaire
+        const handleFormChange = () => {
             clearTimeout(state.saveTimeout);
             state.saveTimeout = setTimeout(autoSave, 1000);
+        };
+        
+        DOM.objectifsTextarea.addEventListener('input', updateWordCounter);
+        DOM.dateNaissanceInput.addEventListener('change', validateAge);
+        
+        DOM.modeFormationSelect.addEventListener('change', function() {
+            DOM.onlinePaymentMethods.style.display = this.value === 'en-ligne' ? 'block' : 'none';
+            DOM.presentielPaymentMethod.style.display = this.value === 'presentiel' ? 'block' : 'none';
+            autoSave();
         });
         
-        element.addEventListener('input', () => {
-            clearTimeout(state.saveTimeout);
-            state.saveTimeout = setTimeout(autoSave, 1000);
+        DOM.paysSelect.addEventListener('change', function() {
+            const selectedCountry = this.value;
+            const config = phoneConfigurations[selectedCountry] || phoneConfigurations['other'];
+            
+            DOM.phonePrefix.textContent = config.code;
+            DOM.telephoneInput.pattern = config.pattern;
+            DOM.telephoneInput.title = `Numéro valide (format: ${config.format})`;
+            DOM.phoneFormat.textContent = `Format: ${config.format}`;
+            DOM.phoneFormat.style.display = 'block';
+            DOM.telephoneInput.value = '';
+            autoSave();
         });
-    });
-    
-    DOM.registrationForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        validateFinalStep();
-    });
-    
-    DOM.modalConfirm.addEventListener('click', sendFormData);
-    DOM.modalCancel.addEventListener('click', () => DOM.modal.style.display = 'none');
-    DOM.closeModal.addEventListener('click', () => DOM.modal.style.display = 'none');
-    
-    DOM.chatToggle.addEventListener('click', () => {
-        DOM.chatContainer.style.display = DOM.chatContainer.style.display === 'block' ? 'none' : 'block';
-        if (DOM.chatContainer.style.display === 'block') DOM.chatInput.focus();
-    });
-    
-    DOM.closeChat.addEventListener('click', () => DOM.chatContainer.style.display = 'none');
-    DOM.sendMessage.addEventListener('click', sendChatMessage);
-    DOM.chatInput.addEventListener('keypress', e => e.key === 'Enter' && sendChatMessage());
-    
-    // Bouton de renvoi d'email
-    DOM.resendEmailBtn.addEventListener('click', resendConfirmationEmail);
-    
-    // Protection contre le clic droit et le glisser-déposer
-    document.addEventListener('contextmenu', function(e) {
-        if (e.target.classList.contains('logo') || e.target.classList.contains('no-download')) {
+        
+        DOM.checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', calculateTotal);
+        });
+        
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('change', handleFormChange);
+            element.addEventListener('input', handleFormChange);
+        });
+        
+        // Écouteurs pour la soumission du formulaire
+        DOM.registrationForm.addEventListener('submit', function(e) {
             e.preventDefault();
-        }
-    });
+            validateFinalStep();
+        });
+        
+        // Écouteurs pour la modal
+        const modalHandlers = {
+            confirm: sendFormData,
+            cancel: () => { DOM.modal.style.display = 'none'; },
+            close: () => { DOM.modal.style.display = 'none'; }
+        };
+        
+        DOM.modalConfirm.addEventListener('click', modalHandlers.confirm);
+        DOM.modalCancel.addEventListener('click', modalHandlers.cancel);
+        DOM.closeModal.addEventListener('click', modalHandlers.close);
+        
+        // Écouteurs pour le chat
+        const chatHandlers = {
+            toggle: () => {
+                DOM.chatContainer.style.display = DOM.chatContainer.style.display === 'block' ? 'none' : 'block';
+                if (DOM.chatContainer.style.display === 'block') DOM.chatInput.focus();
+            },
+            close: () => { DOM.chatContainer.style.display = 'none'; },
+            send: sendChatMessage
+        };
+        
+        DOM.chatToggle.addEventListener('click', chatHandlers.toggle);
+        DOM.closeChat.addEventListener('click', chatHandlers.close);
+        DOM.sendMessage.addEventListener('click', chatHandlers.send);
+        DOM.chatInput.addEventListener('keypress', e => e.key === 'Enter' && chatHandlers.send());
+        
+        // Bouton de renvoi d'email
+        DOM.resendEmailBtn.addEventListener('click', resendConfirmationEmail);
+        
+        // Protection contre le clic droit et le glisser-déposer
+        const preventDefaultHandler = (e) => {
+            if (e.target.classList.contains('logo') || e.target.classList.contains('no-download')) {
+                e.preventDefault();
+            }
+        };
+        
+        document.addEventListener('contextmenu', preventDefaultHandler);
+        document.addEventListener('dragstart', preventDefaultHandler);
+        
+        // Gestion des gestes tactiles
+        const touchHandlers = {
+            start: (e) => { state.touchStartX = e.changedTouches[0].screenX; },
+            end: (e) => {
+                state.touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }
+        };
+        
+        document.addEventListener('touchstart', touchHandlers.start, false);
+        document.addEventListener('touchend', touchHandlers.end, false);
+    }
     
-    document.addEventListener('dragstart', function(e) {
-        if (e.target.classList.contains('logo') || e.target.classList.contains('no-download')) {
-            e.preventDefault();
-        }
-    });
-    
-    // Gestion des gestes tactiles
-    document.addEventListener('touchstart', function(e) {
-        state.touchStartX = e.changedTouches[0].screenX;
-    }, false);
-    
-    document.addEventListener('touchend', function(e) {
-        state.touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, false);
+    setupEventListeners();
     
     // Initialisation finale
     updateWordCounter();
