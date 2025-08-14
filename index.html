@@ -78,9 +78,9 @@
     <style>
         /* Style spécial pour le bouton "Passer au contenu" */
         .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 0;
+            position: fixed;
+            top: 10px;
+            left: 10px;
             background: linear-gradient(135deg, #6e48aa 0%, #9d50bb 100%);
             color: white;
             padding: 12px 20px;
@@ -89,14 +89,15 @@
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
-            z-index: 100;
+            z-index: 1000;
             border: 2px solid #fff;
             background-size: 200% auto;
             animation: gradientBG 3s ease infinite;
+            opacity: 0.9;
         }
         
         .skip-link:hover, .skip-link:focus {
-            top: 10px;
+            opacity: 1;
             background: linear-gradient(135deg, #9d50bb 0%, #6e48aa 100%);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
             transform: translateY(-2px);
@@ -254,7 +255,7 @@
                 </nav>
 
                 <!-- Formulaire unique et bien structuré -->
-                <form id="registration-form" name="inscription" method="POST" data-netlify="true" netlify action="/.netlify/functions/notify-admin" onsubmit="submitForm(event)">
+                <form id="registration-form" name="inscription" method="POST" data-netlify="true" netlify action="/.netlify/functions/notify-admin">
                     <input type="hidden" name="form-name" value="inscription">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="">
                     
@@ -773,7 +774,7 @@
 
                         <div class="form-navigation">
                             <button type="button" class="btn-prev keyboard-support" onclick="prevStep(5)">Précédent</button>
-                            <button type="button" class="submit-btn keyboard-support" id="submit-btn" onclick="validateFinalStep()">S'inscrire maintenant</button>
+                            <button type="submit" class="submit-btn keyboard-support" id="submit-btn">S'inscrire maintenant</button>
                         </div>
                     </div>
                     
@@ -1526,6 +1527,27 @@
                     }
                 }, 200);
             }
+
+            // Gestion des étapes du formulaire
+            document.querySelectorAll('.btn-next').forEach(button => {
+                button.addEventListener('click', function() {
+                    const currentStep = parseInt(this.closest('.form-step').id.split('-').pop());
+                    validateStep(currentStep);
+                });
+            });
+
+            document.querySelectorAll('.btn-prev').forEach(button => {
+                button.addEventListener('click', function() {
+                    const currentStep = parseInt(this.closest('.form-step').id.split('-').pop());
+                    prevStep(currentStep);
+                });
+            });
+
+            // Gestion de la soumission du formulaire
+            document.getElementById('registration-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitForm(e);
+            });
         });
     </script>
     <script src="assets/js/script.js" defer></script>

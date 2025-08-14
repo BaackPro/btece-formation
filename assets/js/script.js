@@ -15,6 +15,7 @@ const stepTimes = [60, 30, 30, 30, 30]; // Total: 3 minutes (180 secondes)
 
 // Configuration des numéros de téléphone par pays
 const phoneConfigurations = {
+
     // Afrique
     'DZ': { code: '+213', pattern: '[0-9]{9}', format: '+213 XX XXX XXXX' },
     'AO': { code: '+244', pattern: '[0-9]{9}', format: '+244 XXX XXX XXX' },
@@ -248,7 +249,6 @@ const phoneConfigurations = {
     // Option par défaut pour les pays non listés
     'other': { code: '+', pattern: '[0-9]{8,15}', format: '+XXX XXX XXXX' }
 };
-
 // Noms des formations pour l'affichage
 const formationNames = {
     'plans_archi_elec': 'Plans architecturaux et électricité',
@@ -266,7 +266,7 @@ const paymentMethodNames = {
     'Orange Money': 'Paiement par Orange Money',
     'Airtel Money': 'Paiement par Airtel Money',
     'Wari': 'Paiement par Wari',
-    'Bitcoin': 'Paiement par Crypto Currency',
+    'Crypto Currency': 'Paiement par Crypto Currency',
     'Paiement sur place': 'Paiement sur place (espèces/chèque)'
 };
 
@@ -328,8 +328,8 @@ const DOM = {
     dateNaissanceInput: document.getElementById('date_naissance'),
     lieuNaissanceInput: document.getElementById('lieu_naissance'),
     ageError: document.getElementById('age-error'),
-    resendEmailBtn: document.getElementById('resend-email-btn'),
-    csrfToken: document.querySelector('meta[name="csrf-token"]')?.content
+    resendEmailBtn: document.querySelector('.resend-link'),
+    csrfToken: document.getElementById('csrf_token')?.value
 };
 
 // Variables d'état
@@ -357,9 +357,9 @@ function countWords(text) {
 // Met à jour le compteur de mots
 function updateWordCounter() {
     const wordCount = countWords(DOM.objectifsTextarea.value);
-    DOM.objectifsCounter.textContent = `${wordCount}/100 mots`;
+    DOM.objectifsCounter.textContent = `${wordCount}/500 mots`;
     
-    if (wordCount > 100) {
+    if (wordCount > 500) {
         DOM.objectifsCounter.style.color = '#e74c3c';
         DOM.objectifsTextarea.style.borderColor = '#e74c3c';
     } else {
@@ -431,9 +431,9 @@ function clearForm() {
     DOM.totalPriceEUR.textContent = '0.00';
     DOM.submitBtn.textContent = "S'inscrire maintenant";
     DOM.checkboxes.forEach(checkbox => checkbox.checked = false);
-    DOM.phonePrefix.textContent = '+';
+    DOM.phonePrefix.textContent = '+229';
     DOM.phoneFormat.style.display = 'none';
-    DOM.objectifsCounter.textContent = '0/100 mots';
+    DOM.objectifsCounter.textContent = '0/500 mots';
     DOM.objectifsCounter.style.color = '#666';
     DOM.objectifsTextarea.style.borderColor = '#ddd';
     DOM.ageError.style.display = 'none';
@@ -563,6 +563,7 @@ function updateProgressBar() {
     const progress = ((state.currentStep - 1) / 5) * 100;
     DOM.progressBar.style.width = `${progress}%`;
     DOM.progressText.textContent = `${progress.toFixed(0)}% complété`;
+    DOM.progressBar.setAttribute('aria-valuenow', progress);
     
     if (state.currentStep > 1) {
         document.querySelector('.progress-container').style.display = 'block';
@@ -620,17 +621,21 @@ function calculateTotal() {
 function showStep(step) {
     DOM.formSteps.forEach((formStep, index) => {
         formStep.classList.toggle('active', index + 1 === step);
+        formStep.setAttribute('aria-hidden', index + 1 !== step);
     });
 
     DOM.progressSteps.forEach((progressStep, index) => {
         if (index + 1 < step) {
             progressStep.classList.add('completed');
             progressStep.classList.remove('active');
+            progressStep.removeAttribute('aria-current');
         } else if (index + 1 === step) {
             progressStep.classList.add('active');
             progressStep.classList.remove('completed');
+            progressStep.setAttribute('aria-current', 'step');
         } else {
             progressStep.classList.remove('active', 'completed');
+            progressStep.removeAttribute('aria-current');
         }
     });
 
@@ -638,6 +643,13 @@ function showStep(step) {
     updateProgressBar();
     updateTimeEstimation();
     autoSave();
+    
+    // Focus sur le premier champ de l'étape pour l'accessibilité
+    const currentStep = document.getElementById(`form-step-${step}`);
+    if (currentStep) {
+        const firstInput = currentStep.querySelector('input, select, textarea');
+        if (firstInput) firstInput.focus();
+    }
 }
 
 // Passe à l'étape suivante avec validation
@@ -665,11 +677,11 @@ function validateStep(step) {
 // Valide l'étape 1 (Informations personnelles)
 function validateStep1() {
     const requiredFields = [
-        { id: 'nom', name: 'Nom' },
-        { id: 'prenom', name: 'Prénom' },
-        { id: 'email', name: 'Email' },
+        { id: 'nom', name: 'Nom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
+        { id: 'prenom', name: 'Prénom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
+        { id: 'email', name: 'Email', pattern: '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$' },
         { id: 'date_naissance', name: 'Date de naissance' },
-        { id: 'lieu_naissance', name: 'Lieu de naissance' },
+        { id: 'lieu_naissance', name: 'Lieu de naissance', minLength: 2, maxLength: 100 },
         { id: 'pays', name: 'Pays' },
         { id: 'telephone', name: 'Téléphone' }
     ];
@@ -678,24 +690,37 @@ function validateStep1() {
     let isValid = true;
 
     for (const field of requiredFields) {
-        const value = document.getElementById(field.id).value.trim();
+        const element = document.getElementById(field.id);
+        const value = element.value.trim();
+        
         if (!value) {
             errorMessages.push(`Veuillez remplir le champ "${field.name}"`);
-            document.getElementById(field.id).setAttribute('aria-invalid', 'true');
+            element.setAttribute('aria-invalid', 'true');
             isValid = false;
         } else {
-            document.getElementById(field.id).setAttribute('aria-invalid', 'false');
+            // Validation supplémentaire si des critères sont spécifiés
+            if (field.pattern && !new RegExp(field.pattern).test(value)) {
+                errorMessages.push(`Le format du champ "${field.name}" est invalide`);
+                element.setAttribute('aria-invalid', 'true');
+                isValid = false;
+            }
+            
+            if (field.minLength && value.length < field.minLength) {
+                errorMessages.push(`Le champ "${field.name}" doit contenir au moins ${field.minLength} caractères`);
+                element.setAttribute('aria-invalid', 'true');
+                isValid = false;
+            }
+            
+            if (field.maxLength && value.length > field.maxLength) {
+                errorMessages.push(`Le champ "${field.name}" ne doit pas dépasser ${field.maxLength} caractères`);
+                element.setAttribute('aria-invalid', 'true');
+                isValid = false;
+            }
+            
+            if (element.getAttribute('aria-invalid') !== 'true') {
+                element.setAttribute('aria-invalid', 'false');
+            }
         }
-    }
-
-    // Validation de l'email
-    const email = document.getElementById('email').value.trim();
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        errorMessages.push('Veuillez entrer une adresse email valide');
-        document.getElementById('email').setAttribute('aria-invalid', 'true');
-        isValid = false;
-    } else if (email) {
-        document.getElementById('email').setAttribute('aria-invalid', 'false');
     }
 
     // Validation du téléphone
@@ -719,8 +744,8 @@ function validateStep1() {
     // Validation des objectifs
     const objectifs = DOM.objectifsTextarea.value.trim();
     const wordCount = countWords(objectifs);
-    if (wordCount > 100) {
-        errorMessages.push('Veuillez limiter vos objectifs à 100 mots maximum');
+    if (wordCount > 500) {
+        errorMessages.push('Veuillez limiter vos objectifs à 500 mots maximum');
         DOM.objectifsTextarea.setAttribute('aria-invalid', 'true');
         isValid = false;
     } else {
@@ -758,7 +783,7 @@ function validateStep1() {
         firstStep.insertBefore(errorContainer, firstStep.firstChild);
         
         // Défilement vers le haut pour voir les erreurs
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     return isValid;
@@ -782,7 +807,7 @@ function validateStep2() {
         secondStep.insertBefore(errorMessage, secondStep.firstChild);
         
         // Défilement vers le haut pour voir les erreurs
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         
         return false;
     }
@@ -830,7 +855,7 @@ function validateStep3() {
         thirdStep.insertBefore(errorContainer, thirdStep.firstChild);
         
         // Défilement vers le haut pour voir les erreurs
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     return isValid;
@@ -854,7 +879,7 @@ function validateStep4() {
         fourthStep.insertBefore(errorMessage, fourthStep.firstChild);
         
         // Défilement vers le haut pour voir les erreurs
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         
         return false;
     }
@@ -885,7 +910,7 @@ function validateFinalStep() {
         fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
         
         // Défilement vers le haut pour voir les erreurs
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         
         return false;
     }
@@ -894,8 +919,7 @@ function validateFinalStep() {
         return false;
     }
 
-    const checkedFormations = Array.from(DOM.checkboxes).filter(cb => cb.checked);
-    showConfirmationModal(checkedFormations);
+    showConfirmationModal();
     return true;
 }
 
@@ -905,7 +929,8 @@ function validateAllSteps() {
 }
 
 // Affiche la modal de confirmation
-function showConfirmationModal(checkedFormations) {
+function showConfirmationModal() {
+    const checkedFormations = Array.from(DOM.checkboxes).filter(cb => cb.checked);
     let total = 0;
     DOM.modalFormationsList.innerHTML = '';
     
@@ -966,20 +991,15 @@ function sendFormData() {
     
     // Ajout du token CSRF si disponible
     if (DOM.csrfToken) {
-        formData.append('_token', DOM.csrfToken);
+        formData.append('csrf_token', DOM.csrfToken);
     }
     
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbx684D00HrPRq1IuoXWBj8Xgg0TAHCp6ccug55c6-1sAXaci4wi82OW7ANt6KdOgXW4cQ/exec';
-    
-    // Utilisation d'un proxy CORS si nécessaire
-    const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-    const fullUrl = corsProxy + scriptUrl;
-    
-    fetch(fullUrl, {
+    // Envoi des données à Netlify
+    fetch(DOM.registrationForm.action, {
         method: 'POST',
         body: formData,
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'Accept': 'application/json'
         }
     })
     .then(response => {
@@ -1008,7 +1028,7 @@ function sendFormData() {
     });
 }
 
-// Envoie un email de confirmation
+// Envoie un email de confirmation via EmailJS
 function sendConfirmationEmail() {
     const emailData = {
         to_name: `${sanitizeInput(document.getElementById('prenom').value)} ${sanitizeInput(document.getElementById('nom').value)}`,
@@ -1020,7 +1040,8 @@ function sendConfirmationEmail() {
         total_price: DOM.totalPriceFCFA.textContent,
         total_price_eur: DOM.totalPriceEUR.textContent,
         session: sanitizeInput(document.querySelector('input[name="session"]:checked')?.nextElementSibling?.textContent),
-        mode_formation: sanitizeInput(DOM.modeFormationSelect.options[DOM.modeFormationSelect.selectedIndex].text)
+        mode_formation: sanitizeInput(DOM.modeFormationSelect.options[DOM.modeFormationSelect.selectedIndex].text),
+        payment_method: sanitizeInput(document.querySelector('input[name="payment_method"]:checked')?.value)
     };
 
     // Initialisation d'EmailJS avec l'ID utilisateur depuis les variables d'environnement
@@ -1102,7 +1123,7 @@ function saveToLocalStorage() {
 function showConfirmationPage() {
     DOM.mainPage.style.display = 'none';
     DOM.confirmationPage.style.display = 'block';
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     
     displayUserSummary();
     simulateTracking();
@@ -1128,15 +1149,10 @@ function displayUserSummary() {
         <h4>Récapitulatif de votre inscription</h4>
         <p><strong>Nom complet :</strong> ${getValue('prenom')} ${getValue('nom')}</p>
         <p><strong>Email :</strong> ${getValue('email')}</p>
-        <p><strong>Date de naissance :</strong> ${getValue('date_naissance')}</p>
-        <p><strong>Lieu de naissance :</strong> ${getValue('lieu_naissance')}</p>
         <p><strong>Téléphone :</strong> ${DOM.phonePrefix.textContent} ${getValue('telephone')}</p>
-        <p><strong>Pays :</strong> ${getSelectText('paysSelect')}</p>
-        <p><strong>Profession :</strong> ${getRadioText('profession')}</p>
-        <p><strong>Objectifs :</strong> ${getValue('objectifs')}</p>
-        <p><strong>Formations choisies :</strong> ${checkedFormations.join(', ')}</p>
+        <p><strong>Formations :</strong> ${checkedFormations.join(', ')}</p>
         <p><strong>Session :</strong> ${getRadioText('session').charAt(0).toUpperCase() + getRadioText('session').slice(1)} 2025</p>
-        <p><strong>Mode de formation :</strong> ${DOM.modeFormationSelect.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
+        <p><strong>Mode :</strong> ${DOM.modeFormationSelect.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
         <p><strong>Méthode de paiement :</strong> ${paymentMethodNames[getRadioText('payment_method')] || getRadioText('payment_method')}</p>
         <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
     `;
@@ -1171,7 +1187,7 @@ function sendChatMessage() {
     DOM.chatInput.value = '';
     
     setTimeout(() => {
-        addChatMessage('Merci pour votre message. Veuillez laisser votre préocupation par e-mail via notre adresse. Notre équipe vous répondra dans les plus brefs délais.', 'bot');
+        addChatMessage('Merci pour votre message. Notre équipe vous répondra dans les plus brefs délais.', 'bot');
     }, 1000);
 }
 
@@ -1198,6 +1214,8 @@ function handleSwipe() {
 
 // Renvoie l'email de confirmation
 function resendConfirmationEmail() {
+    if (!DOM.resendEmailBtn) return;
+    
     DOM.resendEmailBtn.disabled = true;
     DOM.resendEmailBtn.textContent = 'Envoi en cours...';
     
@@ -1228,12 +1246,17 @@ function resendConfirmationEmail() {
             }, 5000);
         }
         DOM.resendEmailBtn.disabled = false;
-        DOM.resendEmailBtn.textContent = 'Renvoyer l\'email de confirmation';
+        DOM.resendEmailBtn.innerHTML = '<i class="fas fa-redo"></i> Renvoyer l\'email de confirmation';
     }, 2000);
 }
 
 // Initialisation
 function init() {
+    // Configuration de la date maximale pour la date de naissance (13 ans minimum)
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+    DOM.dateNaissanceInput.max = maxDate.toISOString().split('T')[0];
+    
     // Chargement des données sauvegardées
     loadSavedData();
     updateProgressBar();
@@ -1242,110 +1265,100 @@ function init() {
     // Rotation des messages du rappel
     setInterval(rotateRappelMessages, 2000);
     
-    // Optimisation des écouteurs d'événements
-    function setupEventListeners() {
-        // Écouteurs pour les champs de formulaire
-        const handleFormChange = () => {
+    // Gestion du mode de formation
+    DOM.modeFormationSelect.addEventListener('change', function() {
+        DOM.onlinePaymentMethods.style.display = this.value === 'en-ligne' ? 'block' : 'none';
+        DOM.presentielPaymentMethod.style.display = this.value === 'presentiel' ? 'block' : 'none';
+        autoSave();
+    });
+    
+    // Gestion du pays et du format de téléphone
+    DOM.paysSelect.addEventListener('change', function() {
+        const selectedCountry = this.value;
+        const config = phoneConfigurations[selectedCountry] || phoneConfigurations['other'];
+        
+        DOM.phonePrefix.textContent = config.code;
+        DOM.telephoneInput.pattern = config.pattern;
+        DOM.telephoneInput.title = `Numéro valide (format: ${config.format})`;
+        DOM.phoneFormat.textContent = `Format: ${config.format}`;
+        DOM.phoneFormat.style.display = 'block';
+        autoSave();
+    });
+    
+    // Calcul du total des formations
+    DOM.checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calculateTotal);
+    });
+    
+    // Compteur de mots pour les objectifs
+    DOM.objectifsTextarea.addEventListener('input', updateWordCounter);
+    
+    // Validation de l'âge
+    DOM.dateNaissanceInput.addEventListener('change', validateAge);
+    
+    // Sauvegarde automatique
+    document.querySelectorAll('input, select, textarea').forEach(element => {
+        element.addEventListener('change', () => {
             clearTimeout(state.saveTimeout);
             state.saveTimeout = setTimeout(autoSave, 1000);
-        };
-        
-        DOM.objectifsTextarea.addEventListener('input', updateWordCounter);
-        DOM.dateNaissanceInput.addEventListener('change', validateAge);
-        
-        DOM.modeFormationSelect.addEventListener('change', function() {
-            DOM.onlinePaymentMethods.style.display = this.value === 'en-ligne' ? 'block' : 'none';
-            DOM.presentielPaymentMethod.style.display = this.value === 'presentiel' ? 'block' : 'none';
-            autoSave();
         });
-        
-        DOM.paysSelect.addEventListener('change', function() {
-            const selectedCountry = this.value;
-            const config = phoneConfigurations[selectedCountry] || phoneConfigurations['other'];
-            
-            DOM.phonePrefix.textContent = config.code;
-            DOM.telephoneInput.pattern = config.pattern;
-            DOM.telephoneInput.title = `Numéro valide (format: ${config.format})`;
-            DOM.phoneFormat.textContent = `Format: ${config.format}`;
-            DOM.phoneFormat.style.display = 'block';
-            DOM.telephoneInput.value = '';
-            autoSave();
+        element.addEventListener('input', () => {
+            clearTimeout(state.saveTimeout);
+            state.saveTimeout = setTimeout(autoSave, 1000);
         });
-        
-        DOM.checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', calculateTotal);
-        });
-        
-        document.querySelectorAll('input, select, textarea').forEach(element => {
-            element.addEventListener('change', handleFormChange);
-            element.addEventListener('input', handleFormChange);
-        });
-        
-        // Écouteurs pour la soumission du formulaire
-        DOM.registrationForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            validateFinalStep();
-        });
-        
-        // Écouteurs pour la modal
-        const modalHandlers = {
-            confirm: sendFormData,
-            cancel: () => { DOM.modal.style.display = 'none'; },
-            close: () => { DOM.modal.style.display = 'none'; }
-        };
-        
-        DOM.modalConfirm.addEventListener('click', modalHandlers.confirm);
-        DOM.modalCancel.addEventListener('click', modalHandlers.cancel);
-        DOM.closeModal.addEventListener('click', modalHandlers.close);
-        
-        // Écouteurs pour le chat
-        const chatHandlers = {
-            toggle: () => {
-                DOM.chatContainer.style.display = DOM.chatContainer.style.display === 'block' ? 'none' : 'block';
-                if (DOM.chatContainer.style.display === 'block') DOM.chatInput.focus();
-            },
-            close: () => { DOM.chatContainer.style.display = 'none'; },
-            send: sendChatMessage
-        };
-        
-        DOM.chatToggle.addEventListener('click', chatHandlers.toggle);
-        DOM.closeChat.addEventListener('click', chatHandlers.close);
-        DOM.sendMessage.addEventListener('click', chatHandlers.send);
-        DOM.chatInput.addEventListener('keypress', e => e.key === 'Enter' && chatHandlers.send());
-        
-        // Bouton de renvoi d'email
+    });
+    
+    // Soumission du formulaire
+    DOM.registrationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        validateFinalStep();
+    });
+    
+    // Gestion de la modal de confirmation
+    DOM.modalConfirm.addEventListener('click', sendFormData);
+    DOM.modalCancel.addEventListener('click', () => { DOM.modal.style.display = 'none'; });
+    DOM.closeModal.addEventListener('click', () => { DOM.modal.style.display = 'none'; });
+    
+    // Gestion du chat
+    DOM.chatToggle.addEventListener('click', () => {
+        DOM.chatContainer.style.display = DOM.chatContainer.style.display === 'block' ? 'none' : 'block';
+        if (DOM.chatContainer.style.display === 'block') DOM.chatInput.focus();
+    });
+    
+    DOM.closeChat.addEventListener('click', () => { DOM.chatContainer.style.display = 'none'; });
+    DOM.sendMessage.addEventListener('click', sendChatMessage);
+    DOM.chatInput.addEventListener('keypress', e => e.key === 'Enter' && sendChatMessage());
+    
+    // Bouton de renvoi d'email
+    if (DOM.resendEmailBtn) {
         DOM.resendEmailBtn.addEventListener('click', resendConfirmationEmail);
-        
-        // Protection contre le clic droit et le glisser-déposer
-        const preventDefaultHandler = (e) => {
-            if (e.target.classList.contains('logo') || e.target.classList.contains('no-download')) {
-                e.preventDefault();
-            }
-        };
-        
-        document.addEventListener('contextmenu', preventDefaultHandler);
-        document.addEventListener('dragstart', preventDefaultHandler);
-        
-        // Gestion des gestes tactiles
-        const touchHandlers = {
-            start: (e) => { state.touchStartX = e.changedTouches[0].screenX; },
-            end: (e) => {
-                state.touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            }
-        };
-        
-        document.addEventListener('touchstart', touchHandlers.start, false);
-        document.addEventListener('touchend', touchHandlers.end, false);
     }
     
-    setupEventListeners();
+    // Gestion des gestes tactiles
+    document.addEventListener('touchstart', (e) => { 
+        state.touchStartX = e.changedTouches[0].screenX; 
+    }, false);
+    
+    document.addEventListener('touchend', (e) => {
+        state.touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, false);
     
     // Initialisation finale
     updateWordCounter();
     calculateTotal();
-    DOM.modeFormationSelect.dispatchEvent(new Event('change'));
+    
+    // Initialisation d'EmailJS
+    if (typeof emailjs !== 'undefined') {
+        emailjs.init(process.env.EMAILJS_USER_ID);
+    }
 }
 
 // Lance l'application lorsque le DOM est chargé
 document.addEventListener('DOMContentLoaded', init);
+
+// Gestion des boutons précédent/suivant
+window.validateStep = validateStep;
+window.prevStep = prevStep;
+window.nextStep = nextStep;
+window.validateFinalStep = validateFinalStep;
