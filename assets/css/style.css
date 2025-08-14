@@ -1510,3 +1510,28 @@ footer p {
         width: 100%;
     }
 }
+/* Styles pour les étapes */
+    .form-step {
+    display: none;
+    }
+
+    .form-step.active {
+     display: block;
+     animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+     from { opacity: 0; transform: translateY(10px); }
+     to { opacity: 1; transform: translateY(0); }
+    }
+
+    .invalid {
+        border-color: #ff3860 !important;
+    }
+
+    .error-message {
+      color: #ff3860;
+     font-size: 0.85em;
+     margin-top: 5px;
+     display: none;
+}
