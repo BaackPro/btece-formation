@@ -47,7 +47,7 @@ exports.handler = async function(event, context) {
 
     // Configuration de l'email admin
     const emailParams = {
-      to_email: process.env.ADMIN_EMAIL || 'contactbtece@gmail.com',
+      to_email: process.env.EMAILJS_ADMIN_EMAIL || 'contactbtece@gmail.com',
       from_name: 'BTECE Formation',
       reply_to: formData.email,
       subject: `[BTECE] Nouvelle inscription - ${formData.prenom} ${formData.nom}`,
@@ -94,10 +94,10 @@ exports.handler = async function(event, context) {
 
     // Envoi de l'email via EmailJS
     const emailResponse = await emailjs.send(
-      process.env.SERVICE_ID,
-      process.env.ADMIN_TEMPLATE_ID,
+      process.env.EMAILJS_SERVICE_ID,
+      process.env.EMAILJS_ADMIN_TEMPLATE_ID,
       emailParams,
-      process.env.USER_ID
+      process.env.EMAILJS_USER_ID
     );
 
     // Réponse de succès
