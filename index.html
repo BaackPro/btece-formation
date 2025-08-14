@@ -74,9 +74,54 @@
       ]
     }
     </script>
+    
+    <style>
+        /* Style spécial pour le bouton "Passer au contenu" */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: linear-gradient(135deg, #6e48aa 0%, #9d50bb 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 100;
+            border: 2px solid #fff;
+            background-size: 200% auto;
+            animation: gradientBG 3s ease infinite;
+        }
+        
+        .skip-link:hover, .skip-link:focus {
+            top: 10px;
+            background: linear-gradient(135deg, #9d50bb 0%, #6e48aa 100%);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Animation de scintillement pour attirer l'attention */
+        .skip-link:focus {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(157, 80, 187, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(157, 80, 187, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(157, 80, 187, 0); }
+        }
+    </style>
 </head>
 <body>
-    <!-- Lien "Passer au contenu" pour l'accessibilité -->
+    <!-- Lien "Passer au contenu" pour l'accessibilité avec nouveau style -->
     <a href="#main-content" class="skip-link">Passer au contenu</a>
     
     <!-- Page principale (formulaire d'inscription) -->
