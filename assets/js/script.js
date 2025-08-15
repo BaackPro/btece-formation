@@ -1,4 +1,6 @@
 
+console.log('Formulaire trouvé:', document.getElementById('registration-form'));
+
 // Configuration des prix des formations en FCFA
 const formationPrices = {
     'plans_archi_elec': 130000,
@@ -13,7 +15,8 @@ const exchangeRate = 655.957;
 // Temps estimé par étape (en secondes)
 const stepTimes = [60, 30, 30, 30, 30]; // Total: 3 minutes (180 secondes)
 
-// Configuration des numéros de téléphone par pays
+// Configuration des numéros de téléphone par pays (identique à votre code original)
+
 const phoneConfigurations = {
     // Afrique
     'DZ': { code: '+213', pattern: '[0-9]{9}', format: '+213 XX XXX XXXX' },
@@ -1003,7 +1006,7 @@ function showConfirmationModal() {
 }
 
 // Envoie les données du formulaire
-function sendFormData() {
+async function sendFormData() {
     if (state.isSubmitting) return;
     state.isSubmitting = true;
     
@@ -1018,145 +1021,110 @@ function sendFormData() {
         formData.append('csrf_token', DOM.csrfToken);
     }
     
-    // Envoi des données à Netlify
-    fetch(DOM.registrationForm.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => {
+    try {
+        // Envoi des données à Netlify
+        const response = await fetch(DOM.registrationForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
         if (!response.ok) {
             throw new Error('Erreur réseau');
         }
-        return response.json();
-    })
-    .then(data => {
+        
+        const data = await response.json();
         console.log('Succès:', data);
+        
+        // Envoi des emails de confirmation
+        await sendConfirmationEmail();
+        
         showConfirmationPage();
         localStorage.removeItem('bteceFormData');
-        sendConfirmationEmail();
         clearForm();
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Erreur:', error);
         saveToLocalStorage();
         showConfirmationPage();
         clearForm();
-    })
-    .finally(() => {
+    } finally {
         state.isSubmitting = false;
         DOM.loadingIndicator.style.display = 'none';
         DOM.submitBtn.disabled = false;
-    });
+    }
 }
 
 // Envoie un email de confirmation via EmailJS
-function sendConfirmationEmail() {
-    const emailData = {
-        to_name: `${sanitizeInput(document.getElementById('prenom').value)} ${sanitizeInput(document.getElementById('nom').value)}`,
-        to_email: sanitizeInput(document.getElementById('email').value),
-        formations: Array.from(DOM.checkboxes)
-            .filter(cb => cb.checked)
-            .map(cb => formationNames[cb.value])
-            .join(', '),
-        total_price: DOM.totalPriceFCFA.textContent,
-        total_price_eur: DOM.totalPriceEUR.textContent,
-        session: sanitizeInput(document.querySelector('input[name="session"]:checked')?.nextElementSibling?.textContent),
-        mode_formation: sanitizeInput(DOM.modeFormationSelect.options[DOM.modeFormationSelect.selectedIndex].text),
-        payment_method: sanitizeInput(document.querySelector('input[name="payment_method"]:checked')?.value)
-    };
+async function sendConfirmationEmail() {
+    try {
+        // Récupération des données du formulaire
+        const formData = {
+            to_name: `${sanitizeInput(document.getElementById('prenom').value)} ${sanitizeInput(document.getElementById('nom').value)}`,
+            to_email: sanitizeInput(document.getElementById('email').value),
+            formations: Array.from(DOM.checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => formationNames[cb.value])
+                .join(', '),
+            total_price: DOM.totalPriceFCFA.textContent,
+            total_price_eur: DOM.totalPriceEUR.textContent,
+            session: sanitizeInput(document.querySelector('input[name="session"]:checked')?.nextElementSibling?.textContent),
+            mode_formation: sanitizeInput(DOM.modeFormationSelect.options[DOM.modeFormationSelect.selectedIndex].text),
+            payment_method: sanitizeInput(document.querySelector('input[name="payment_method"]:checked')?.value)
+        };
 
-    // Initialisation d'EmailJS avec l'ID utilisateur depuis les variables d'environnement
-    emailjs.init(process.env.EMAILJS_PUBLIC_ID);
-
-    // Utilisation d'EmailJS pour envoyer l'email
-    emailjs.send(process.env.EMAILJS_SERVICE_ID, process.env.EMAILJS_TEMPLATE_ID, emailData)
-    emailjs.send(process.env.EMAILJS_SERVICE_ID, process.env.EMAILJS_ADMIN_TEMPLATE_ID, emailData)
-        .then(function(response) {
-            console.log('Email envoyé avec succès', response.status, response.text);
-            state.emailSent = true;
-            // Dans votre fonction de soumission existante
-async function handleFormSubmit(event) {
-  event.preventDefault();
-  
-  // Récupération des données du formulaire
-  const formData = new FormData(document.getElementById('registration-form'));
-  const formValues = Object.fromEntries(formData.entries());
-
-  try {
-    // Envoi des données au backend Netlify
-    const response = await fetch('/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formValues),
-    });
-
-    if (!response.ok) throw new Error('Erreur réseau');
-
-    // Envoi supplémentaire à la fonction admin si besoin
-    if (formValues.admin_notification === 'true') {
-      await sendAdminNotification(formValues);
-    }
-
-    // Traitement de la réponse...
-  } catch (error) {
-    console.error('Erreur:', error);
-    // Gestion des erreurs
-  }
-}
-
-// Nouvelle fonction pour l'envoi admin
-async function sendAdminNotification(formData) {
-  try {
-    const response = await fetch('/.netlify/functions/emailjs_admin', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    });
-
-    if (!response.ok) throw new Error('Échec de la notification admin');
-    
-    const data = await response.json();
-    console.log('Notification admin envoyée:', data);
-  } catch (error) {
-    console.error('Erreur notification admin:', error);
-    // Optionnel: afficher un message à l'utilisateur
-  }
-}
-            
-            // Notification accessible
-            const notification = document.createElement('div');
-            notification.className = 'aria-notification';
-            notification.setAttribute('role', 'status');
-            notification.setAttribute('aria-live', 'polite');
-            notification.textContent = 'Email de confirmation envoyé avec succès';
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
-        }, function(error) {
-            console.error('Échec de l\'envoi de l\'email', error);
-            state.emailSent = false;
-            
-            // Notification accessible
-            const notification = document.createElement('div');
-            notification.className = 'aria-notification error';
-            notification.setAttribute('role', 'alert');
-            notification.setAttribute('aria-live', 'assertive');
-            notification.textContent = 'Échec de l\'envoi de l\'email de confirmation';
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
+        // Envoi à l'utilisateur
+        const userResponse = await fetch('/.netlify/functions/send-confirmation-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
         });
+
+        // Envoi à l'admin
+        const adminResponse = await fetch('/.netlify/functions/send-admin-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!userResponse.ok || !adminResponse.ok) {
+            throw new Error('Échec de l\'envoi des emails');
+        }
+
+        state.emailSent = true;
+        
+        // Notification accessible
+        const notification = document.createElement('div');
+        notification.className = 'aria-notification';
+        notification.setAttribute('role', 'status');
+        notification.setAttribute('aria-live', 'polite');
+        notification.textContent = 'Email de confirmation envoyé avec succès';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    } catch (error) {
+        console.error('Échec de l\'envoi des emails:', error);
+        state.emailSent = false;
+        
+        // Notification accessible
+        const notification = document.createElement('div');
+        notification.className = 'aria-notification error';
+        notification.setAttribute('role', 'alert');
+        notification.setAttribute('aria-live', 'assertive');
+        notification.textContent = 'Échec de l\'envoi de l\'email de confirmation';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
 }
 
 // Sauvegarde locale en cas d'échec
@@ -1264,7 +1232,7 @@ function sendChatMessage() {
     DOM.chatInput.value = '';
     
     setTimeout(() => {
-        addChatMessage('Merci pour votre message. Veuillez nous envoyer votre préocupation via notre adresse Mail. Notre équipe vous répondra dans les plus brefs délais.', 'bot');
+        addChatMessage('Merci pour votre message. Veuillez envoyer votre préocupation via notre adresse Mail. Notre équipe vous répondra dans les plus brefs délais.', 'bot');
     }, 1000);
 }
 
