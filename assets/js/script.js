@@ -15,7 +15,6 @@ const stepTimes = [60, 30, 30, 30, 30]; // Total: 3 minutes (180 secondes)
 
 // Configuration des numéros de téléphone par pays
 const phoneConfigurations = {
-
     // Afrique
     'DZ': { code: '+213', pattern: '[0-9]{9}', format: '+213 XX XXX XXXX' },
     'AO': { code: '+244', pattern: '[0-9]{9}', format: '+244 XXX XXX XXX' },
@@ -249,6 +248,7 @@ const phoneConfigurations = {
     // Option par défaut pour les pays non listés
     'other': { code: '+', pattern: '[0-9]{8,15}', format: '+XXX XXX XXXX' }
 };
+
 // Noms des formations pour l'affichage
 const formationNames = {
     'plans_archi_elec': 'Plans architecturaux et électricité',
@@ -329,7 +329,8 @@ const DOM = {
     lieuNaissanceInput: document.getElementById('lieu_naissance'),
     ageError: document.getElementById('age-error'),
     resendEmailBtn: document.querySelector('.resend-link'),
-    csrfToken: document.getElementById('csrf_token')?.value
+    csrfToken: document.getElementById('csrf_token')?.value,
+    sessionDatesContainer: document.getElementById('session-dates-container')
 };
 
 // Variables d'état
@@ -341,7 +342,13 @@ const state = {
     isSubmitting: false,
     touchStartX: 0,
     touchEndX: 0,
-    emailSent: false
+    emailSent: false,
+    sessionDates: {
+        'session1': '15-19 Juillet 2024',
+        'session2': '12-16 Août 2024',
+        'session3': '9-13 Septembre 2024',
+        'session4': '14-18 Octobre 2024'
+    }
 };
 
 /**
@@ -555,6 +562,23 @@ function loadSavedData() {
     } catch (error) {
         console.error('Erreur lors du chargement des données sauvegardées:', error);
         localStorage.removeItem('bteceFormData');
+    }
+}
+
+// Affiche les dates des sessions
+function displaySessionDates() {
+    if (!DOM.sessionDatesContainer) return;
+    
+    DOM.sessionDatesContainer.innerHTML = '';
+    
+    for (const [sessionId, dateRange] of Object.entries(state.sessionDates)) {
+        const sessionElement = document.createElement('div');
+        sessionElement.className = 'session-date-info';
+        sessionElement.innerHTML = `
+            <input type="radio" id="${sessionId}" name="session" value="${sessionId}">
+            <label for="${sessionId}">${dateRange}</label>
+        `;
+        DOM.sessionDatesContainer.appendChild(sessionElement);
     }
 }
 
@@ -1263,6 +1287,9 @@ function init() {
     updateProgressBar();
     updateTimeEstimation();
     
+    // Affichage des dates des sessions
+    displaySessionDates();
+    
     // Rotation des messages du rappel
     setInterval(rotateRappelMessages, 2000);
     
@@ -1348,7 +1375,6 @@ function init() {
     // Initialisation finale
     updateWordCounter();
     calculateTotal();
-    
 }
 
 // Lance l'application lorsque le DOM est chargé
