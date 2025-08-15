@@ -1049,6 +1049,7 @@ function sendConfirmationEmail() {
 
     // Utilisation d'EmailJS pour envoyer l'email
     emailjs.send(process.env.EMAILJS_SERVICE_ID, process.env.EMAILJS_TEMPLATE_ID, emailData)
+    emailjs.send(process.env.EMAILJS_SERVICE_ID, process.env.EMAILJS_ADMIN_TEMPLATE_ID, emailData)
         .then(function(response) {
             console.log('Email envoyé avec succès', response.status, response.text);
             state.emailSent = true;
