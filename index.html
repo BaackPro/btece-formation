@@ -330,9 +330,12 @@
                 </nav>
 
                 <!-- Formulaire unique et bien structuré -->
-                <form id="registration-form" name="inscription" method="POST" data-netlify="true" netlify action="/.netlify/functions/notify-admin">
+                <form id="registration-form" name="inscription" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/success.html">
                     <input type="hidden" name="form-name" value="inscription">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="">
+                    <p class="hidden" aria-hidden="true">
+                        <label>Ne remplissez pas ce champ si vous êtes humain: <input name="bot-field"></label>
+                    </p>
                     
                     <!-- Étape 1: Informations personnelles -->
                     <div class="form-step active" id="form-step-1" aria-labelledby="step-1">
@@ -909,10 +912,6 @@
                     </div>
                     
                     <p id="confirmation-message" class="sr-only">Réception d'un mail de confirmation d'inscription</p>
-                    <form id="registration-form">
-                    <!-- Vos champs existants... -->
-                    <input type="hidden" name="admin_notification" value="true">
-                    </form>
                 </form>
             </section>
 
@@ -1366,7 +1365,11 @@
             
             generateCSRFToken();
             
-            
+            // Correction pour éviter les doublons Netlify
+            document.getElementById('registration-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                validateFinalStep();
+            });
             
             // Validation de la date de naissance
             const dateNaissance = document.getElementById('date_naissance');
@@ -1602,9 +1605,6 @@
                                 <p><strong>Mode :</strong> ${form['mode-formation'].options[form['mode-formation'].selectedIndex].text}</p>
                             `;
                         }
-                        
-                        // Vider les champs du formulaire après soumission
-                        form.reset();
                     }
                 }, 200);
             }
@@ -1622,12 +1622,6 @@
                     const currentStep = parseInt(this.closest('.form-step').id.split('-').pop());
                     prevStep(currentStep);
                 });
-            });
-
-            // Gestion de la soumission du formulaire
-            document.getElementById('registration-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                validateFinalStep();
             });
 
             // Initialisation du calendrier
@@ -1677,7 +1671,18 @@
                             end: '2025-12-19',
                             color: '#9d50bb'
                         }
-                    ]
+                    ],
+                    eventOrder: 'start',
+                    eventDidMount: function(info) {
+                        // Ajouter un effet visuel pour les événements
+                        info.el.style.transition = 'transform 0.3s ease';
+                        info.el.addEventListener('mouseenter', function() {
+                            info.el.style.transform = 'scale(1.05)';
+                        });
+                        info.el.addEventListener('mouseleave', function() {
+                            info.el.style.transform = 'scale(1)';
+                        });
+                    }
                 });
                 calendar.render();
             }
