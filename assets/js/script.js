@@ -1045,7 +1045,7 @@ function sendConfirmationEmail() {
     };
 
     // Initialisation d'EmailJS avec l'ID utilisateur depuis les variables d'environnement
-    emailjs.init(process.env.EMAILJS_USER_ID);
+    emailjs.init(process.env.EMAILJS_PUBLIC_ID);
 
     // Utilisation d'EmailJS pour envoyer l'email
     emailjs.send(process.env.EMAILJS_SERVICE_ID, process.env.EMAILJS_TEMPLATE_ID, emailData)
@@ -1348,10 +1348,6 @@ function init() {
     updateWordCounter();
     calculateTotal();
     
-    // Initialisation d'EmailJS
-    if (typeof emailjs !== 'undefined') {
-        emailjs.init(process.env.EMAILJS_USER_ID);
-    }
 }
 
 // Lance l'application lorsque le DOM est chargé

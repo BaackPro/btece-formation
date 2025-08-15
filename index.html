@@ -11,14 +11,13 @@
     
     <!-- Préchargement des ressources critiques -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap" as="style">
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.2.0/css/all.min.css" as="style">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" as="style">
     <link rel="preload" href="assets/css/style.css" as="style">
     
     <!-- Polices et styles -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.2.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="canonical" href="https://btece-formation.netlify.app/">
@@ -101,7 +100,7 @@
                 <!-- Rappel clignotant amélioré -->
                 <div class="rappel-container">
                     <div class="rappel-title">
-                        <span class="warning-icon">⚠️</span> RAPPEL IMPORTANT :
+                        <i class="fas fa-exclamation-triangle"></i> RAPPEL IMPORTANT :
                     </div>
                     <div class="rappel-separator"></div>
                     <div class="rappel-message active">
@@ -159,27 +158,32 @@
                         <div class="form-group">
                             <label for="nom" class="required">Nom</label>
                             <input type="text" id="nom" name="nom" required aria-required="true" class="keyboard-support">
+                            <div class="error-message" id="nom-error">Veuillez entrer votre nom (minimum 2 caractères)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="prenom" class="required">Prénom</label>
                             <input type="text" id="prenom" name="prenom" required aria-required="true" class="keyboard-support">
+                            <div class="error-message" id="prenom-error">Veuillez entrer votre prénom (minimum 2 caractères)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="email" class="required">Email</label>
                             <input type="email" id="email" name="email" required aria-required="true" class="keyboard-support">
+                            <div class="error-message" id="email-error">Veuillez entrer une adresse email valide (ex: exemple@domaine.com)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="date_naissance" class="required">Date de naissance</label>
                             <input type="date" id="date_naissance" name="date_naissance" required aria-required="true" class="keyboard-support">
-                            <div id="age-error" class="error-message">Vous devez avoir au moins 13 ans pour vous inscrire.</div>
+                            <div class="error-message" id="date_naissance-error">Veuillez entrer une date de naissance valide</div>
+                            <div class="error-message" id="age-error">Vous devez avoir au moins 13 ans pour vous inscrire.</div>
                         </div>
 
                         <div class="form-group">
                             <label for="lieu_naissance" class="required">Lieu de naissance</label>
                             <input type="text" id="lieu_naissance" name="lieu_naissance" required aria-required="true" class="keyboard-support">
+                            <div class="error-message" id="lieu_naissance-error">Veuillez entrer votre lieu de naissance</div>
                         </div>
 
                         <div class="form-group">
@@ -419,6 +423,7 @@
                                     <option value="other">Autre pays</option>
                                 </optgroup>
                             </select>
+                            <div class="error-message" id="pays-error">Veuillez sélectionner votre pays</div>
                         </div>
 
                         <div class="form-group">
@@ -429,6 +434,7 @@
                                        pattern="[0-9]{8,10}" title="Numéro de téléphone valide (8 à 10 chiffres)" class="keyboard-support">
                             </div>
                             <small id="phone-format" class="phone-format">Format : +229 XX XX XX XX</small>
+                            <div class="error-message" id="telephone-error">Veuillez entrer un numéro de téléphone valide (8 à 10 chiffres)</div>
                         </div>
 
                         <div class="form-group">
@@ -463,16 +469,18 @@
                                     <label for="profession-autre">Autre</label>
                                 </div>
                             </fieldset>
+                            <div class="error-message" id="profession-error">Veuillez sélectionner votre profession</div>
                         </div>
 
                         <div class="form-group">
                             <label for="objectifs" class="required">Objectifs principaux</label>
                             <textarea id="objectifs" name="objectifs" rows="3" required aria-required="true" class="keyboard-support" maxlength="100" placeholder="100 mots maximum"></textarea>
                             <small id="objectifs-counter">0/100 mots</small>
+                            <div class="error-message" id="objectifs-error">Veuillez décrire vos objectifs (10 mots minimum)</div>
                         </div>
 
                         <div class="form-navigation">
-                            <button type="button" class="btn-next keyboard-support" onclick="nextStep(1)">Suivant</button>
+                            <button type="button" class="btn-next keyboard-support" onclick="validateStep1()">Suivant</button>
                         </div>
                     </div>
 
@@ -500,6 +508,7 @@
                                     </div>
                                 </div>
                             </fieldset>
+                            <div class="error-message" id="formations-error">Veuillez sélectionner au moins une formation</div>
                         </div>
                         
                         <div id="price-display" class="selected-price">
@@ -511,7 +520,7 @@
 
                         <div class="form-navigation">
                             <button type="button" class="btn-prev keyboard-support" onclick="prevStep(2)">Précédent</button>
-                            <button type="button" class="btn-next keyboard-support" onclick="nextStep(2)">Suivant</button>
+                            <button type="button" class="btn-next keyboard-support" onclick="validateStep2()">Suivant</button>
                         </div>
                     </div>
 
@@ -545,6 +554,7 @@
                                     <label for="session-decembre">Décembre 2025</label>
                                 </div>
                             </fieldset>
+                            <div class="error-message" id="session-error">Veuillez sélectionner une session</div>
                         </div>
 
                         <div class="form-group">
@@ -554,11 +564,12 @@
                                 <option value="presentiel">Présentiel à Cotonou (Bénin)</option>
                                 <option value="en-ligne">En ligne (à distance)</option>
                             </select>
+                            <div class="error-message" id="mode-error">Veuillez sélectionner un mode de formation</div>
                         </div>
 
                         <div class="form-navigation">
                             <button type="button" class="btn-prev keyboard-support" onclick="prevStep(3)">Précédent</button>
-                            <button type="button" class="btn-next keyboard-support" onclick="nextStep(3)">Suivant</button>
+                            <button type="button" class="btn-next keyboard-support" onclick="validateStep3()">Suivant</button>
                         </div>
                     </div>
 
@@ -623,11 +634,12 @@
                                     </div>
                                 </div>
                             </fieldset>
+                            <div class="error-message" id="payment-error">Veuillez sélectionner une méthode de paiement</div>
                         </div>
 
                         <div class="form-navigation">
                             <button type="button" class="btn-prev keyboard-support" onclick="prevStep(4)">Précédent</button>
-                            <button type="button" class="btn-next keyboard-support" onclick="nextStep(4)">Suivant</button>
+                            <button type="button" class="btn-next keyboard-support" onclick="validateStep4()">Suivant</button>
                         </div>
                     </div>
                     
@@ -644,6 +656,7 @@
                         <div class="checkbox-group">
                             <input type="checkbox" id="consentement" name="consentement" required aria-required="true" class="keyboard-support">
                             <label for="consentement" class="required">J'accepte les conditions générales</label>
+                            <div class="error-message" id="consentement-error">Vous devez accepter les conditions générales</div>
                         </div>
 
                         <div id="loading">
@@ -1144,6 +1157,10 @@
                 <a href="https://pin.it/5xRR8QdLk" target="_blank" rel="noopener noreferrer" aria-label="Pinterest (nouvelle fenêtre)">
                     <i class="fab fa-pinterest"></i>
                 </a>
+                 <a href="https://bsky.app/profile/baackpro.bsky.social" target="_blank" rel="noopener noreferrer" aria-label="Bluesky (nouvelle fenêtre)">
+                    <i class="fab fa-bluesky" aria-hidden="true"></i>
+                    <span class="sr-only">Bluesky</span>
+                </a>
             </div>
         </div>
     </footer>
@@ -1182,6 +1199,254 @@
             // Faire défiler vers le haut de la page de confirmation
             window.scrollTo(0, 0);
         }
+
+        // Fonctions de validation améliorées
+        function validateStep1() {
+            let isValid = true;
+            
+            // Validation du nom
+            const nom = document.getElementById('nom').value.trim();
+            if (nom.length < 2) {
+                document.getElementById('nom-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('nom-error').style.display = 'none';
+            }
+            
+            // Validation du prénom
+            const prenom = document.getElementById('prenom').value.trim();
+            if (prenom.length < 2) {
+                document.getElementById('prenom-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('prenom-error').style.display = 'none';
+            }
+            
+            // Validation de l'email
+            const email = document.getElementById('email').value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                document.getElementById('email-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('email-error').style.display = 'none';
+            }
+            
+            // Validation de la date de naissance
+            const dateNaissance = document.getElementById('date_naissance').value;
+            if (!dateNaissance) {
+                document.getElementById('date_naissance-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('date_naissance-error').style.display = 'none';
+                // Vérification de l'âge (au moins 13 ans)
+                const birthDate = new Date(dateNaissance);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                if (age < 13) {
+                    document.getElementById('age-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    document.getElementById('age-error').style.display = 'none';
+                }
+            }
+            
+            // Validation du lieu de naissance
+            const lieuNaissance = document.getElementById('lieu_naissance').value.trim();
+            if (lieuNaissance.length < 2) {
+                document.getElementById('lieu_naissance-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('lieu_naissance-error').style.display = 'none';
+            }
+            
+            // Validation du pays
+            const pays = document.getElementById('pays').value;
+            if (!pays) {
+                document.getElementById('pays-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('pays-error').style.display = 'none';
+            }
+            
+            // Validation du téléphone
+            const telephone = document.getElementById('telephone').value.trim();
+            const phoneRegex = /^\d{8,10}$/;
+            if (!phoneRegex.test(telephone)) {
+                document.getElementById('telephone-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('telephone-error').style.display = 'none';
+            }
+            
+            // Validation de la profession
+            const professionSelected = document.querySelector('input[name="profession"]:checked');
+            if (!professionSelected) {
+                document.getElementById('profession-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('profession-error').style.display = 'none';
+            }
+            
+            // Validation des objectifs
+            const objectifs = document.getElementById('objectifs').value.trim();
+            if (objectifs.split(/\s+/).length < 10) {
+                document.getElementById('objectifs-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('objectifs-error').style.display = 'none';
+            }
+            
+            if (isValid) {
+                nextStep(1);
+            } else {
+                // Faire défiler vers le premier champ invalide
+                const firstError = document.querySelector('.error-message[style="display: block;"]');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        function validateStep2() {
+            const formations = document.querySelectorAll('input[name="formations[]"]:checked');
+            if (formations.length === 0) {
+                document.getElementById('formations-error').style.display = 'block';
+                // Faire défiler vers le message d'erreur
+                document.getElementById('formations-error').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                document.getElementById('formations-error').style.display = 'none';
+                nextStep(2);
+            }
+        }
+
+        function validateStep3() {
+            let isValid = true;
+            
+            // Validation de la session
+            const sessionSelected = document.querySelector('input[name="session"]:checked');
+            if (!sessionSelected) {
+                document.getElementById('session-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('session-error').style.display = 'none';
+            }
+            
+            // Validation du mode de formation
+            const mode = document.getElementById('mode-formation').value;
+            if (!mode) {
+                document.getElementById('mode-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('mode-error').style.display = 'none';
+            }
+            
+            if (isValid) {
+                nextStep(3);
+            } else {
+                // Faire défiler vers le premier champ invalide
+                const firstError = document.querySelector('.error-message[style="display: block;"]');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        function validateStep4() {
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+            if (!paymentMethod) {
+                document.getElementById('payment-error').style.display = 'block';
+                // Faire défiler vers le message d'erreur
+                document.getElementById('payment-error').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                document.getElementById('payment-error').style.display = 'none';
+                nextStep(4);
+            }
+        }
+
+        function validateFinalStep() {
+            const consentement = document.getElementById('consentement').checked;
+            if (!consentement) {
+                document.getElementById('consentement-error').style.display = 'block';
+                // Faire défiler vers le message d'erreur
+                document.getElementById('consentement-error').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                document.getElementById('consentement-error').style.display = 'none';
+                
+                // Afficher la modal de confirmation avant soumission
+                showConfirmationModal();
+            }
+        }
+
+        function showConfirmationModal() {
+            // Remplir les informations dans la modal
+            document.getElementById('modal-nom-complet').textContent = 
+                `${document.getElementById('nom').value} ${document.getElementById('prenom').value}`;
+            document.getElementById('modal-email').textContent = document.getElementById('email').value;
+            document.getElementById('modal-date-naissance').textContent = document.getElementById('date_naissance').value;
+            document.getElementById('modal-lieu-naissance').textContent = document.getElementById('lieu_naissance').value;
+            document.getElementById('modal-telephone').textContent = 
+                document.getElementById('phone-prefix').textContent + document.getElementById('telephone').value;
+            document.getElementById('modal-pays').textContent = 
+                document.getElementById('pays').options[document.getElementById('pays').selectedIndex].text;
+            document.getElementById('modal-profession').textContent = 
+                document.querySelector('input[name="profession"]:checked').nextElementSibling.textContent;
+            document.getElementById('modal-objectifs').textContent = document.getElementById('objectifs').value;
+            
+            // Formations sélectionnées
+            const formationsList = document.getElementById('modal-formations-list');
+            formationsList.innerHTML = '';
+            document.querySelectorAll('input[name="formations[]"]:checked').forEach(checkbox => {
+                const li = document.createElement('li');
+                li.textContent = checkbox.nextElementSibling.textContent;
+                formationsList.appendChild(li);
+            });
+            
+            // Session sélectionnée
+            document.getElementById('modal-session-info').textContent = 
+                document.querySelector('input[name="session"]:checked').nextElementSibling.textContent;
+            
+            // Mode de formation
+            document.getElementById('modal-mode-info').textContent = 
+                document.getElementById('mode-formation').options[document.getElementById('mode-formation').selectedIndex].text;
+            
+            // Méthode de paiement
+            document.getElementById('modal-payment-info').textContent = 
+                document.querySelector('input[name="payment_method"]:checked').value;
+            
+            // Prix total
+            document.getElementById('modal-total-price').textContent = document.getElementById('total-price-fcfa').textContent;
+            document.getElementById('modal-total-price-eur').textContent = document.getElementById('total-price-eur').textContent;
+            
+            // Afficher la modal
+            document.getElementById('confirmation-modal').style.display = 'block';
+        }
+
+        // Gestion des événements pour la modal
+        document.querySelector('.close-modal').addEventListener('click', function() {
+            document.getElementById('confirmation-modal').style.display = 'none';
+        });
+
+        document.querySelector('.modal-cancel').addEventListener('click', function() {
+            document.getElementById('confirmation-modal').style.display = 'none';
+        });
+
+        document.querySelector('.modal-confirm').addEventListener('click', function() {
+            document.getElementById('confirmation-modal').style.display = 'none';
+            // Soumettre le formulaire
+            document.getElementById('registration-form').submit();
+        });
+
+        // Fermer la modal en cliquant à l'extérieur
+        window.addEventListener('click', function(event) {
+            if (event.target === document.getElementById('confirmation-modal')) {
+                document.getElementById('confirmation-modal').style.display = 'none';
+            }
+        });
     </script>
     <script src="assets/js/script.js" defer></script>
 </body>

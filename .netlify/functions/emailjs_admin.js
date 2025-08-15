@@ -97,7 +97,7 @@ exports.handler = async function(event, context) {
       process.env.EMAILJS_SERVICE_ID,
       process.env.EMAILJS_ADMIN_TEMPLATE_ID,
       emailParams,
-      process.env.EMAILJS_USER_ID
+      process.env.EMAILJS_PUBLIC_ID
     );
 
     // Réponse de succès
