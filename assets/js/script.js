@@ -15,8 +15,7 @@ const exchangeRate = 655.957;
 // Temps estimé par étape (en secondes)
 const stepTimes = [60, 30, 30, 30, 30]; // Total: 3 minutes (180 secondes)
 
-// Configuration des numéros de téléphone par pays (identique à votre code original)
-
+// Configuration des numéros de téléphone par pays
 const phoneConfigurations = {
     // Afrique
     'DZ': { code: '+213', pattern: '[0-9]{9}', format: '+213 XX XXX XXXX' },
@@ -1014,18 +1013,44 @@ async function sendFormData() {
     DOM.loadingIndicator.style.display = 'block';
     DOM.submitBtn.disabled = true;
     
-    const formData = new FormData(DOM.registrationForm);
+    // Création d'un formulaire dynamique pour éviter la soumission en double
+    const dynamicForm = document.createElement('form');
+    dynamicForm.method = 'POST';
+    dynamicForm.action = DOM.registrationForm.action;
+    dynamicForm.style.display = 'none';
+    
+    // Ajout de tous les champs du formulaire original
+    const formElements = DOM.registrationForm.elements;
+    for (let i = 0; i < formElements.length; i++) {
+        const element = formElements[i];
+        
+        // Ne pas inclure les boutons
+        if (element.type === 'button' || element.type === 'submit') continue;
+        
+        // Gestion des cases à cocher et boutons radio
+        if ((element.type === 'checkbox' || element.type === 'radio') && !element.checked) continue;
+        
+        const clone = element.cloneNode(true);
+        dynamicForm.appendChild(clone);
+    }
     
     // Ajout du token CSRF si disponible
     if (DOM.csrfToken) {
-        formData.append('csrf_token', DOM.csrfToken);
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = DOM.csrfToken;
+        dynamicForm.appendChild(csrfInput);
     }
+    
+    // Ajout du formulaire dynamique au DOM et soumission
+    document.body.appendChild(dynamicForm);
     
     try {
         // Envoi des données à Netlify
-        const response = await fetch(DOM.registrationForm.action, {
+        const response = await fetch(dynamicForm.action, {
             method: 'POST',
-            body: formData,
+            body: new FormData(dynamicForm),
             headers: {
                 'Accept': 'application/json'
             }
@@ -1053,6 +1078,7 @@ async function sendFormData() {
         state.isSubmitting = false;
         DOM.loadingIndicator.style.display = 'none';
         DOM.submitBtn.disabled = false;
+        dynamicForm.remove();
     }
 }
 
