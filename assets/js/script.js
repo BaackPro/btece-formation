@@ -16,6 +16,7 @@ const exchangeRate = 655.957;
 const stepTimes = [60, 30, 30, 30, 30]; // Total: 3 minutes (180 secondes)
 
 // Configuration des numéros de téléphone par pays
+
 const phoneConfigurations = {
     // Afrique
     'DZ': { code: '+213', pattern: '[0-9]{9}', format: '+213 XX XXX XXXX' },
@@ -250,7 +251,6 @@ const phoneConfigurations = {
     // Option par défaut pour les pays non listés
     'other': { code: '+', pattern: '[0-9]{8,15}', format: '+XXX XXX XXXX' }
 };
-
 // Noms des formations pour l'affichage
 const formationNames = {
     'plans_archi_elec': 'Plans architecturaux et électricité',
@@ -332,7 +332,8 @@ const DOM = {
     ageError: document.getElementById('age-error'),
     resendEmailBtn: document.querySelector('.resend-link'),
     csrfToken: document.getElementById('csrf_token')?.value,
-    sessionDatesContainer: document.getElementById('session-dates-container')
+    sessionDatesContainer: document.getElementById('session-dates-container'),
+    exportCSVBtn: document.getElementById('export-csv-btn') // Nouveau bouton d'export CSV
 };
 
 // Variables d'état
@@ -350,7 +351,9 @@ const state = {
         'session2': '12-16 Août 2024',
         'session3': '9-13 Septembre 2024',
         'session4': '14-18 Octobre 2024'
-    }
+    },
+    // Nouvelle propriété pour éviter les doubles soumissions
+    formSubmitted: false
 };
 
 /**
@@ -1006,52 +1009,38 @@ function showConfirmationModal() {
 
 // Envoie les données du formulaire
 async function sendFormData() {
-    if (state.isSubmitting) return;
+    if (state.isSubmitting || state.formSubmitted) return;
     state.isSubmitting = true;
+    state.formSubmitted = true;
     
     DOM.modal.style.display = 'none';
     DOM.loadingIndicator.style.display = 'block';
     DOM.submitBtn.disabled = true;
     
-    // Création d'un formulaire dynamique pour éviter la soumission en double
-    const dynamicForm = document.createElement('form');
-    dynamicForm.method = 'POST';
-    dynamicForm.action = DOM.registrationForm.action;
-    dynamicForm.style.display = 'none';
-    
-    // Ajout de tous les champs du formulaire original
+    // Modification pour éviter le double enregistrement Netlify
+    const formData = new URLSearchParams();
     const formElements = DOM.registrationForm.elements;
+    
     for (let i = 0; i < formElements.length; i++) {
         const element = formElements[i];
-        
-        // Ne pas inclure les boutons
-        if (element.type === 'button' || element.type === 'submit') continue;
-        
-        // Gestion des cases à cocher et boutons radio
-        if ((element.type === 'checkbox' || element.type === 'radio') && !element.checked) continue;
-        
-        const clone = element.cloneNode(true);
-        dynamicForm.appendChild(clone);
+        if (element.name && !element.disabled && element.type !== 'file') {
+            if (element.type === 'checkbox' || element.type === 'radio') {
+                if (element.checked) {
+                    formData.append(element.name, element.value);
+                }
+            } else {
+                formData.append(element.name, element.value);
+            }
+        }
     }
-    
-    // Ajout du token CSRF si disponible
-    if (DOM.csrfToken) {
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrf_token';
-        csrfInput.value = DOM.csrfToken;
-        dynamicForm.appendChild(csrfInput);
-    }
-    
-    // Ajout du formulaire dynamique au DOM et soumission
-    document.body.appendChild(dynamicForm);
     
     try {
         // Envoi des données à Netlify
-        const response = await fetch(dynamicForm.action, {
+        const response = await fetch(DOM.registrationForm.action, {
             method: 'POST',
-            body: new FormData(dynamicForm),
+            body: formData,
             headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'Accept': 'application/json'
             }
         });
@@ -1078,7 +1067,7 @@ async function sendFormData() {
         state.isSubmitting = false;
         DOM.loadingIndicator.style.display = 'none';
         DOM.submitBtn.disabled = false;
-        dynamicForm.remove();
+        state.formSubmitted = false; // Réinitialiser pour permettre une nouvelle soumission si nécessaire
     }
 }
 
@@ -1321,6 +1310,44 @@ function resendConfirmationEmail() {
     }, 2000);
 }
 
+// Exporte les données des inscrits au format CSV
+function exportToCSV() {
+    // Récupérer les données depuis Netlify (fonction serverless)
+    fetch('/.netlify/functions/get-submissions')
+        .then(response => response.json())
+        .then(data => {
+            if (!data || data.length === 0) {
+                alert('Aucune donnée à exporter');
+                return;
+            }
+
+            // Créer le contenu CSV
+            const headers = Object.keys(data[0]).join(',');
+            const rows = data.map(item => 
+                Object.values(item).map(value => 
+                    `"${String(value).replace(/"/g, '""')}"`
+                ).join(',')
+            ).join('\n');
+
+            const csvContent = `${headers}\n${rows}`;
+
+            // Créer et télécharger le fichier CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'inscriptions_btece.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'export CSV:', error);
+            alert('Une erreur est survenue lors de l\'export des données');
+        });
+}
+
 // Initialisation
 function init() {
     // Configuration de la date maximale pour la date de naissance (13 ans minimum)
@@ -1417,6 +1444,11 @@ function init() {
         state.touchEndX = e.changedTouches[0].screenX;
         handleSwipe();
     }, false);
+    
+    // Bouton d'export CSV
+    if (DOM.exportCSVBtn) {
+        DOM.exportCSVBtn.addEventListener('click', exportToCSV);
+    }
     
     // Initialisation finale
     updateWordCounter();
