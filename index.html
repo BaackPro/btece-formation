@@ -120,6 +120,39 @@
             100% { box-shadow: 0 0 0 0 rgba(157, 80, 187, 0); }
         }
 
+        /* Style pour le lien vers le site web */
+        .website-link {
+            position: fixed;
+            top: 60px;
+            left: 10px;
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9em;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            opacity: 0.8;
+        }
+        
+        .website-link:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .website-link::after {
+            content: "Visiter notre site";
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        .website-link:hover::after {
+            text-decoration: underline;
+        }
+
         /* Amélioration du contraste pour l'accessibilité */
         body {
             color: #333;
@@ -214,6 +247,11 @@
 <body>
     <!-- Lien "Passer au contenu" pour l'accessibilité avec nouveau style -->
     <a href="#main-content" class="skip-link" aria-label="Passer directement au contenu principal">Passer au contenu</a>
+    
+    <!-- Lien vers le site web -->
+    <a href="https://www.btece.com" class="website-link" aria-label="Visiter notre site web BTECE" target="_blank" rel="noopener noreferrer">
+        <i class="fas fa-external-link-alt"></i>
+    </a>
     
     <!-- Page principale (formulaire d'inscription) -->
     <div id="main-page">
@@ -1300,7 +1338,7 @@
                 <a href="https://pin.it/5xRR8QdLk" target="_blank" rel="noopener noreferrer" aria-label="Pinterest (nouvelle fenêtre)">
                     <i class="fab fa-pinterest"></i>
                 </a>
-                <a href="https://bsky.app/profile/btece.bsky.social" target="_blank" rel="noopener noreferrer" aria-label="Bluesky (nouvelle fenêtre)">
+                <a href="https://bsky.app/profile/baackpro.bsky.social" target="_blank" rel="noopener noreferrer" aria-label="Bluesky (nouvelle fenêtre)">
                     <i class="fas fa-cloud"></i>
                 </a>
             </div>
@@ -1322,7 +1360,7 @@
             
             generateCSRFToken();
             
-            // Configuration EmailJS avec variable d'environnement
+            // Configuration EmailJS avec variable d'environnement Netlify
             emailjs.init(process.env.EMAILJS_USER_ID);
             
             // Validation de la date de naissance
@@ -1584,7 +1622,7 @@
             // Gestion de la soumission du formulaire
             document.getElementById('registration-form').addEventListener('submit', function(e) {
                 e.preventDefault();
-                submitForm(e);
+                validateFinalStep();
             });
 
             // Initialisation du calendrier
