@@ -5,38 +5,25 @@
 
 [build.environment]
   NODE_ENV = "production"
-  # Variables nécessaires pendant le build (si applicable)
-  # Exemple: NEXT_PUBLIC_ANALYTICS_ID = "@analytics_id"
 
 [context.production.environment]
   NODE_ENV = "production"
   SECURE_ORIGIN = "true"
-  # Variables EmailJS (à définir dans l'interface Netlify)
-  EMAILJS_SERVICE_ID = "@emailjs_service_id"
-  EMAILJS_TEMPLATE_ID = "@emailjs_template_id"
-  EMAILJS_PUBLIC_ID = "@emailjs_public_id"
-  EMAILJS_ADMIN_TEMPLATE_ID = "@emailjs_admin_template_id"
 
 # Configuration de sécurité avancée
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.emailjs.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://api.emailjs.com; frame-ancestors 'none'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://api.emailjs.com; frame-ancestors 'none'; form-action 'self'"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
 
 # Optimisation du cache
 [[headers]]
   for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/_next/static/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
@@ -45,14 +32,12 @@
   for = "/*.env"
   [headers.values]
     Content-Type = "text/plain"
-    X-Robots-Tag = "noindex, nofollow"
 
 # Redirections SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
 
 # Protection contre les scans
 [[redirects]]
@@ -63,12 +48,6 @@
 
 [[redirects]]
   from = "/wp-admin/*"
-  to = "/404.html"
-  status = 404
-  force = true
-
-[[redirects]]
-  from = "/.git/*"
   to = "/404.html"
   status = 404
   force = true
@@ -85,9 +64,3 @@
   to = "https://btece-formation.netlify.app/:splat"
   status = 301
   force = true
-
-# Redirection de trailing slash (bonus)
-[[redirects]]
-  from = "/*/"
-  to = "/:splat"
-  status = 301
