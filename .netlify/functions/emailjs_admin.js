@@ -1,139 +1,173 @@
 
 const emailjs = require('emailjs-com');
+const sanitizeHtml = require('sanitize-html');
+
+// Configuration initiale d'EmailJS
+emailjs.init(process.env.EMAILJS_PUBLIC_ID);
 
 exports.handler = async function(event, context) {
-  // Vérification de la méthode HTTP et du contenu
+  // 1. Validation de la requête
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ 
-        error: 'Method Not Allowed',
-        message: 'Seules les requêtes POST sont acceptées' 
-      }),
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store' 
-      }
-    };
+    return generateResponse(405, {
+      error: 'Method Not Allowed',
+      message: 'Seules les requêtes POST sont acceptées'
+    });
   }
 
-  // Vérification du corps de la requête
   if (!event.body) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ 
-        error: 'Bad Request',
-        message: 'Données du formulaire manquantes' 
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    };
+    return generateResponse(400, {
+      error: 'Bad Request',
+      message: 'Données du formulaire manquantes'
+    });
   }
 
   try {
-    // Parse et validation des données
+    // 2. Traitement des données
     const formData = JSON.parse(event.body);
-    
-    // Vérification des champs obligatoires
-    if (!formData.email || !formData.prenom || !formData.nom) {
-      return {
-        statusCode: 422,
-        body: JSON.stringify({ 
-          error: 'Unprocessable Entity',
-          message: 'Les champs email, prénom et nom sont obligatoires' 
-        }),
-        headers: { 'Content-Type': 'application/json' }
-      };
+    const requiredFields = ['email', 'prenom', 'nom'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+
+    if (missingFields.length > 0) {
+      return generateResponse(422, {
+        error: 'Unprocessable Entity',
+        message: `Champs obligatoires manquants: ${missingFields.join(', ')}`,
+        missing_fields: missingFields
+      });
     }
 
-    // Configuration de l'email admin
-    const emailParams = {
-      to_email: process.env.EMAILJS_ADMIN_EMAIL || 'contactbtece@gmail.com',
-      from_name: 'BTECE Formation',
-      reply_to: formData.email,
-      subject: `[BTECE] Nouvelle inscription - ${formData.prenom} ${formData.nom}`,
-      message_html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <h2 style="color: #2c3e50;">Nouvelle inscription reçue</h2>
-          
-          <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            <h3 style="margin-top: 0; color: #3498db;">Informations personnelles</h3>
-            <p><strong>Nom complet:</strong> ${formData.prenom} ${formData.nom}</p>
-            <p><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></p>
-            ${formData.telephone ? `<p><strong>Téléphone:</strong> ${formData.telephone}</p>` : ''}
-          </div>
-          
-          <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            <h3 style="margin-top: 0; color: #3498db;">Détails de l'inscription</h3>
-            ${formData.formations ? `<p><strong>Formations:</strong> ${formData.formations}</p>` : ''}
-            ${formData.session ? `<p><strong>Session:</strong> ${formData.session}</p>` : ''}
-            ${formData.payment_method ? `<p><strong>Méthode de paiement:</strong> ${formData.payment_method}</p>` : ''}
-            ${formData.total ? `<p><strong>Montant:</strong> ${formData.total}</p>` : ''}
-          </div>
-          
-          <div style="margin-top: 20px; color: #7f8c8d; font-size: 0.9em;">
-            <hr>
-            <p>Date d'inscription: ${new Date().toLocaleString('fr-FR', { 
-              day: '2-digit', 
-              month: '2-digit', 
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}</p>
-            <p>Cet email a été envoyé automatiquement depuis le formulaire d'inscription BTECE.</p>
-          </div>
-        </div>
-      `,
-      message_text: `Nouvelle inscription:
-      ${formData.prenom} ${formData.nom} (${formData.email})
-      Formations: ${formData.formations || 'Non spécifié'}
-      Session: ${formData.session || 'Non spécifié'}
-      Paiement: ${formData.payment_method || 'Non spécifié'}
-      Montant: ${formData.total || 'Non spécifié'}
-      `
+    // 3. Préparation du contenu sécurisé
+    const sanitizedData = {
+      prenom: sanitizeHtml(formData.prenom),
+      nom: sanitizeHtml(formData.nom),
+      email: sanitizeHtml(formData.email),
+      telephone: formData.telephone ? sanitizeHtml(formData.telephone) : null,
+      formations: formData.formations ? sanitizeHtml(formData.formations) : null,
+      session: formData.session ? sanitizeHtml(formData.session) : null,
+      payment_method: formData.payment_method ? sanitizeHtml(formData.payment_method) : null,
+      total: formData.total ? sanitizeHtml(formData.total) : null
     };
 
-    // Envoi de l'email via EmailJS
+    // 4. Construction du template email
+    const emailParams = {
+      to_email: process.env.ADMIN_EMAIL || 'contactbtece@gmail.com',
+      from_name: 'BTECE Formation',
+      reply_to: sanitizedData.email,
+      subject: `[BTECE] Nouvelle inscription - ${sanitizedData.prenom} ${sanitizedData.nom}`,
+      message_html: buildEmailHtmlTemplate(sanitizedData),
+      message_text: buildEmailTextTemplate(sanitizedData)
+    };
+
+    // 5. Envoi de l'email
     const emailResponse = await emailjs.send(
       process.env.EMAILJS_SERVICE_ID,
       process.env.EMAILJS_ADMIN_TEMPLATE_ID,
-      emailParams,
-      process.env.EMAILJS_PUBLIC_ID
+      emailParams
     );
 
-    // Réponse de succès
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ 
-        success: true,
-        message: 'Notification envoyée avec succès',
-        email_id: emailResponse.text 
-      }),
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
-      }
-    };
+    // 6. Réponse de succès
+    return generateResponse(200, {
+      success: true,
+      message: 'Notification admin envoyée avec succès',
+      email_id: emailResponse.text
+    });
 
   } catch (error) {
-    // Journalisation de l'erreur complète
-    console.error('Erreur lors de l\'envoi:', {
+    console.error('Erreur:', {
       error: error.message,
       stack: error.stack,
       timestamp: new Date().toISOString()
     });
 
-    // Réponse d'erreur
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        error: 'internal_server_error',
-        message: 'Une erreur est survenue lors de l\'envoi de la notification',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      }),
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
-      }
-    };
+    return generateResponse(500, {
+      error: 'internal_server_error',
+      message: 'Erreur lors du traitement de la demande',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
+
+// Fonctions utilitaires
+function generateResponse(statusCode, body) {
+  return {
+    statusCode,
+    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff'
+    }
+  };
+}
+
+function buildEmailHtmlTemplate(data) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Nouvelle inscription BTECE</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .section { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .section-title { color: #3498db; margin-top: 0; }
+        .footer { margin-top: 20px; color: #7f8c8d; font-size: 0.9em; border-top: 1px solid #eee; padding-top: 10px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h2>Nouvelle inscription reçue</h2>
+        </div>
+        
+        <div class="section">
+          <h3 class="section-title">Informations personnelles</h3>
+          <p><strong>Nom complet:</strong> ${data.prenom} ${data.nom}</p>
+          <p><strong>Email:</strong> <a href="mailto:${data.email}">${data.email}</a></p>
+          ${data.telephone ? `<p><strong>Téléphone:</strong> ${data.telephone}</p>` : ''}
+        </div>
+        
+        <div class="section">
+          <h3 class="section-title">Détails de l'inscription</h3>
+          ${data.formations ? `<p><strong>Formations:</strong> ${data.formations}</p>` : ''}
+          ${data.session ? `<p><strong>Session:</strong> ${data.session}</p>` : ''}
+          ${data.payment_method ? `<p><strong>Méthode de paiement:</strong> ${data.payment_method}</p>` : ''}
+          ${data.total ? `<p><strong>Montant:</strong> ${data.total}</p>` : ''}
+        </div>
+        
+        <div class="footer">
+          <p>Date d'inscription: ${new Date().toLocaleString('fr-FR', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}</p>
+          <p>Cet email a été envoyé automatiquement depuis le formulaire d'inscription BTECE.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function buildEmailTextTemplate(data) {
+  return `
+Nouvelle inscription BTECE
+-------------------------
+
+Informations personnelles:
+- Nom complet: ${data.prenom} ${data.nom}
+- Email: ${data.email}
+${data.telephone ? `- Téléphone: ${data.telephone}\n` : ''}
+
+Détails de l'inscription:
+${data.formations ? `- Formations: ${data.formations}\n` : ''}
+${data.session ? `- Session: ${data.session}\n` : ''}
+${data.payment_method ? `- Méthode de paiement: ${data.payment_method}\n` : ''}
+${data.total ? `- Montant: ${data.total}\n` : ''}
+
+Date: ${new Date().toLocaleString('fr-FR')}
+  `;
+}

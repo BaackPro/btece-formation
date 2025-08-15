@@ -1077,6 +1077,58 @@ function sendConfirmationEmail() {
         .then(function(response) {
             console.log('Email envoyé avec succès', response.status, response.text);
             state.emailSent = true;
+            // Dans votre fonction de soumission existante
+async function handleFormSubmit(event) {
+  event.preventDefault();
+  
+  // Récupération des données du formulaire
+  const formData = new FormData(document.getElementById('registration-form'));
+  const formValues = Object.fromEntries(formData.entries());
+
+  try {
+    // Envoi des données au backend Netlify
+    const response = await fetch('/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formValues),
+    });
+
+    if (!response.ok) throw new Error('Erreur réseau');
+
+    // Envoi supplémentaire à la fonction admin si besoin
+    if (formValues.admin_notification === 'true') {
+      await sendAdminNotification(formValues);
+    }
+
+    // Traitement de la réponse...
+  } catch (error) {
+    console.error('Erreur:', error);
+    // Gestion des erreurs
+  }
+}
+
+// Nouvelle fonction pour l'envoi admin
+async function sendAdminNotification(formData) {
+  try {
+    const response = await fetch('/.netlify/functions/emailjs_admin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) throw new Error('Échec de la notification admin');
+    
+    const data = await response.json();
+    console.log('Notification admin envoyée:', data);
+  } catch (error) {
+    console.error('Erreur notification admin:', error);
+    // Optionnel: afficher un message à l'utilisateur
+  }
+}
             
             // Notification accessible
             const notification = document.createElement('div');
@@ -1212,7 +1264,7 @@ function sendChatMessage() {
     DOM.chatInput.value = '';
     
     setTimeout(() => {
-        addChatMessage('Merci pour votre message. Notre équipe vous répondra dans les plus brefs délais.', 'bot');
+        addChatMessage('Merci pour votre message. Veuillez nous envoyer votre préocupation via notre adresse Mail. Notre équipe vous répondra dans les plus brefs délais.', 'bot');
     }, 1000);
 }
 
