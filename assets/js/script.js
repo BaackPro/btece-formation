@@ -369,9 +369,9 @@ function countWords(text) {
 // Met à jour le compteur de mots
 function updateWordCounter() {
     const wordCount = countWords(DOM.objectifsTextarea.value);
-    DOM.objectifsCounter.textContent = `${wordCount}/500 mots`;
+    DOM.objectifsCounter.textContent = `${wordCount}/50 mots`;
     
-    if (wordCount > 500) {
+    if (wordCount > 50) {
         DOM.objectifsCounter.style.color = '#e74c3c';
         DOM.objectifsTextarea.style.borderColor = '#e74c3c';
     } else {
@@ -445,7 +445,7 @@ function clearForm() {
     DOM.checkboxes.forEach(checkbox => checkbox.checked = false);
     DOM.phonePrefix.textContent = '+229';
     DOM.phoneFormat.style.display = 'none';
-    DOM.objectifsCounter.textContent = '0/500 mots';
+    DOM.objectifsCounter.textContent = '0/50 mots';
     DOM.objectifsCounter.style.color = '#666';
     DOM.objectifsTextarea.style.borderColor = '#ddd';
     DOM.ageError.style.display = 'none';
@@ -773,8 +773,8 @@ function validateStep1() {
     // Validation des objectifs
     const objectifs = DOM.objectifsTextarea.value.trim();
     const wordCount = countWords(objectifs);
-    if (wordCount > 500) {
-        errorMessages.push('Veuillez limiter vos objectifs à 500 mots maximum');
+    if (wordCount > 50) {
+        errorMessages.push('Veuillez limiter vos objectifs à 50 mots maximum');
         DOM.objectifsTextarea.setAttribute('aria-invalid', 'true');
         isValid = false;
     } else {
@@ -1002,6 +1002,13 @@ function showConfirmationModal() {
     const totalEur = (total / exchangeRate).toFixed(2);
     DOM.modalTotalPrice.textContent = total.toLocaleString('fr-FR');
     DOM.modalTotalPriceEur.textContent = totalEur;
+    
+    // Ajout du montant total dans le récapitulatif Netlify
+    const totalInput = document.createElement('input');
+    totalInput.type = 'hidden';
+    totalInput.name = 'montant_total';
+    totalInput.value = `${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
+    DOM.registrationForm.appendChild(totalInput);
     
     // Ajout des attributs ARIA pour l'accessibilité
     DOM.modal.setAttribute('aria-modal', 'true');
