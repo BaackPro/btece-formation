@@ -244,6 +244,40 @@
             opacity: 1;
             font-weight: bold;
         }
+        
+        /* Correction pour le calendrier */
+        .fc-header-toolbar {
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .fc-button {
+            background-color: #6e48aa;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .fc-button:hover {
+            background-color: #5a3a8a;
+        }
+        
+        .fc-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .fc-button-active {
+            background-color: #4a2c6a;
+        }
+        
+        .fc-daygrid-event {
+            padding: 5px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -334,7 +368,7 @@
                     <input type="hidden" name="form-name" value="inscription">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="">
                     <p class="hidden" aria-hidden="true">
-                        <label>Ne remplissez pas ce champ si vous êtes humain: <input name="bot-field"></label>
+                        <label>Ne remplissez pas ce champ si vous êtes humain: <input name="bot-field" id="bot-field"></label>
                     </p>
                     
                     <!-- Étape 1: Informations personnelles -->
@@ -1365,10 +1399,23 @@
             
             generateCSRFToken();
             
-            // Correction pour éviter les doublons Netlify
+            // Blocage de la soumission si le champ honeypot est rempli
             document.getElementById('registration-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                validateFinalStep();
+                const botField = document.getElementById('bot-field');
+                if (botField && botField.value) {
+                    e.preventDefault();
+                    alert("Le formulaire ne peut pas être soumis avec ce champ rempli.");
+                    return false;
+                }
+                
+                // Enregistrement du nom de l'utilisateur dans le localStorage
+                const nom = document.getElementById('nom').value;
+                const prenom = document.getElementById('prenom').value;
+                if (nom && prenom) {
+                    localStorage.setItem('userName', `${prenom} ${nom}`);
+                }
+                
+                return true;
             });
             
             // Validation de la date de naissance
@@ -1576,6 +1623,13 @@
                 const loadingElement = document.getElementById('loading');
                 const progressFill = document.getElementById('progress-fill');
                 
+                // Vérifier le champ honeypot avant soumission
+                const botField = document.getElementById('bot-field');
+                if (botField && botField.value) {
+                    alert("Le formulaire ne peut pas être soumis avec ce champ rempli.");
+                    return false;
+                }
+                
                 // Afficher le feedback visuel
                 loadingElement.style.display = 'block';
                 let progress = 0;
@@ -1624,7 +1678,7 @@
                 });
             });
 
-            // Initialisation du calendrier
+            // Initialisation du calendrier avec corrections
             const calendarEl = document.getElementById('calendar');
             if (calendarEl) {
                 const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -1634,42 +1688,58 @@
                         center: 'title',
                         right: 'dayGridMonth,timeGridWeek,timeGridDay'
                     },
+                    buttonText: {
+                        today: 'Aujourd\'hui',
+                        month: 'Mois',
+                        week: 'Semaine',
+                        day: 'Jour'
+                    },
+                    locale: 'fr',
+                    firstDay: 1, // Lundi comme premier jour de la semaine
+                    navLinks: true, // Permet de cliquer sur les jours/semaines pour les voir en détail
+                    dayMaxEvents: true, // Affiche un indicateur quand il y a trop d'événements
                     events: [
                         {
                             title: 'Session Juillet 2025',
                             start: '2025-07-07',
                             end: '2025-08-01',
-                            color: '#6e48aa'
+                            color: '#6e48aa',
+                            description: 'Formation en présentiel et en ligne'
                         },
                         {
                             title: 'Session Août 2025',
                             start: '2025-08-04',
                             end: '2025-08-29',
-                            color: '#9d50bb'
+                            color: '#9d50bb',
+                            description: 'Formation intensive en week-end'
                         },
                         {
                             title: 'Session Septembre 2025',
                             start: '2025-09-01',
                             end: '2025-09-26',
-                            color: '#6e48aa'
+                            color: '#6e48aa',
+                            description: 'Formation en soirée'
                         },
                         {
                             title: 'Session Octobre 2025',
                             start: '2025-10-06',
                             end: '2025-10-31',
-                            color: '#9d50bb'
+                            color: '#9d50bb',
+                            description: 'Formation en matinée'
                         },
                         {
                             title: 'Session Novembre 2025',
                             start: '2025-11-03',
                             end: '2025-11-28',
-                            color: '#6e48aa'
+                            color: '#6e48aa',
+                            description: 'Formation en soirée'
                         },
                         {
                             title: 'Session Décembre 2025',
                             start: '2025-12-01',
                             end: '2025-12-19',
-                            color: '#9d50bb'
+                            color: '#9d50bb',
+                            description: 'Formation intensive'
                         }
                     ],
                     eventOrder: 'start',
@@ -1682,9 +1752,35 @@
                         info.el.addEventListener('mouseleave', function() {
                             info.el.style.transform = 'scale(1)';
                         });
+                        
+                        // Ajouter une infobulle avec la description
+                        if (info.event.extendedProps.description) {
+                            const tooltip = new bootstrap.Tooltip(info.el, {
+                                title: info.event.extendedProps.description,
+                                placement: 'top',
+                                trigger: 'hover',
+                                container: 'body'
+                            });
+                        }
                     }
                 });
+                
+                // Correction pour les boutons de navigation
                 calendar.render();
+                
+                // Réinitialisation des boutons de navigation si nécessaire
+                setTimeout(() => {
+                    const prevButtons = document.querySelectorAll('.fc-prev-button');
+                    const nextButtons = document.querySelectorAll('.fc-next-button');
+                    
+                    prevButtons.forEach(btn => {
+                        btn.innerHTML = '<span class="fc-icon fc-icon-chevron-left"></span>';
+                    });
+                    
+                    nextButtons.forEach(btn => {
+                        btn.innerHTML = '<span class="fc-icon fc-icon-chevron-right"></span>';
+                    });
+                }, 100);
             }
         });
     </script>

@@ -1,6 +1,12 @@
 
 console.log('Formulaire trouvé:', document.getElementById('registration-form'));
 
+
+import { Calendar } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import listPlugin from '@fullcalendar/list';
+import interactionPlugin from '@fullcalendar/interaction';
 // Configuration des prix des formations en FCFA
 const formationPrices = {
     'plans_archi_elec': 130000,
@@ -16,7 +22,6 @@ const exchangeRate = 655.957;
 const stepTimes = [60, 30, 30, 30, 30]; // Total: 3 minutes (180 secondes)
 
 // Configuration des numéros de téléphone par pays
-
 const phoneConfigurations = {
     // Afrique
     'DZ': { code: '+213', pattern: '[0-9]{9}', format: '+213 XX XXX XXXX' },
@@ -251,6 +256,7 @@ const phoneConfigurations = {
     // Option par défaut pour les pays non listés
     'other': { code: '+', pattern: '[0-9]{8,15}', format: '+XXX XXX XXXX' }
 };
+
 // Noms des formations pour l'affichage
 const formationNames = {
     'plans_archi_elec': 'Plans architecturaux et électricité',
@@ -333,7 +339,8 @@ const DOM = {
     resendEmailBtn: document.querySelector('.resend-link'),
     csrfToken: document.getElementById('csrf_token')?.value,
     sessionDatesContainer: document.getElementById('session-dates-container'),
-    exportCSVBtn: document.getElementById('export-csv-btn') // Nouveau bouton d'export CSV
+    exportCSVBtn: document.getElementById('export-csv-btn'),
+    honeypotField: document.getElementById('honeypot') // Champ honeypot pour les bots
 };
 
 // Variables d'état
@@ -352,8 +359,19 @@ const state = {
         'session3': '9-13 Septembre 2024',
         'session4': '14-18 Octobre 2024'
     },
-    // Nouvelle propriété pour éviter les doubles soumissions
-    formSubmitted: false
+    formSubmitted: false,
+    // Configuration du calendrier
+    calendarConfig: {
+        locale: 'fr',
+        format: 'yyyy-mm-dd',
+        weekStart: 1,
+        minDate: new Date(1900, 0, 1),
+        maxDate: new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate()),
+        icons: {
+            previous: '←',
+            next: '→'
+        }
+    }
 };
 
 /**
@@ -587,6 +605,49 @@ function displaySessionDates() {
     }
 }
 
+// Initialise le calendrier pour la date de naissance
+function initCalendar() {
+    if (!DOM.dateNaissanceInput) return;
+    
+    // Configuration du calendrier
+    const calendarConfig = {
+        locale: 'fr',
+        format: 'yyyy-mm-dd',
+        weekStart: 1,
+        minDate: new Date(1900, 0, 1),
+        maxDate: new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate()),
+        icons: {
+            previous: '←',
+            next: '→'
+        },
+        onSelect: (date) => {
+            DOM.dateNaissanceInput.value = date;
+            validateAge();
+            autoSave();
+        }
+    };
+    
+    // Initialisation du calendrier
+    const calendar = new Pikaday({
+        field: DOM.dateNaissanceInput,
+        ...calendarConfig
+    });
+    
+    // Correction des icônes de navigation si nécessaire
+    const prevButton = document.querySelector('.pika-prev');
+    const nextButton = document.querySelector('.pika-next');
+    
+    if (prevButton) {
+        prevButton.innerHTML = calendarConfig.icons.previous;
+        prevButton.setAttribute('aria-label', 'Mois précédent');
+    }
+    
+    if (nextButton) {
+        nextButton.innerHTML = calendarConfig.icons.next;
+        nextButton.setAttribute('aria-label', 'Mois suivant');
+    }
+}
+
 // Met à jour la barre de progression
 function updateProgressBar() {
     const progress = ((state.currentStep - 1) / 5) * 100;
@@ -784,6 +845,12 @@ function validateStep1() {
     // Validation de l'âge
     if (!validateAge()) {
         errorMessages.push('Vous devez avoir au moins 13 ans pour vous inscrire');
+        isValid = false;
+    }
+
+    // Validation du champ honeypot (anti-spam)
+    if (DOM.honeypotField && DOM.honeypotField.value.trim() !== '') {
+        errorMessages.push('Erreur de validation du formulaire');
         isValid = false;
     }
 
@@ -1018,21 +1085,25 @@ async function sendFormData() {
     DOM.submitBtn.disabled = true;
     
     // Modification pour éviter le double enregistrement Netlify
-    const formData = new URLSearchParams();
-    const formElements = DOM.registrationForm.elements;
+    const formData = new FormData(DOM.registrationForm);
     
-    for (let i = 0; i < formElements.length; i++) {
-        const element = formElements[i];
-        if (element.name && !element.disabled && element.type !== 'file') {
-            if (element.type === 'checkbox' || element.type === 'radio') {
-                if (element.checked) {
-                    formData.append(element.name, element.value);
-                }
-            } else {
-                formData.append(element.name, element.value);
-            }
-        }
-    }
+    // Ajout du nom de l'utilisateur dans le sujet de l'email Netlify
+    const nomComplet = `${formData.get('prenom')} ${formData.get('nom')}`;
+    formData.append('nom_complet', nomComplet);
+    
+    // Ajout du montant total dans les données Netlify
+    const selectedFormations = Array.from(DOM.checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+    
+    let totalFCfa = 0;
+    selectedFormations.forEach(formation => {
+        totalFCfa += formationPrices[formation];
+    });
+    
+    const totalEur = (totalFCfa / exchangeRate).toFixed(2);
+    formData.append('montant_total_fcfa', totalFCfa.toLocaleString('fr-FR'));
+    formData.append('montant_total_eur', totalEur);
     
     try {
         // Envoi des données à Netlify
@@ -1040,7 +1111,6 @@ async function sendFormData() {
             method: 'POST',
             body: formData,
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
                 'Accept': 'application/json'
             }
         });
@@ -1355,6 +1425,9 @@ function init() {
     const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
     DOM.dateNaissanceInput.max = maxDate.toISOString().split('T')[0];
     
+    // Initialisation du calendrier
+    initCalendar();
+    
     // Chargement des données sauvegardées
     loadSavedData();
     updateProgressBar();
@@ -1412,6 +1485,13 @@ function init() {
     // Soumission du formulaire
     DOM.registrationForm.addEventListener('submit', function(e) {
         e.preventDefault();
+        
+        // Vérification du champ honeypot (anti-spam)
+        if (DOM.honeypotField && DOM.honeypotField.value.trim() !== '') {
+            console.log('Tentative de spam détectée');
+            return false;
+        }
+        
         validateFinalStep();
     });
     
