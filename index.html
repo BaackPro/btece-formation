@@ -21,8 +21,7 @@
     
     <!-- Stratégie de cache -->
     <meta http-equiv="Cache-Control" content="public, max-age=604800, must-revalidate">
-    <meta http-equiv="Content-Security-Policy" content=" default-src 'self'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://use.fontawesome.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://use.fontawesome.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;">
-
+    <meta http-equiv="Content-Security-Policy" content=" default-src 'self'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://use.fontawesome.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://use.fontawesome.com; script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-src 'self' https://www.google.com/recaptcha/;">
     
     <!-- Métadonnées SEO -->
     <meta property="og:type" content="website">
@@ -287,6 +286,13 @@
             border-color: #5cb85c !important;
             background-color: #f9fff9 !important;
         }
+
+        /* Styles pour reCAPTCHA */
+        .g-recaptcha {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -373,7 +379,7 @@
                 </nav>
 
                 <!-- Formulaire unique et bien structuré -->
-                <form id="registration-form" name="registration" method="POST" data-netlify="true" netlify-honeypot="bot-field" data-netlify-recaptcha="true">
+                <form id="registration-form" name="registration" method="POST" data-netlify="true" netlify-honeypot="bot-field">
                 
                     <input type="hidden" name="form-name" value="registration">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="">
@@ -717,7 +723,7 @@
                         </div>
 
                         <div class="form-navigation">
-                            <button type="button" class="btn-next keyboard-support" onclick="validateStep(1)">Suivant</button>
+                            <button type="button" class="btn-next keyboard-support">Suivant</button>
                         </div>
                     </div>
 
@@ -757,8 +763,8 @@
                         </div>
 
                         <div class="form-navigation">
-                            <button type="button" class="btn-prev keyboard-support" onclick="prevStep(2)">Précédent</button>
-                            <button type="button" class="btn-next keyboard-support" onclick="validateStep(2)">Suivant</button>
+                            <button type="button" class="btn-prev keyboard-support">Précédent</button>
+                            <button type="button" class="btn-next keyboard-support">Suivant</button>
                         </div>
                     </div>
 
@@ -808,8 +814,8 @@
                         </div>
 
                         <div class="form-navigation">
-                            <button type="button" class="btn-prev keyboard-support" onclick="prevStep(3)">Précédent</button>
-                            <button type="button" class="btn-next keyboard-support" onclick="validateStep(3)">Suivant</button>
+                            <button type="button" class="btn-prev keyboard-support">Précédent</button>
+                            <button type="button" class="btn-next keyboard-support">Suivant</button>
                         </div>
                     </div>
 
@@ -879,8 +885,8 @@
                         </div>
 
                         <div class="form-navigation">
-                            <button type="button" class="btn-prev keyboard-support" onclick="prevStep(4)">Précédent</button>
-                            <button type="button" class="btn-next keyboard-support" onclick="validateStep(4)">Suivant</button>
+                            <button type="button" class="btn-prev keyboard-support">Précédent</button>
+                            <button type="button" class="btn-next keyboard-support">Suivant</button>
                         </div>
                     </div>
                     
@@ -893,6 +899,10 @@
                         <div class="blinking-bonus">
                             <i class="fas fa-gift" aria-hidden="true"></i> <strong>Bonus exclusif</strong> : Licence des logiciels professionnels offerte pour 5 ans
                         </div>
+
+                        <!-- Intégration sécurisée de reCAPTCHA -->
+                        <div class="g-recaptcha" data-sitekey="<%= process.env.RECAPTCHA_SITE_KEY %>"></div>
+                        <div id="recaptcha-error" class="error-message" style="display: none;" role="alert">Veuillez compléter le reCAPTCHA</div>
 
                         <div class="checkbox-group">
                             <input type="checkbox" id="consentement" name="terms_accepted" required aria-required="true" class="keyboard-support" aria-describedby="consentement-error">
@@ -910,7 +920,7 @@
                         </div>
 
                         <div class="form-navigation">
-                            <button type="button" class="btn-prev keyboard-support" onclick="prevStep(5)">Précédent</button>
+                            <button type="button" class="btn-prev keyboard-support">Précédent</button>
                             <button type="submit" class="submit-btn keyboard-support" id="submit-btn">S'inscrire maintenant</button>
                         </div>
                     </div>
@@ -1408,512 +1418,7 @@
 
     <!-- Scripts en bas de page pour une meilleure performance -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script>
-        // Initialisation au chargement de la page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Génération dynamique du token CSRF
-            function generateCSRFToken() {
-                const token = window.crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
-                document.getElementById('csrf_token').value = token;
-                return token;
-            }
-            
-            generateCSRFToken();
-            
-            // Blocage de la soumission si le champ honeypot est rempli
-            document.getElementById('registration-form').addEventListener('submit', function(e) {
-                const botField = document.getElementById('bot-field');
-                if (botField && botField.value) {
-                    e.preventDefault();
-                    alert("Le formulaire ne peut pas être soumis avec ce champ rempli.");
-                    return false;
-                }
-                
-                // Enregistrement du nom de l'utilisateur dans le localStorage
-                const nom = document.getElementById('nom').value;
-                const prenom = document.getElementById('prenom').value;
-                if (nom && prenom) {
-                    localStorage.setItem('userName', `${prenom} ${nom}`);
-                }
-                
-                // Stockage du montant total dans le champ caché
-                const totalPrice = document.getElementById('total-price-fcfa').textContent;
-                document.getElementById('montant-total').value = totalPrice;
-                
-                return true;
-            });
-            
-            // Validation de la date de naissance
-            const dateNaissance = document.getElementById('date_naissance');
-            const today = new Date();
-            const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
-            dateNaissance.max = maxDate.toISOString().split('T')[0];
-            
-            // Validation du pays et préfixe téléphonique
-            const paysSelect = document.getElementById('pays');
-            const phonePrefix = document.getElementById('phone-prefix');
-            
-            paysSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                if (selectedOption.value === 'BJ') {
-                    phonePrefix.textContent = '+229';
-                } else {
-                    const phoneCode = selectedOption.textContent.match(/\(([^)]+)\)/)[1];
-                    phonePrefix.textContent = phoneCode ? `+${phoneCode.replace('+', '')}` : '+229';
-                }
-            });
-            
-            // Compteur de mots pour les objectifs
-            const objectifsTextarea = document.getElementById('objectifs');
-            const objectifsCounter = document.getElementById('objectifs-counter');
-            
-            objectifsTextarea.addEventListener('input', function() {
-                const text = this.value;
-                const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
-                objectifsCounter.textContent = `${wordCount}/50 mots`;
-                
-                if (wordCount > 50) {
-                    this.classList.add('invalid');
-                    document.getElementById('objectifs-error').textContent = "Maximum 50 mots autorisés";
-                    document.getElementById('objectifs-error').style.display = 'block';
-                    document.getElementById('objectifs-error-icon').style.display = 'inline-block';
-                } else {
-                    this.classList.remove('invalid');
-                    document.getElementById('objectifs-error').style.display = 'none';
-                    document.getElementById('objectifs-error-icon').style.display = 'none';
-                }
-            });
-            
-            // Calcul du prix total
-            const formationCheckboxes = document.querySelectorAll('input[name="selected_courses[]"]');
-            const totalPriceFcfa = document.getElementById('total-price-fcfa');
-            const totalPriceEur = document.getElementById('total-price-eur');
-            
-            const formationPrices = {
-                'plans_archi_elec': 130000,
-                'conception_elec': 150000,
-                'realisation_3d': 120000,
-                'programmation': 200000
-            };
-            
-            formationCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    let total = 0;
-                    document.querySelectorAll('input[name="selected_courses[]"]:checked').forEach(checked => {
-                        total += formationPrices[checked.value];
-                    });
-                    
-                    totalPriceFcfa.textContent = total.toLocaleString('fr-FR');
-                    totalPriceEur.textContent = Math.round(total / 655.957).toLocaleString('fr-FR');
-                });
-            });
-            
-            // Navigation entre les étapes
-            function nextStep(currentStep) {
-                document.getElementById(`form-step-${currentStep}`).classList.remove('active');
-                document.getElementById(`form-step-${currentStep + 1}`).classList.add('active');
-                
-                document.getElementById(`step-${currentStep}`).classList.remove('active');
-                document.getElementById(`step-${currentStep + 1}`).classList.add('active');
-                
-                // Mise à jour de la barre de progression
-                const progressPercentage = (currentStep / 5) * 100;
-                document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
-                document.getElementById('progress-text').textContent = `${progressPercentage}% complété`;
-                document.getElementById('progress-bar').setAttribute('aria-valuenow', progressPercentage);
-            }
-            
-            function prevStep(currentStep) {
-                document.getElementById(`form-step-${currentStep}`).classList.remove('active');
-                document.getElementById(`form-step-${currentStep - 1}`).classList.add('active');
-                
-                document.getElementById(`step-${currentStep}`).classList.remove('active');
-                document.getElementById(`step-${currentStep - 1}`).classList.add('active');
-                
-                // Mise à jour de la barre de progression
-                const progressPercentage = ((currentStep - 2) / 5) * 100;
-                document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
-                document.getElementById('progress-text').textContent = `${progressPercentage}% complété`;
-                document.getElementById('progress-bar').setAttribute('aria-valuenow', progressPercentage);
-            }
-            
-            // Validation de l'étape 1
-            window.validateStep = function(stepNumber) {
-                let isValid = true;
-                
-                if (stepNumber === 1) {
-                    // Validation du nom
-                    const nom = document.getElementById('nom');
-                    if (!nom.value || nom.value.length < 2 || !/^[A-Za-zÀ-ÿ\s\-']+$/.test(nom.value)) {
-                        nom.classList.add('invalid');
-                        nom.classList.add('error-highlight');
-                        document.getElementById('nom-error').style.display = 'block';
-                        document.getElementById('nom-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                        
-                        setTimeout(() => {
-                            nom.classList.remove('error-highlight');
-                        }, 500);
-                    } else {
-                        nom.classList.remove('invalid');
-                        document.getElementById('nom-error').style.display = 'none';
-                        document.getElementById('nom-error-icon').style.display = 'none';
-                        nom.classList.add('valid');
-                    }
-                    
-                    // Validation du prénom
-                    const prenom = document.getElementById('prenom');
-                    if (!prenom.value || prenom.value.length < 2 || !/^[A-Za-zÀ-ÿ\s\-']+$/.test(prenom.value)) {
-                        prenom.classList.add('invalid');
-                        prenom.classList.add('error-highlight');
-                        document.getElementById('prenom-error').style.display = 'block';
-                        document.getElementById('prenom-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                        
-                        setTimeout(() => {
-                            prenom.classList.remove('error-highlight');
-                        }, 500);
-                    } else {
-                        prenom.classList.remove('invalid');
-                        document.getElementById('prenom-error').style.display = 'none';
-                        document.getElementById('prenom-error-icon').style.display = 'none';
-                        prenom.classList.add('valid');
-                    }
-                    
-                    // Validation de l'email
-                    const email = document.getElementById('email');
-                    if (!email.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-                        email.classList.add('invalid');
-                        email.classList.add('error-highlight');
-                        document.getElementById('email-error').style.display = 'block';
-                        document.getElementById('email-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                        
-                        setTimeout(() => {
-                            email.classList.remove('error-highlight');
-                        }, 500);
-                    } else {
-                        email.classList.remove('invalid');
-                        document.getElementById('email-error').style.display = 'none';
-                        document.getElementById('email-error-icon').style.display = 'none';
-                        email.classList.add('valid');
-                    }
-                    
-                    // Validation de la date de naissance
-                    const dateNaissance = document.getElementById('date_naissance');
-                    if (!dateNaissance.value) {
-                        dateNaissance.classList.add('invalid');
-                        dateNaissance.classList.add('error-highlight');
-                        document.getElementById('age-error').style.display = 'block';
-                        document.getElementById('age-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                        
-                        setTimeout(() => {
-                            dateNaissance.classList.remove('error-highlight');
-                        }, 500);
-                    } else {
-                        const birthDate = new Date(dateNaissance.value);
-                        const ageDiff = Date.now() - birthDate.getTime();
-                        const ageDate = new Date(ageDiff);
-                        const age = Math.abs(ageDate.getUTCFullYear() - 1970);
-                        
-                        if (age < 13) {
-                            dateNaissance.classList.add('invalid');
-                            dateNaissance.classList.add('error-highlight');
-                            document.getElementById('age-error').style.display = 'block';
-                            document.getElementById('age-error-icon').style.display = 'inline-block';
-                            isValid = false;
-                            
-                            setTimeout(() => {
-                                dateNaissance.classList.remove('error-highlight');
-                            }, 500);
-                        } else {
-                            dateNaissance.classList.remove('invalid');
-                            document.getElementById('age-error').style.display = 'none';
-                            document.getElementById('age-error-icon').style.display = 'none';
-                            dateNaissance.classList.add('valid');
-                        }
-                    }
-                    
-                    // Validation du lieu de naissance
-                    const lieuNaissance = document.getElementById('lieu_naissance');
-                    if (!lieuNaissance.value || lieuNaissance.value.length < 2) {
-                        lieuNaissance.classList.add('invalid');
-                        lieuNaissance.classList.add('error-highlight');
-                        document.getElementById('lieu-error').style.display = 'block';
-                        document.getElementById('lieu-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                        
-                        setTimeout(() => {
-                            lieuNaissance.classList.remove('error-highlight');
-                        }, 500);
-                    } else {
-                        lieuNaissance.classList.remove('invalid');
-                        document.getElementById('lieu-error').style.display = 'none';
-                        document.getElementById('lieu-error-icon').style.display = 'none';
-                        lieuNaissance.classList.add('valid');
-                    }
-                    
-                    // Validation du pays
-                    const pays = document.getElementById('pays');
-                    if (!pays.value) {
-                        pays.classList.add('invalid');
-                        pays.classList.add('error-highlight');
-                        document.getElementById('pays-error').style.display = 'block';
-                        document.getElementById('pays-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                        
-                        setTimeout(() => {
-                            pays.classList.remove('error-highlight');
-                        }, 500);
-                    } else {
-                        pays.classList.remove('invalid');
-                        document.getElementById('pays-error').style.display = 'none';
-                        document.getElementById('pays-error-icon').style.display = 'none';
-                        pays.classList.add('valid');
-                    }
-                    
-                    // Validation du téléphone
-                    const telephone = document.getElementById('telephone');
-                    if (!telephone.value || !/^\d{8,10}$/.test(telephone.value)) {
-                        telephone.classList.add('invalid');
-                        telephone.classList.add('error-highlight');
-                        document.getElementById('telephone-error').style.display = 'block';
-                        document.getElementById('telephone-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                        
-                        setTimeout(() => {
-                            telephone.classList.remove('error-highlight');
-                        }, 500);
-                    } else {
-                        telephone.classList.remove('invalid');
-                        document.getElementById('telephone-error').style.display = 'none';
-                        document.getElementById('telephone-error-icon').style.display = 'none';
-                        telephone.classList.add('valid');
-                    }
-                    
-                    // Validation de la profession
-                    const professionSelected = document.querySelector('input[name="profession"]:checked');
-                    if (!professionSelected) {
-                        document.getElementById('profession-error').style.display = 'block';
-                        document.getElementById('profession-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                    } else {
-                        document.getElementById('profession-error').style.display = 'none';
-                        document.getElementById('profession-error-icon').style.display = 'none';
-                    }
-                    
-                    // Validation des objectifs
-                    const objectifs = document.getElementById('objectifs');
-                    const wordCount = objectifs.value.trim() === '' ? 0 : objectifs.value.trim().split(/\s+/).length;
-                    
-                    if (wordCount < 5 || wordCount > 50) {
-                        objectifs.classList.add('invalid');
-                        objectifs.classList.add('error-highlight');
-                        document.getElementById('objectifs-error').textContent = wordCount < 5 ? 
-                            "Veuillez décrire vos objectifs (minimum 5 mots)" : 
-                            "Maximum 50 mots autorisés";
-                        document.getElementById('objectifs-error').style.display = 'block';
-                        document.getElementById('objectifs-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                        
-                        setTimeout(() => {
-                            objectifs.classList.remove('error-highlight');
-                        }, 50);
-                    } else {
-                        objectifs.classList.remove('invalid');
-                        document.getElementById('objectifs-error').style.display = 'none';
-                        document.getElementById('objectifs-error-icon').style.display = 'none';
-                        objectifs.classList.add('valid');
-                    }
-                    
-                    if (isValid) {
-                        nextStep(stepNumber);
-                    }
-                } else if (stepNumber === 2) {
-                    const formationsSelected = document.querySelectorAll('input[name="selected_courses[]"]:checked');
-                    if (formationsSelected.length === 0) {
-                        document.getElementById('formations-error').style.display = 'block';
-                        document.getElementById('formations-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                    } else {
-                        document.getElementById('formations-error').style.display = 'none';
-                        document.getElementById('formations-error-icon').style.display = 'none';
-                        nextStep(stepNumber);
-                    }
-                } else if (stepNumber === 3) {
-                    const sessionSelected = document.querySelector('input[name="session"]:checked');
-                    const modeSelected = document.getElementById('mode-formation').value;
-                    
-                    if (!sessionSelected) {
-                        document.getElementById('session-error').style.display = 'block';
-                        document.getElementById('session-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                    } else {
-                        document.getElementById('session-error').style.display = 'none';
-                        document.getElementById('session-error-icon').style.display = 'none';
-                    }
-                    
-                    if (!modeSelected) {
-                        document.getElementById('mode-error').style.display = 'block';
-                        document.getElementById('mode-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                    } else {
-                        document.getElementById('mode-error').style.display = 'none';
-                        document.getElementById('mode-error-icon').style.display = 'none';
-                    }
-                    
-                    if (isValid) {
-                        nextStep(stepNumber);
-                    }
-                } else if (stepNumber === 4) {
-                    const paymentSelected = document.querySelector('input[name="payment_method"]:checked');
-                    if (!paymentSelected) {
-                        document.getElementById('payment-error').style.display = 'block';
-                        document.getElementById('payment-error-icon').style.display = 'inline-block';
-                        isValid = false;
-                    } else {
-                        document.getElementById('payment-error').style.display = 'none';
-                        document.getElementById('payment-error-icon').style.display = 'none';
-                        nextStep(stepNumber);
-                    }
-                }
-            };
-            
-            // Validation finale avant soumission
-            window.validateFinalStep = function() {
-                const consentement = document.getElementById('consentement').checked;
-                if (!consentement) {
-                    document.getElementById('consentement-error').style.display = 'block';
-                    document.getElementById('consentement-error-icon').style.display = 'inline-block';
-                    return;
-                } else {
-                    document.getElementById('consentement-error').style.display = 'none';
-                    document.getElementById('consentement-error-icon').style.display = 'none';
-                }
-                
-                // Afficher le modal de confirmation
-                showConfirmationModal();
-            };
-            
-            // Afficher le modal de confirmation
-            function showConfirmationModal() {
-                const modal = document.getElementById('confirmation-modal');
-                const form = document.getElementById('registration-form');
-                
-                // Remplir les informations dans le modal
-                document.getElementById('modal-nom-complet').textContent = `${form.nom.value} ${form.prenom.value}`;
-                document.getElementById('modal-email').textContent = form.email.value;
-                document.getElementById('modal-date-naissance').textContent = form.date_naissance.value;
-                document.getElementById('modal-lieu-naissance').textContent = form.lieu_naissance.value;
-                document.getElementById('modal-telephone').textContent = `${document.getElementById('phone-prefix').textContent} ${form.telephone.value}`;
-                document.getElementById('modal-pays').textContent = form.pays.options[form.pays.selectedIndex].text.split(' (')[0];
-                document.getElementById('modal-profession').textContent = document.querySelector('input[name="profession"]:checked').value;
-                document.getElementById('modal-objectifs').textContent = form.objectifs.value;
-                
-                const formationsList = document.getElementById('modal-formations-list');
-                formationsList.innerHTML = '';
-                document.querySelectorAll('input[name="selected_courses[]"]:checked').forEach(checkbox => {
-                    const li = document.createElement('li');
-                    li.textContent = checkbox.nextElementSibling.textContent;
-                    formationsList.appendChild(li);
-                });
-                
-                document.getElementById('modal-session-info').textContent = document.querySelector('input[name="session"]:checked').value;
-                document.getElementById('modal-mode-info').textContent = form['mode-formation'].options[form['mode-formation'].selectedIndex].text;
-                document.getElementById('modal-payment-info').textContent = document.querySelector('input[name="payment_method"]:checked').value;
-                document.getElementById('modal-total-price').textContent = document.getElementById('total-price-fcfa').textContent;
-                document.getElementById('modal-total-price-eur').textContent = document.getElementById('total-price-eur').textContent;
-                
-                // Afficher le modal
-                modal.style.display = 'block';
-                
-                // Gestion des boutons du modal
-                document.querySelector('.modal-cancel').addEventListener('click', function() {
-                    modal.style.display = 'none';
-                });
-                
-                document.querySelector('.modal-confirm').addEventListener('click', function() {
-                    modal.style.display = 'none';
-                    submitForm();
-                });
-                
-                document.querySelector('.close-modal').addEventListener('click', function() {
-                    modal.style.display = 'none';
-                });
-            }
-            
-            // Fonction pour soumettre le formulaire
-            function submitForm(event) {
-                if (event) event.preventDefault();
-                
-                const form = document.getElementById('registration-form');
-                const loadingElement = document.getElementById('loading');
-                const progressFill = document.getElementById('progress-fill');
-                
-                // Vérifier le champ honeypot avant soumission
-                const botField = document.getElementById('bot-field');
-                if (botField && botField.value) {
-                    alert("Le formulaire ne peut pas être soumis avec ce champ rempli.");
-                    return false;
-                }
-                
-                // Afficher le feedback visuel
-                loadingElement.style.display = 'block';
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += 5;
-                    progressFill.style.width = `${progress}%`;
-                    
-                    if (progress >= 100) {
-                        clearInterval(progressInterval);
-                        
-                        // Envoyer le formulaire
-                        form.submit();
-                        
-                        // Afficher la page de confirmation
-                        document.getElementById('main-page').style.display = 'none';
-                        document.getElementById('confirmation-page').style.display = 'block';
-                        
-                        // Remplir les informations de l'utilisateur
-                        const userSummary = document.getElementById('user-summary');
-                        if (userSummary) {
-                            userSummary.innerHTML = `
-                                <p><strong>Nom complet :</strong> ${form.nom.value} ${form.prenom.value}</p>
-                                <p><strong>Email :</strong> ${form.email.value}</p>
-                                <p><strong>Téléphone :</strong> ${document.getElementById('phone-prefix').textContent} ${form.telephone.value}</p>
-                                <p><strong>Formations :</strong> ${Array.from(document.querySelectorAll('input[name="selected_courses[]"]:checked')).map(cb => cb.nextElementSibling.textContent).join(', ')}</p>
-                                <p><strong>Session :</strong> ${document.querySelector('input[name="session"]:checked').value}</p>
-                                <p><strong>Mode :</strong> ${form['mode-formation'].options[form['mode-formation'].selectedIndex].text}</p>
-                                <p><strong>Montant total :</strong> ${document.getElementById('total-price-fcfa').textContent} FCFA</p>
-                            `;
-                        }
-                    }
-                }, 200);
-            }
-
-            // Gestion des étapes du formulaire
-            document.querySelectorAll('.btn-next').forEach(button => {
-                button.addEventListener('click', function() {
-                    const currentStep = parseInt(this.closest('.form-step').id.split('-').pop());
-                    validateStep(currentStep);
-                });
-            });
-
-            document.querySelectorAll('.btn-prev').forEach(button => {
-                button.addEventListener('click', function() {
-                    const currentStep = parseInt(this.closest('.form-step').id.split('-').pop());
-                    prevStep(currentStep);
-                });
-            });
-
-            // Gestion du bouton de soumission
-            document.getElementById('submit-btn').addEventListener('click', function(e) {
-                e.preventDefault();
-                validateFinalStep();
-            });
-        });
-    </script>
-    <script src="assets/js/script.js"></script>
+    <!-- Chargement de l'API reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 </html>
