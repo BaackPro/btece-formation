@@ -1,6 +1,4 @@
 
-console.log('Formulaire trouvé:', document.getElementById('registration-form'));
-
 // Configuration des prix des formations en FCFA
 const formationPrices = {
     'plans_archi_elec': 130000,
@@ -14,6 +12,7 @@ const exchangeRate = 655.957;
 
 // Temps estimé par étape (en secondes)
 const stepTimes = [60, 30, 30, 30, 30]; // Total: 3 minutes (180 secondes)
+
 
 // Configuration des numéros de téléphone par pays
 const phoneConfigurations = {
@@ -251,6 +250,7 @@ const phoneConfigurations = {
     'other': { code: '+', pattern: '[0-9]{8,15}', format: '+XXX XXX XXXX' }
 };
 
+
 // Noms des formations pour l'affichage
 const formationNames = {
     'plans_archi_elec': 'Plans architecturaux et électricité',
@@ -331,10 +331,10 @@ const DOM = {
     lieuNaissanceInput: document.getElementById('lieu_naissance'),
     ageError: document.getElementById('age-error'),
     resendEmailBtn: document.querySelector('.resend-link'),
-    csrfToken: document.getElementById('csrf_token')?.value,
+    csrfToken: document.getElementById('csrf_token'),
     sessionDatesContainer: document.getElementById('session-dates-container'),
     exportCSVBtn: document.getElementById('export-csv-btn'),
-    honeypotField: document.getElementById('honeypot') // Champ honeypot pour les bots
+    honeypotField: document.getElementById('bot-field') // Champ honeypot pour les bots
 };
 
 // Variables d'état
@@ -348,10 +348,12 @@ const state = {
     touchEndX: 0,
     emailSent: false,
     sessionDates: {
-        'session1': '15-19 Juillet 2024',
-        'session2': '12-16 Août 2024',
-        'session3': '9-13 Septembre 2024',
-        'session4': '14-18 Octobre 2024'
+        'juillet': 'Juillet 2025',
+        'aout': 'Août 2025',
+        'septembre': 'Septembre 2025',
+        'octobre': 'Octobre 2025',
+        'novembre': 'Novembre 2025',
+        'decembre': 'Décembre 2025'
     },
     formSubmitted: false
 };
@@ -424,7 +426,7 @@ function validateAge() {
 
 // Valide un numéro de téléphone selon le pays
 function validatePhone(phone, country) {
-    const config = phoneConfigurations[country] || phoneConfigurations['other'];
+    const config = phoneConfigurations[country] || phoneConfigurations['BJ']; // Par défaut Bénin
     const regex = new RegExp(`^${config.pattern}$`);
     return regex.test(phone);
 }
@@ -444,7 +446,7 @@ function clearForm() {
     DOM.registrationForm.reset();
     DOM.priceDisplay.style.display = 'none';
     DOM.totalPriceFCFA.textContent = '0';
-    DOM.totalPriceEUR.textContent = '0.00';
+    DOM.totalPriceEUR.textContent = '0';
     DOM.submitBtn.textContent = "S'inscrire maintenant";
     DOM.checkboxes.forEach(checkbox => checkbox.checked = false);
     DOM.phonePrefix.textContent = '+229';
@@ -760,7 +762,7 @@ function validateStep1() {
     const pays = DOM.paysSelect.value;
     const telephone = DOM.telephoneInput.value.trim();
     if (telephone && !validatePhone(telephone, pays)) {
-        const config = phoneConfigurations[pays] || phoneConfigurations['other'];
+        const config = phoneConfigurations[pays] || phoneConfigurations['BJ'];
         errorMessages.push(`Format de téléphone invalide (${config.format})`);
         DOM.telephoneInput.setAttribute('aria-invalid', 'true');
         isValid = false;
@@ -778,7 +780,6 @@ function validateStep1() {
     const objectifs = DOM.objectifsTextarea.value.trim();
     const wordCount = countWords(objectifs);
     
-    // Correction pour la validation des objectifs généraux
     if (wordCount < 5) {
         errorMessages.push('Veuillez décrire vos objectifs (minimum 5 mots)');
         DOM.objectifsTextarea.classList.add('invalid');
@@ -1059,32 +1060,50 @@ async function sendFormData() {
     DOM.loadingIndicator.style.display = 'block';
     DOM.submitBtn.disabled = true;
     
-    // Modification pour éviter le double enregistrement Netlify
-    const formData = new FormData(DOM.registrationForm);
-    
-    // Ajout du nom de l'utilisateur dans le sujet de l'email Netlify
-    const nomComplet = `${formData.get('prenom')} ${formData.get('nom')}`;
-    formData.append('nom_complet', nomComplet);
-    
-    // Ajout du montant total dans les données Netlify
-    const selectedFormations = Array.from(DOM.checkboxes)
-        .filter(cb => cb.checked)
-        .map(cb => cb.value);
-    
-    let totalFCfa = 0;
-    selectedFormations.forEach(formation => {
-        totalFCfa += formationPrices[formation];
-    });
-    
-    const totalEur = (totalFCfa / exchangeRate).toFixed(2);
-    formData.append('montant_total_fcfa', totalFCfa.toLocaleString('fr-FR'));
-    formData.append('montant_total_eur', totalEur);
-    
     try {
+        // Ajout du nom du formulaire pour Netlify Forms
+        const formNameInput = document.createElement('input');
+        formNameInput.type = 'hidden';
+        formNameInput.name = 'form-name';
+        formNameInput.value = 'inscription';
+        DOM.registrationForm.appendChild(formNameInput);
+        
+        // Ajout du nom de l'utilisateur dans le sujet de l'email Netlify
+        const nomComplet = `${document.getElementById('prenom').value} ${document.getElementById('nom').value}`;
+        const nomCompletInput = document.createElement('input');
+        nomCompletInput.type = 'hidden';
+        nomCompletInput.name = 'nom_complet';
+        nomCompletInput.value = nomComplet;
+        DOM.registrationForm.appendChild(nomCompletInput);
+        
+        // Ajout du montant total dans les données Netlify
+        const selectedFormations = Array.from(DOM.checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        let totalFCfa = 0;
+        selectedFormations.forEach(formation => {
+            totalFCfa += formationPrices[formation];
+        });
+        
+        const totalEur = (totalFCfa / exchangeRate).toFixed(2);
+        
+        const montantTotalInput = document.createElement('input');
+        montantTotalInput.type = 'hidden';
+        montantTotalInput.name = 'montant_total_fcfa';
+        montantTotalInput.value = totalFCfa.toLocaleString('fr-FR');
+        DOM.registrationForm.appendChild(montantTotalInput);
+        
+        const montantEurInput = document.createElement('input');
+        montantEurInput.type = 'hidden';
+        montantEurInput.name = 'montant_total_eur';
+        montantEurInput.value = totalEur;
+        DOM.registrationForm.appendChild(montantEurInput);
+        
         // Envoi des données à Netlify
         const response = await fetch(DOM.registrationForm.action, {
             method: 'POST',
-            body: formData,
+            body: new FormData(DOM.registrationForm),
             headers: {
                 'Accept': 'application/json'
             }
@@ -1096,9 +1115,6 @@ async function sendFormData() {
         
         const data = await response.json();
         console.log('Succès:', data);
-        
-        // Envoi des emails de confirmation
-        await sendConfirmationEmail();
         
         showConfirmationPage();
         localStorage.removeItem('bteceFormData');
@@ -1112,84 +1128,7 @@ async function sendFormData() {
         state.isSubmitting = false;
         DOM.loadingIndicator.style.display = 'none';
         DOM.submitBtn.disabled = false;
-        state.formSubmitted = false; // Réinitialiser pour permettre une nouvelle soumission si nécessaire
-    }
-}
-
-// Envoie un email de confirmation via EmailJS
-async function sendConfirmationEmail() {
-    try {
-        // Configuration EmailJS avec les variables d'environnement
-        const emailjsConfig = {
-            serviceId: process.env.EMAILJS_SERVICE_ID,
-            templateId: process.env.EMAILJS_TEMPLATE_ID,
-            adminTemplateId: process.env.EMAILJS_ADMIN_TEMPLATE_ID,
-            userId: process.env.EMAILJS_PUBLIC_ID
-        };
-
-        // Récupération des données du formulaire
-        const formData = {
-            to_name: `${sanitizeInput(document.getElementById('prenom').value)} ${sanitizeInput(document.getElementById('nom').value)}`,
-            to_email: sanitizeInput(document.getElementById('email').value),
-            formations: Array.from(DOM.checkboxes)
-                .filter(cb => cb.checked)
-                .map(cb => formationNames[cb.value])
-                .join(', '),
-            total_price: DOM.totalPriceFCFA.textContent,
-            total_price_eur: DOM.totalPriceEUR.textContent,
-            session: sanitizeInput(document.querySelector('input[name="session"]:checked')?.nextElementSibling?.textContent),
-            mode_formation: sanitizeInput(DOM.modeFormationSelect.options[DOM.modeFormationSelect.selectedIndex].text),
-            payment_method: sanitizeInput(document.querySelector('input[name="payment_method"]:checked')?.value)
-        };
-
-        // Envoi à l'utilisateur
-        const userResponse = await emailjs.send(
-            emailjsConfig.serviceId,
-            emailjsConfig.templateId, // Template pour l'utilisateur
-            formData,
-            emailjsConfig.userId
-        );
-
-        // Envoi à l'admin
-        const adminResponse = await emailjs.send(
-            emailjsConfig.serviceId,
-            emailjsConfig.adminTemplateId, // Template pour l'admin
-            formData,
-            emailjsConfig.userId
-        );
-
-        if (userResponse.status !== 200 || adminResponse.status !== 200) {
-            throw new Error('Échec de l\'envoi des emails');
-        }
-
-        state.emailSent = true;
-        
-        // Notification accessible
-        const notification = document.createElement('div');
-        notification.className = 'aria-notification';
-        notification.setAttribute('role', 'status');
-        notification.setAttribute('aria-live', 'polite');
-        notification.textContent = 'Email de confirmation envoyé avec succès';
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 5000);
-    } catch (error) {
-        console.error('Échec de l\'envoi des emails:', error);
-        state.emailSent = false;
-        
-        // Notification accessible
-        const notification = document.createElement('div');
-        notification.className = 'aria-notification error';
-        notification.setAttribute('role', 'alert');
-        notification.setAttribute('aria-live', 'assertive');
-        notification.textContent = 'Échec de l\'envoi de l\'email de confirmation';
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 5000);
+        state.formSubmitted = false;
     }
 }
 
@@ -1262,7 +1201,7 @@ function displayUserSummary() {
         <p><strong>Email :</strong> ${getValue('email')}</p>
         <p><strong>Téléphone :</strong> ${DOM.phonePrefix.textContent} ${getValue('telephone')}</p>
         <p><strong>Formations :</strong> ${checkedFormations.join(', ')}</p>
-        <p><strong>Session :</strong> ${getRadioText('session').charAt(0).toUpperCase() + getRadioText('session').slice(1)} 2025</p>
+        <p><strong>Session :</strong> ${getRadioText('session')} 2025</p>
         <p><strong>Mode :</strong> ${DOM.modeFormationSelect.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
         <p><strong>Méthode de paiement :</strong> ${paymentMethodNames[getRadioText('payment_method')] || getRadioText('payment_method')}</p>
         <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
@@ -1323,82 +1262,6 @@ function handleSwipe() {
     }
 }
 
-// Renvoie l'email de confirmation
-function resendConfirmationEmail() {
-    if (!DOM.resendEmailBtn) return;
-    
-    DOM.resendEmailBtn.disabled = true;
-    DOM.resendEmailBtn.textContent = 'Envoi en cours...';
-    
-    sendConfirmationEmail();
-    
-    setTimeout(() => {
-        if (state.emailSent) {
-            const notification = document.createElement('div');
-            notification.className = 'aria-notification';
-            notification.setAttribute('role', 'status');
-            notification.setAttribute('aria-live', 'polite');
-            notification.textContent = 'Un nouveau email de confirmation vous a été envoyé';
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
-        } else {
-            const notification = document.createElement('div');
-            notification.className = 'aria-notification error';
-            notification.setAttribute('role', 'alert');
-            notification.setAttribute('aria-live', 'assertive');
-            notification.textContent = 'Échec de l\'envoi du nouvel email. Veuillez réessayer plus tard.';
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
-        }
-        DOM.resendEmailBtn.disabled = false;
-        DOM.resendEmailBtn.innerHTML = '<i class="fas fa-redo"></i> Renvoyer l\'email de confirmation';
-    }, 2000);
-}
-
-// Exporte les données des inscrits au format CSV
-function exportToCSV() {
-    // Récupérer les données depuis Netlify (fonction serverless)
-    fetch('/.netlify/functions/get-submissions')
-        .then(response => response.json())
-        .then(data => {
-            if (!data || data.length === 0) {
-                alert('Aucune donnée à exporter');
-                return;
-            }
-
-            // Créer le contenu CSV
-            const headers = Object.keys(data[0]).join(',');
-            const rows = data.map(item => 
-                Object.values(item).map(value => 
-                    `"${String(value).replace(/"/g, '""')}"`
-                ).join(',')
-            ).join('\n');
-
-            const csvContent = `${headers}\n${rows}`;
-
-            // Créer et télécharger le fichier CSV
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'inscriptions_btece.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        })
-        .catch(error => {
-            console.error('Erreur lors de l\'export CSV:', error);
-            alert('Une erreur est survenue lors de l\'export des données');
-        });
-}
-
 // Initialisation
 function init() {
     // Configuration de la date maximale pour la date de naissance (13 ans minimum)
@@ -1427,7 +1290,7 @@ function init() {
     // Gestion du pays et du format de téléphone
     DOM.paysSelect.addEventListener('change', function() {
         const selectedCountry = this.value;
-        const config = phoneConfigurations[selectedCountry] || phoneConfigurations['other'];
+        const config = phoneConfigurations[selectedCountry] || phoneConfigurations['BJ'];
         
         DOM.phonePrefix.textContent = config.code;
         DOM.telephoneInput.pattern = config.pattern;
@@ -1487,26 +1350,6 @@ function init() {
     DOM.closeChat.addEventListener('click', () => { DOM.chatContainer.style.display = 'none'; });
     DOM.sendMessage.addEventListener('click', sendChatMessage);
     DOM.chatInput.addEventListener('keypress', e => e.key === 'Enter' && sendChatMessage());
-    
-    // Bouton de renvoi d'email
-    if (DOM.resendEmailBtn) {
-        DOM.resendEmailBtn.addEventListener('click', resendConfirmationEmail);
-    }
-    
-    // Gestion des gestes tactiles
-    document.addEventListener('touchstart', (e) => { 
-        state.touchStartX = e.changedTouches[0].screenX; 
-    }, false);
-    
-    document.addEventListener('touchend', (e) => {
-        state.touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, false);
-    
-    // Bouton d'export CSV
-    if (DOM.exportCSVBtn) {
-        DOM.exportCSVBtn.addEventListener('click', exportToCSV);
-    }
     
     // Initialisation finale
     updateWordCounter();
