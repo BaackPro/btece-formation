@@ -259,6 +259,34 @@
             content: " *";
             color: #d9534f;
         }
+        
+        /* Amélioration des messages d'erreur */
+        .error-icon {
+            display: none;
+            color: #d9534f;
+            margin-right: 5px;
+        }
+        
+        .invalid ~ .error-icon {
+            display: inline-block;
+        }
+        
+        .error-highlight {
+            animation: shake 0.5s;
+            box-shadow: 0 0 8px rgba(217, 83, 79, 0.5);
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        
+        /* Style pour les champs valides */
+        .valid {
+            border-color: #5cb85c !important;
+            background-color: #f9fff9 !important;
+        }
     </style>
 </head>
 <body>
@@ -358,30 +386,35 @@
                         <div class="form-group">
                             <label for="nom" class="required">Nom</label>
                             <input type="text" id="nom" name="nom" required aria-required="true" class="keyboard-support" minlength="2" maxlength="50" pattern="[A-Za-zÀ-ÿ\s\-']+" aria-describedby="nom-error">
+                            <i class="fas fa-exclamation-circle error-icon" id="nom-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="nom-error" role="alert">Veuillez entrer votre nom (minimum 2 caractères, lettres uniquement)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="prenom" class="required">Prénom</label>
                             <input type="text" id="prenom" name="prenom" required aria-required="true" class="keyboard-support" minlength="2" maxlength="50" pattern="[A-Za-zÀ-ÿ\s\-']+" aria-describedby="prenom-error">
+                            <i class="fas fa-exclamation-circle error-icon" id="prenom-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="prenom-error" role="alert">Veuillez entrer votre prénom (minimum 2 caractères, lettres uniquement)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="email" class="required">Email</label>
                             <input type="email" id="email" name="email" required aria-required="true" class="keyboard-support" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" aria-describedby="email-error">
+                            <i class="fas fa-exclamation-circle error-icon" id="email-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="email-error" role="alert">Veuillez entrer une adresse email valide (exemple@domaine.com)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="date_naissance" class="required">Date de naissance</label>
                             <input type="date" id="date_naissance" name="date_naissance" required aria-required="true" class="keyboard-support" max="" aria-describedby="age-error">
+                            <i class="fas fa-exclamation-circle error-icon" id="age-error-icon" aria-hidden="true"></i>
                             <div id="age-error" class="error-message" role="alert">Vous devez avoir au moins 13 ans pour vous inscrire.</div>
                         </div>
 
                         <div class="form-group">
                             <label for="lieu_naissance" class="required">Lieu de naissance</label>
                             <input type="text" id="lieu_naissance" name="lieu_naissance" required aria-required="true" class="keyboard-support" minlength="2" maxlength="100" aria-describedby="lieu-error">
+                            <i class="fas fa-exclamation-circle error-icon" id="lieu-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="lieu-error" role="alert">Veuillez entrer votre lieu de naissance (minimum 2 caractères)</div>
                         </div>
 
@@ -622,6 +655,7 @@
                                     <option value="other">Autre pays</option>
                                 </optgroup>
                             </select>
+                            <i class="fas fa-exclamation-circle error-icon" id="pays-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="pays-error" role="alert">Veuillez sélectionner votre pays</div>
                         </div>
 
@@ -631,6 +665,7 @@
                                 <span id="phone-prefix" class="phone-prefix">+229</span>
                                 <input type="tel" id="telephone" name="telephone" required aria-required="true" 
                                        pattern="[0-9]{8,10}" title="Numéro de téléphone valide (8 à 10 chiffres)" class="keyboard-support" aria-describedby="telephone-error phone-format">
+                                <i class="fas fa-exclamation-circle error-icon" id="telephone-error-icon" aria-hidden="true"></i>
                             </div>
                             <small id="phone-format" class="phone-format">Format : +229 XX XX XX XX</small>
                             <div class="error-message" id="telephone-error" role="alert">Veuillez entrer un numéro de téléphone valide (8 à 10 chiffres)</div>
@@ -668,14 +703,16 @@
                                     <label for="profession-autre">Autre</label>
                                 </div>
                             </fieldset>
+                            <i class="fas fa-exclamation-circle error-icon" id="profession-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="profession-error" role="alert">Veuillez sélectionner votre profession</div>
                         </div>
 
                         <div class="form-group">
                             <label for="objectifs" class="required">Objectifs principaux</label>
-                            <textarea id="objectifs" name="objectifs" rows="3" required aria-required="true" class="keyboard-support" maxlength="500" placeholder="500 caractères maximum" aria-describedby="objectifs-error objectifs-counter"></textarea>
-                            <small id="objectifs-counter">0/500 caractères</small>
-                            <div class="error-message" id="objectifs-error" role="alert">Veuillez décrire vos objectifs (minimum 10 caractères)</div>
+                            <textarea id="objectifs" name="objectifs" rows="3" required aria-required="true" class="keyboard-support" maxlength="50" placeholder="50 mots maximum" aria-describedby="objectifs-error objectifs-counter"></textarea>
+                            <small id="objectifs-counter">0/50 mots</small>
+                            <i class="fas fa-exclamation-circle error-icon" id="objectifs-error-icon" aria-hidden="true"></i>
+                            <div class="error-message" id="objectifs-error" role="alert">Veuillez décrire vos objectifs (10 à 50 mots)</div>
                         </div>
 
                         <div class="form-navigation">
@@ -707,6 +744,7 @@
                                     </div>
                                 </div>
                             </fieldset>
+                            <i class="fas fa-exclamation-circle error-icon" id="formations-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="formations-error" role="alert">Veuillez sélectionner au moins une formation</div>
                         </div>
                         
@@ -753,6 +791,7 @@
                                     <label for="session-decembre">Décembre 2025</label>
                                 </div>
                             </fieldset>
+                            <i class="fas fa-exclamation-circle error-icon" id="session-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="session-error" role="alert">Veuillez sélectionner une session</div>
                         </div>
 
@@ -763,6 +802,7 @@
                                 <option value="presentiel">Présentiel à Cotonou (Bénin)</option>
                                 <option value="en-ligne">En ligne (à distance)</option>
                             </select>
+                            <i class="fas fa-exclamation-circle error-icon" id="mode-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="mode-error" role="alert">Veuillez sélectionner un mode de formation</div>
                         </div>
 
@@ -833,6 +873,7 @@
                                     </div>
                                 </div>
                             </fieldset>
+                            <i class="fas fa-exclamation-circle error-icon" id="payment-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="payment-error" role="alert">Veuillez sélectionner une méthode de paiement</div>
                         </div>
 
@@ -856,6 +897,7 @@
                             <input type="checkbox" id="consentement" name="consentement" required aria-required="true" class="keyboard-support" aria-describedby="consentement-error">
                             <label for="consentement" class="required">J'accepte les conditions générales</label>
                         </div>
+                        <i class="fas fa-exclamation-circle error-icon" id="consentement-error-icon" aria-hidden="true"></i>
                         <div class="error-message" id="consentement-error" role="alert">Veuillez accepter les conditions générales</div>
 
                         <div id="loading" style="display: none;" aria-live="polite">
@@ -1420,13 +1462,25 @@
                 }
             });
             
-            // Compteur de caractères pour les objectifs
+            // Compteur de mots pour les objectifs
             const objectifsTextarea = document.getElementById('objectifs');
             const objectifsCounter = document.getElementById('objectifs-counter');
             
             objectifsTextarea.addEventListener('input', function() {
-                const count = this.value.length;
-                objectifsCounter.textContent = `${count}/500 caractères`;
+                const text = this.value;
+                const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+                objectifsCounter.textContent = `${wordCount}/50 mots`;
+                
+                if (wordCount > 50) {
+                    this.classList.add('invalid');
+                    document.getElementById('objectifs-error').textContent = "Maximum 50 mots autorisés";
+                    document.getElementById('objectifs-error').style.display = 'block';
+                    document.getElementById('objectifs-error-icon').style.display = 'inline-block';
+                } else {
+                    this.classList.remove('invalid');
+                    document.getElementById('objectifs-error').style.display = 'none';
+                    document.getElementById('objectifs-error-icon').style.display = 'none';
+                }
             });
             
             // Calcul du prix total
@@ -1491,41 +1545,71 @@
                     const nom = document.getElementById('nom');
                     if (!nom.value || nom.value.length < 2 || !/^[A-Za-zÀ-ÿ\s\-']+$/.test(nom.value)) {
                         nom.classList.add('invalid');
+                        nom.classList.add('error-highlight');
                         document.getElementById('nom-error').style.display = 'block';
+                        document.getElementById('nom-error-icon').style.display = 'inline-block';
                         isValid = false;
+                        
+                        setTimeout(() => {
+                            nom.classList.remove('error-highlight');
+                        }, 500);
                     } else {
                         nom.classList.remove('invalid');
                         document.getElementById('nom-error').style.display = 'none';
+                        document.getElementById('nom-error-icon').style.display = 'none';
+                        nom.classList.add('valid');
                     }
                     
                     // Validation du prénom
                     const prenom = document.getElementById('prenom');
                     if (!prenom.value || prenom.value.length < 2 || !/^[A-Za-zÀ-ÿ\s\-']+$/.test(prenom.value)) {
                         prenom.classList.add('invalid');
+                        prenom.classList.add('error-highlight');
                         document.getElementById('prenom-error').style.display = 'block';
+                        document.getElementById('prenom-error-icon').style.display = 'inline-block';
                         isValid = false;
+                        
+                        setTimeout(() => {
+                            prenom.classList.remove('error-highlight');
+                        }, 500);
                     } else {
                         prenom.classList.remove('invalid');
                         document.getElementById('prenom-error').style.display = 'none';
+                        document.getElementById('prenom-error-icon').style.display = 'none';
+                        prenom.classList.add('valid');
                     }
                     
                     // Validation de l'email
                     const email = document.getElementById('email');
                     if (!email.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
                         email.classList.add('invalid');
+                        email.classList.add('error-highlight');
                         document.getElementById('email-error').style.display = 'block';
+                        document.getElementById('email-error-icon').style.display = 'inline-block';
                         isValid = false;
+                        
+                        setTimeout(() => {
+                            email.classList.remove('error-highlight');
+                        }, 500);
                     } else {
                         email.classList.remove('invalid');
                         document.getElementById('email-error').style.display = 'none';
+                        document.getElementById('email-error-icon').style.display = 'none';
+                        email.classList.add('valid');
                     }
                     
                     // Validation de la date de naissance
                     const dateNaissance = document.getElementById('date_naissance');
                     if (!dateNaissance.value) {
                         dateNaissance.classList.add('invalid');
+                        dateNaissance.classList.add('error-highlight');
                         document.getElementById('age-error').style.display = 'block';
+                        document.getElementById('age-error-icon').style.display = 'inline-block';
                         isValid = false;
+                        
+                        setTimeout(() => {
+                            dateNaissance.classList.remove('error-highlight');
+                        }, 500);
                     } else {
                         const birthDate = new Date(dateNaissance.value);
                         const ageDiff = Date.now() - birthDate.getTime();
@@ -1534,11 +1618,19 @@
                         
                         if (age < 13) {
                             dateNaissance.classList.add('invalid');
+                            dateNaissance.classList.add('error-highlight');
                             document.getElementById('age-error').style.display = 'block';
+                            document.getElementById('age-error-icon').style.display = 'inline-block';
                             isValid = false;
+                            
+                            setTimeout(() => {
+                                dateNaissance.classList.remove('error-highlight');
+                            }, 500);
                         } else {
                             dateNaissance.classList.remove('invalid');
                             document.getElementById('age-error').style.display = 'none';
+                            document.getElementById('age-error-icon').style.display = 'none';
+                            dateNaissance.classList.add('valid');
                         }
                     }
                     
@@ -1546,53 +1638,92 @@
                     const lieuNaissance = document.getElementById('lieu_naissance');
                     if (!lieuNaissance.value || lieuNaissance.value.length < 2) {
                         lieuNaissance.classList.add('invalid');
+                        lieuNaissance.classList.add('error-highlight');
                         document.getElementById('lieu-error').style.display = 'block';
+                        document.getElementById('lieu-error-icon').style.display = 'inline-block';
                         isValid = false;
+                        
+                        setTimeout(() => {
+                            lieuNaissance.classList.remove('error-highlight');
+                        }, 500);
                     } else {
                         lieuNaissance.classList.remove('invalid');
                         document.getElementById('lieu-error').style.display = 'none';
+                        document.getElementById('lieu-error-icon').style.display = 'none';
+                        lieuNaissance.classList.add('valid');
                     }
                     
                     // Validation du pays
                     const pays = document.getElementById('pays');
                     if (!pays.value) {
                         pays.classList.add('invalid');
+                        pays.classList.add('error-highlight');
                         document.getElementById('pays-error').style.display = 'block';
+                        document.getElementById('pays-error-icon').style.display = 'inline-block';
                         isValid = false;
+                        
+                        setTimeout(() => {
+                            pays.classList.remove('error-highlight');
+                        }, 500);
                     } else {
                         pays.classList.remove('invalid');
                         document.getElementById('pays-error').style.display = 'none';
+                        document.getElementById('pays-error-icon').style.display = 'none';
+                        pays.classList.add('valid');
                     }
                     
                     // Validation du téléphone
                     const telephone = document.getElementById('telephone');
                     if (!telephone.value || !/^\d{8,10}$/.test(telephone.value)) {
                         telephone.classList.add('invalid');
+                        telephone.classList.add('error-highlight');
                         document.getElementById('telephone-error').style.display = 'block';
+                        document.getElementById('telephone-error-icon').style.display = 'inline-block';
                         isValid = false;
+                        
+                        setTimeout(() => {
+                            telephone.classList.remove('error-highlight');
+                        }, 500);
                     } else {
                         telephone.classList.remove('invalid');
                         document.getElementById('telephone-error').style.display = 'none';
+                        document.getElementById('telephone-error-icon').style.display = 'none';
+                        telephone.classList.add('valid');
                     }
                     
                     // Validation de la profession
                     const professionSelected = document.querySelector('input[name="profession"]:checked');
                     if (!professionSelected) {
                         document.getElementById('profession-error').style.display = 'block';
+                        document.getElementById('profession-error-icon').style.display = 'inline-block';
                         isValid = false;
                     } else {
                         document.getElementById('profession-error').style.display = 'none';
+                        document.getElementById('profession-error-icon').style.display = 'none';
                     }
                     
                     // Validation des objectifs
                     const objectifs = document.getElementById('objectifs');
-                    if (!objectifs.value || objectifs.value.length < 10) {
+                    const wordCount = objectifs.value.trim() === '' ? 0 : objectifs.value.trim().split(/\s+/).length;
+                    
+                    if (wordCount < 10 || wordCount > 50) {
                         objectifs.classList.add('invalid');
+                        objectifs.classList.add('error-highlight');
+                        document.getElementById('objectifs-error').textContent = wordCount < 10 ? 
+                            "Veuillez décrire vos objectifs (minimum 10 mots)" : 
+                            "Maximum 50 mots autorisés";
                         document.getElementById('objectifs-error').style.display = 'block';
+                        document.getElementById('objectifs-error-icon').style.display = 'inline-block';
                         isValid = false;
+                        
+                        setTimeout(() => {
+                            objectifs.classList.remove('error-highlight');
+                        }, 500);
                     } else {
                         objectifs.classList.remove('invalid');
                         document.getElementById('objectifs-error').style.display = 'none';
+                        document.getElementById('objectifs-error-icon').style.display = 'none';
+                        objectifs.classList.add('valid');
                     }
                     
                     if (isValid) {
@@ -1602,9 +1733,11 @@
                     const formationsSelected = document.querySelectorAll('input[name="formations[]"]:checked');
                     if (formationsSelected.length === 0) {
                         document.getElementById('formations-error').style.display = 'block';
+                        document.getElementById('formations-error-icon').style.display = 'inline-block';
                         isValid = false;
                     } else {
                         document.getElementById('formations-error').style.display = 'none';
+                        document.getElementById('formations-error-icon').style.display = 'none';
                         nextStep(stepNumber);
                     }
                 } else if (stepNumber === 3) {
@@ -1613,16 +1746,20 @@
                     
                     if (!sessionSelected) {
                         document.getElementById('session-error').style.display = 'block';
+                        document.getElementById('session-error-icon').style.display = 'inline-block';
                         isValid = false;
                     } else {
                         document.getElementById('session-error').style.display = 'none';
+                        document.getElementById('session-error-icon').style.display = 'none';
                     }
                     
                     if (!modeSelected) {
                         document.getElementById('mode-error').style.display = 'block';
+                        document.getElementById('mode-error-icon').style.display = 'inline-block';
                         isValid = false;
                     } else {
                         document.getElementById('mode-error').style.display = 'none';
+                        document.getElementById('mode-error-icon').style.display = 'none';
                     }
                     
                     if (isValid) {
@@ -1632,9 +1769,11 @@
                     const paymentSelected = document.querySelector('input[name="payment_method"]:checked');
                     if (!paymentSelected) {
                         document.getElementById('payment-error').style.display = 'block';
+                        document.getElementById('payment-error-icon').style.display = 'inline-block';
                         isValid = false;
                     } else {
                         document.getElementById('payment-error').style.display = 'none';
+                        document.getElementById('payment-error-icon').style.display = 'none';
                         nextStep(stepNumber);
                     }
                 }
@@ -1645,9 +1784,11 @@
                 const consentement = document.getElementById('consentement').checked;
                 if (!consentement) {
                     document.getElementById('consentement-error').style.display = 'block';
+                    document.getElementById('consentement-error-icon').style.display = 'inline-block';
                     return;
                 } else {
                     document.getElementById('consentement-error').style.display = 'none';
+                    document.getElementById('consentement-error-icon').style.display = 'none';
                 }
                 
                 // Afficher le modal de confirmation

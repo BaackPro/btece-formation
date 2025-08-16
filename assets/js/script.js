@@ -374,9 +374,11 @@ function updateWordCounter() {
     if (wordCount > 50) {
         DOM.objectifsCounter.style.color = '#e74c3c';
         DOM.objectifsTextarea.style.borderColor = '#e74c3c';
+        DOM.objectifsTextarea.setAttribute('aria-invalid', 'true');
     } else {
         DOM.objectifsCounter.style.color = '#666';
         DOM.objectifsTextarea.style.borderColor = '#ddd';
+        DOM.objectifsTextarea.setAttribute('aria-invalid', 'false');
     }
 }
 
@@ -410,10 +412,12 @@ function validateAge() {
     if (age < 13) {
         DOM.ageError.style.display = 'block';
         DOM.dateNaissanceInput.style.borderColor = '#e74c3c';
+        DOM.dateNaissanceInput.setAttribute('aria-invalid', 'true');
         return false;
     } else {
         DOM.ageError.style.display = 'none';
         DOM.dateNaissanceInput.style.borderColor = '#ddd';
+        DOM.dateNaissanceInput.setAttribute('aria-invalid', 'false');
         return true;
     }
 }
@@ -1090,6 +1094,14 @@ async function sendFormData() {
 // Envoie un email de confirmation via EmailJS
 async function sendConfirmationEmail() {
     try {
+        // Configuration EmailJS avec les variables d'environnement
+        const emailjsConfig = {
+            serviceId: process.env.EMAILJS_SERVICE_ID,
+            templateId: process.env.EMAILJS_TEMPLATE_ID,
+            adminTemplateId: process.env.EMAILJS_ADMIN_TEMPLATE_ID,
+            userId: process.env.EMAILJS_PUBLIC_ID
+        };
+
         // Récupération des données du formulaire
         const formData = {
             to_name: `${sanitizeInput(document.getElementById('prenom').value)} ${sanitizeInput(document.getElementById('nom').value)}`,
@@ -1106,24 +1118,22 @@ async function sendConfirmationEmail() {
         };
 
         // Envoi à l'utilisateur
-        const userResponse = await fetch('/.netlify/functions/send-confirmation-email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
+        const userResponse = await emailjs.send(
+            emailjsConfig.serviceId,
+            emailjsConfig.templateId, // Template pour l'utilisateur
+            formData,
+            emailjsConfig.userId
+        );
 
         // Envoi à l'admin
-        const adminResponse = await fetch('/.netlify/functions/send-admin-notification', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
+        const adminResponse = await emailjs.send(
+            emailjsConfig.serviceId,
+            emailjsConfig.adminTemplateId, // Template pour l'admin
+            formData,
+            emailjsConfig.userId
+        );
 
-        if (!userResponse.ok || !adminResponse.ok) {
+        if (userResponse.status !== 200 || adminResponse.status !== 200) {
             throw new Error('Échec de l\'envoi des emails');
         }
 
