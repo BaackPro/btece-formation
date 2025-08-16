@@ -1,0 +1,288 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription confirmée - BTECE Formation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .success-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .success-icon {
+            font-size: 80px;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        p {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .user-summary {
+            text-align: left;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .user-summary h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
+        .tracking-steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .tracking-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #ddd;
+            z-index: 1;
+        }
+        
+        .step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            width: 24%;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+        
+        .step.active .step-circle {
+            background: #3498db;
+        }
+        
+        .step.completed .step-circle {
+            background: #4CAF50;
+        }
+        
+        .step-text {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .step.completed .step-text,
+        .step.active .step-text {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .action-buttons {
+            margin-top: 30px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            .success-container {
+                margin: 20px;
+                padding: 20px;
+            }
+            
+            .tracking-steps {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .step {
+                width: 100%;
+                text-align: left;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .step-circle {
+                margin: 0 15px 0 0;
+            }
+            
+            .tracking-steps::before {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h1>Inscription confirmée !</h1>
+        <p>Merci pour votre inscription à nos formations. Nous avons bien reçu votre demande.</p>
+        <p>Un email de confirmation vous a été envoyé avec tous les détails de votre inscription.</p>
+        
+        <div class="user-summary">
+            <h3>Récapitulatif de votre inscription</h3>
+            <!-- Ces informations seront remplies par JavaScript -->
+            <div id="user-summary-content"></div>
+        </div>
+        
+        <div class="tracking-steps">
+            <div class="step completed">
+                <div class="step-circle">1</div>
+                <div class="step-text">Formulaire soumis</div>
+            </div>
+            <div class="step active">
+                <div class="step-circle">2</div>
+                <div class="step-text">Validation en cours</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <div class="step-text">Confirmation</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">4</div>
+                <div class="step-text">Accès aux formations</div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/" class="btn">Retour à l'accueil</a>
+            <a href="/contact.html" class="btn btn-secondary">Nous contacter</a>
+        </div>
+    </div>
+
+    <script>
+        // Récupération des données depuis localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedData = localStorage.getItem('pendingRegistration') || localStorage.getItem('bteceFormData');
+            
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    let summaryHTML = '';
+                    
+                    if (data.nom && data.prenom) {
+                        summaryHTML += `<p><strong>Nom complet :</strong> ${data.prenom} ${data.nom}</p>`;
+                    }
+                    
+                    if (data.email) {
+                        summaryHTML += `<p><strong>Email :</strong> ${data.email}</p>`;
+                    }
+                    
+                    if (data.telephone) {
+                        summaryHTML += `<p><strong>Téléphone :</strong> ${data.telephone}</p>`;
+                    }
+                    
+                    if (data.checkedFormations && data.checkedFormations.length > 0) {
+                        summaryHTML += `<p><strong>Formations :</strong> ${data.checkedFormations.join(', ')}</p>`;
+                    }
+                    
+                    if (data.session) {
+                        summaryHTML += `<p><strong>Session :</strong> ${data.session} 2025</p>`;
+                    }
+                    
+                    if (data.modeFormation) {
+                        summaryHTML += `<p><strong>Mode :</strong> ${data.modeFormation === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>`;
+                    }
+                    
+                    if (data.paymentMethod) {
+                        summaryHTML += `<p><strong>Méthode de paiement :</strong> ${data.paymentMethod}</p>`;
+                    }
+                    
+                    if (data.total) {
+                        summaryHTML += `<p><strong>Montant total :</strong> ${data.total} FCFA</p>`;
+                    }
+                    
+                    document.getElementById('user-summary-content').innerHTML = summaryHTML;
+                    
+                    // Animation des étapes
+                    const steps = document.querySelectorAll('.tracking-steps .step');
+                    
+                    setTimeout(() => {
+                        steps[1].classList.add('completed');
+                        steps[2].classList.add('active');
+                        
+                        setTimeout(() => {
+                            steps[2].classList.add('completed');
+                            steps[3].classList.add('active');
+                        }, 2000);
+                    }, 1000);
+                    
+                    // Nettoyage du localStorage après affichage
+                    localStorage.removeItem('pendingRegistration');
+                    localStorage.removeItem('bteceFormData');
+                    
+                } catch (error) {
+                    console.error('Erreur lors de la lecture des données:', error);
+                    document.getElementById('user-summary-content').innerHTML = 
+                        '<p>Nous avons bien reçu votre inscription. Un email de confirmation vous a été envoyé.</p>';
+                }
+            } else {
+                document.getElementById('user-summary-content').innerHTML = 
+                    '<p>Nous avons bien reçu votre inscription. Un email de confirmation vous a été envoyé.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
