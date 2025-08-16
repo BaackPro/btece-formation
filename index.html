@@ -373,9 +373,9 @@
                 </nav>
 
                 <!-- Formulaire unique et bien structuré -->
-                <form id="registration-form" name="registration" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/success.html">
+                <form id="registration-form" name="registration" method="POST" data-netlify="true" netlify-honeypot="bot-field" data-netlify-recaptcha="true">
                 
-                    <input type="hidden" name="form-name" value="inscription">
+                    <input type="hidden" name="form-name" value="registration">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="">
                     <input type="hidden" id="montant-total" name="montant_total" value="">
                     <p class="hidden" aria-hidden="true">
@@ -386,14 +386,14 @@
                     <div class="form-step active" id="form-step-1" aria-labelledby="step-1">
                         <div class="form-group">
                             <label for="nom" class="required">Nom</label>
-                            <input type="text" id="nom" name="nom" required aria-required="true" class="keyboard-support" minlength="2" maxlength="50" pattern="[A-Za-zÀ-ÿ\s\-']+" aria-describedby="nom-error">
+                            <input type="text" id="nom" name="last_name" required aria-required="true" class="keyboard-support" minlength="2" maxlength="50" pattern="[A-Za-zÀ-ÿ\s\-']+" aria-describedby="nom-error">
                             <i class="fas fa-exclamation-circle error-icon" id="nom-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="nom-error" role="alert">Veuillez entrer votre nom (minimum 2 caractères, lettres uniquement)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="prenom" class="required">Prénom</label>
-                            <input type="text" id="prenom" name="prenom" required aria-required="true" class="keyboard-support" minlength="2" maxlength="50" pattern="[A-Za-zÀ-ÿ\s\-']+" aria-describedby="prenom-error">
+                            <input type="text" id="prenom" name="first_name" required aria-required="true" class="keyboard-support" minlength="2" maxlength="50" pattern="[A-Za-zÀ-ÿ\s\-']+" aria-describedby="prenom-error">
                             <i class="fas fa-exclamation-circle error-icon" id="prenom-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="prenom-error" role="alert">Veuillez entrer votre prénom (minimum 2 caractères, lettres uniquement)</div>
                         </div>
@@ -407,21 +407,21 @@
 
                         <div class="form-group">
                             <label for="date_naissance" class="required">Date de naissance</label>
-                            <input type="date" id="date_naissance" name="date_naissance" required aria-required="true" class="keyboard-support" max="" aria-describedby="age-error">
+                            <input type="date" id="date_naissance" name="birth_date" required aria-required="true" class="keyboard-support" max="" aria-describedby="age-error">
                             <i class="fas fa-exclamation-circle error-icon" id="age-error-icon" aria-hidden="true"></i>
                             <div id="age-error" class="error-message" role="alert">Vous devez avoir au moins 13 ans pour vous inscrire.</div>
                         </div>
 
                         <div class="form-group">
                             <label for="lieu_naissance" class="required">Lieu de naissance</label>
-                            <input type="text" id="lieu_naissance" name="lieu_naissance" required aria-required="true" class="keyboard-support" minlength="2" maxlength="100" aria-describedby="lieu-error">
+                            <input type="text" id="lieu_naissance" name="birth_place" required aria-required="true" class="keyboard-support" minlength="2" maxlength="100" aria-describedby="lieu-error">
                             <i class="fas fa-exclamation-circle error-icon" id="lieu-error-icon" aria-hidden="true"></i>
                             <div class="error-message" id="lieu-error" role="alert">Veuillez entrer votre lieu de naissance (minimum 2 caractères)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="pays" class="required">Pays</label>
-                            <select id="pays" name="pays" required aria-required="true" class="keyboard-support" aria-describedby="pays-error">
+                            <select id="pays" name="country" required aria-required="true" class="keyboard-support" aria-describedby="pays-error">
                                 <option value="">Sélectionnez votre pays</option>
                                 <!-- Afrique -->
                                 <optgroup label="Zone Afrique">
@@ -664,7 +664,7 @@
                             <label for="telephone" class="required">Téléphone</label>
                             <div class="phone-container">
                                 <span id="phone-prefix" class="phone-prefix">+229</span>
-                                <input type="tel" id="telephone" name="telephone" required aria-required="true" 
+                                <input type="tel" id="telephone" name="phone_number" required aria-required="true" 
                                        pattern="[0-9]{8,10}" title="Numéro de téléphone valide (8 à 10 chiffres)" class="keyboard-support" aria-describedby="telephone-error phone-format">
                                 <i class="fas fa-exclamation-circle error-icon" id="telephone-error-icon" aria-hidden="true"></i>
                             </div>
@@ -710,10 +710,10 @@
 
                         <div class="form-group">
                             <label for="objectifs" class="required">Objectifs principaux</label>
-                            <textarea id="objectifs" name="objectifs" rows="3" required aria-required="true" class="keyboard-support" maxlength="50" placeholder="50 mots maximum" aria-describedby="objectifs-error objectifs-counter"></textarea>
+                            <textarea id="objectifs" name="goals" rows="3" required aria-required="true" class="keyboard-support" maxlength="50" placeholder="50 mots maximum" aria-describedby="objectifs-error objectifs-counter"></textarea>
                             <small id="objectifs-counter">0/50 mots</small>
                             <i class="fas fa-exclamation-circle error-icon" id="objectifs-error-icon" aria-hidden="true"></i>
-                            <div class="error-message" id="objectifs-error" role="alert">Veuillez décrire vos objectifs (10 à 50 mots)</div>
+                            <div class="error-message" id="objectifs-error" role="alert">Veuillez décrire vos objectifs (5 à 50 mots)</div>
                         </div>
 
                         <div class="form-navigation">
@@ -728,19 +728,19 @@
                                 <legend class="required">Formations souhaitées</legend>
                                 <div class="checkbox-container">
                                     <div class="checkbox-group">
-                                        <input type="checkbox" id="formation1" name="formations[]" value="plans_archi_elec" class="keyboard-support" aria-describedby="formations-error">
+                                        <input type="checkbox" id="formation1" name="selected_courses[]" value="plans_archi_elec" class="keyboard-support" aria-describedby="formations-error">
                                         <label for="formation1">Réalisation de plans architecturaux et électricité</label>
                                     </div>
                                     <div class="checkbox-group">
-                                        <input type="checkbox" id="formation2" name="formations[]" value="conception_elec" class="keyboard-support">
+                                        <input type="checkbox" id="formation2" name="selected_courses[]" value="conception_elec" class="keyboard-support">
                                         <label for="formation2">Conception électronique</label>
                                     </div>
                                     <div class="checkbox-group">
-                                        <input type="checkbox" id="formation3" name="formations[]" value="realisation_3d" class="keyboard-support">
+                                        <input type="checkbox" id="formation3" name="selected_courses[]" value="realisation_3d" class="keyboard-support">
                                         <label for="formation3">Réalisation 3D</label>
                                     </div>
                                     <div class="checkbox-group">
-                                        <input type="checkbox" id="formation4" name="formations[]" value="programmation" class="keyboard-support">
+                                        <input type="checkbox" id="formation4" name="selected_courses[]" value="programmation" class="keyboard-support">
                                         <label for="formation4">Programmation</label>
                                     </div>
                                 </div>
@@ -798,7 +798,7 @@
 
                         <div class="form-group">
                             <label for="mode-formation" class="required">Mode de formation</label>
-                            <select id="mode-formation" name="mode-formation" required class="keyboard-support" aria-describedby="mode-error">
+                            <select id="mode-formation" name="training_mode" required class="keyboard-support" aria-describedby="mode-error">
                                 <option value="">Sélectionnez un mode</option>
                                 <option value="presentiel">Présentiel à Cotonou (Bénin)</option>
                                 <option value="en-ligne">En ligne (à distance)</option>
@@ -895,7 +895,7 @@
                         </div>
 
                         <div class="checkbox-group">
-                            <input type="checkbox" id="consentement" name="consentement" required aria-required="true" class="keyboard-support" aria-describedby="consentement-error">
+                            <input type="checkbox" id="consentement" name="terms_accepted" required aria-required="true" class="keyboard-support" aria-describedby="consentement-error">
                             <label for="consentement" class="required">J'accepte les conditions générales</label>
                         </div>
                         <i class="fas fa-exclamation-circle error-icon" id="consentement-error-icon" aria-hidden="true"></i>
@@ -1485,7 +1485,7 @@
             });
             
             // Calcul du prix total
-            const formationCheckboxes = document.querySelectorAll('input[name="formations[]"]');
+            const formationCheckboxes = document.querySelectorAll('input[name="selected_courses[]"]');
             const totalPriceFcfa = document.getElementById('total-price-fcfa');
             const totalPriceEur = document.getElementById('total-price-eur');
             
@@ -1499,7 +1499,7 @@
             formationCheckboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
                     let total = 0;
-                    document.querySelectorAll('input[name="formations[]"]:checked').forEach(checked => {
+                    document.querySelectorAll('input[name="selected_courses[]"]:checked').forEach(checked => {
                         total += formationPrices[checked.value];
                     });
                     
@@ -1731,7 +1731,7 @@
                         nextStep(stepNumber);
                     }
                 } else if (stepNumber === 2) {
-                    const formationsSelected = document.querySelectorAll('input[name="formations[]"]:checked');
+                    const formationsSelected = document.querySelectorAll('input[name="selected_courses[]"]:checked');
                     if (formationsSelected.length === 0) {
                         document.getElementById('formations-error').style.display = 'block';
                         document.getElementById('formations-error-icon').style.display = 'inline-block';
@@ -1813,7 +1813,7 @@
                 
                 const formationsList = document.getElementById('modal-formations-list');
                 formationsList.innerHTML = '';
-                document.querySelectorAll('input[name="formations[]"]:checked').forEach(checkbox => {
+                document.querySelectorAll('input[name="selected_courses[]"]:checked').forEach(checkbox => {
                     const li = document.createElement('li');
                     li.textContent = checkbox.nextElementSibling.textContent;
                     formationsList.appendChild(li);
@@ -1882,7 +1882,7 @@
                                 <p><strong>Nom complet :</strong> ${form.nom.value} ${form.prenom.value}</p>
                                 <p><strong>Email :</strong> ${form.email.value}</p>
                                 <p><strong>Téléphone :</strong> ${document.getElementById('phone-prefix').textContent} ${form.telephone.value}</p>
-                                <p><strong>Formations :</strong> ${Array.from(document.querySelectorAll('input[name="formations[]"]:checked')).map(cb => cb.nextElementSibling.textContent).join(', ')}</p>
+                                <p><strong>Formations :</strong> ${Array.from(document.querySelectorAll('input[name="selected_courses[]"]:checked')).map(cb => cb.nextElementSibling.textContent).join(', ')}</p>
                                 <p><strong>Session :</strong> ${document.querySelector('input[name="session"]:checked').value}</p>
                                 <p><strong>Mode :</strong> ${form['mode-formation'].options[form['mode-formation'].selectedIndex].text}</p>
                                 <p><strong>Montant total :</strong> ${document.getElementById('total-price-fcfa').textContent} FCFA</p>

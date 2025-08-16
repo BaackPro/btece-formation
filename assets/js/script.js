@@ -251,9 +251,10 @@ const phoneConfigurations = {
 };
 
 
+
 // Noms des formations pour l'affichage
 const formationNames = {
-    'plans_archi_elec': 'Plans architecturaux et électricité',
+    'plans_archi_elec': 'Réalisation de plans architecturaux et électricité',
     'conception_elec': 'Conception électronique',
     'realisation_3d': 'Réalisation 3D',
     'programmation': 'Programmation'
@@ -274,7 +275,7 @@ const paymentMethodNames = {
 
 // Cache les éléments DOM
 const DOM = {
-    checkboxes: document.querySelectorAll('input[name="formations[]"]'),
+    checkboxes: document.querySelectorAll('input[name="selected_courses[]"]'),
     priceDisplay: document.getElementById('price-display'),
     totalPriceFCFA: document.getElementById('total-price-fcfa'),
     totalPriceEUR: document.getElementById('total-price-eur'),
@@ -334,7 +335,8 @@ const DOM = {
     csrfToken: document.getElementById('csrf_token'),
     sessionDatesContainer: document.getElementById('session-dates-container'),
     exportCSVBtn: document.getElementById('export-csv-btn'),
-    honeypotField: document.getElementById('bot-field') // Champ honeypot pour les bots
+    honeypotField: document.getElementById('bot-field'),
+    montantTotalInput: document.getElementById('montant-total')
 };
 
 // Variables d'état
@@ -426,7 +428,7 @@ function validateAge() {
 
 // Valide un numéro de téléphone selon le pays
 function validatePhone(phone, country) {
-    const config = phoneConfigurations[country] || phoneConfigurations['BJ']; // Par défaut Bénin
+    const config = phoneConfigurations[country] || phoneConfigurations['BJ'];
     const regex = new RegExp(`^${config.pattern}$`);
     return regex.test(phone);
 }
@@ -543,7 +545,7 @@ function loadSavedData() {
         // Formations
         if (state.formData.formations?.length > 0) {
             state.formData.formations.forEach(formation => {
-                const checkbox = document.querySelector(`input[name="formations[]"][value="${sanitizeInput(formation)}"]`);
+                const checkbox = document.querySelector(`input[name="selected_courses[]"][value="${sanitizeInput(formation)}"]`);
                 if (checkbox) checkbox.checked = true;
             });
             calculateTotal();
@@ -638,6 +640,11 @@ function calculateTotal() {
         DOM.totalPriceFCFA.textContent = totalFCfa.toLocaleString('fr-FR');
         DOM.totalPriceEUR.textContent = totalEur;
         DOM.priceDisplay.style.display = 'block';
+        
+        // Mise à jour du champ caché pour Netlify
+        if (DOM.montantTotalInput) {
+            DOM.montantTotalInput.value = `${totalFCfa.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
+        }
         
         if (selectedFormations.length === 1) {
             DOM.submitBtn.textContent = `S'inscrire maintenant (${totalFCfa.toLocaleString('fr-FR')} FCFA / ${totalEur} €)`;
@@ -980,6 +987,24 @@ function validateFinalStep() {
         return false;
     }
 
+    // Vérification reCAPTCHA
+    if (typeof grecaptcha !== 'undefined' && grecaptcha.getResponse().length === 0) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.setAttribute('aria-live', 'assertive');
+        errorMessage.textContent = 'Veuillez compléter la vérification reCAPTCHA';
+        
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        const fifthStep = DOM.formSteps[4];
+        fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return false;
+    }
+
     if (!validateAllSteps()) {
         return false;
     }
@@ -1033,12 +1058,10 @@ function showConfirmationModal() {
     DOM.modalTotalPrice.textContent = total.toLocaleString('fr-FR');
     DOM.modalTotalPriceEur.textContent = totalEur;
     
-    // Ajout du montant total dans le récapitulatif Netlify
-    const totalInput = document.createElement('input');
-    totalInput.type = 'hidden';
-    totalInput.name = 'montant_total';
-    totalInput.value = `${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
-    DOM.registrationForm.appendChild(totalInput);
+    // Ajout du montant total dans le champ caché pour Netlify
+    if (DOM.montantTotalInput) {
+        DOM.montantTotalInput.value = `${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
+    }
     
     // Ajout des attributs ARIA pour l'accessibilité
     DOM.modal.setAttribute('aria-modal', 'true');
@@ -1061,46 +1084,49 @@ async function sendFormData() {
     DOM.submitBtn.disabled = true;
     
     try {
-        // Ajout du nom du formulaire pour Netlify Forms
-        const formNameInput = document.createElement('input');
-        formNameInput.type = 'hidden';
-        formNameInput.name = 'form-name';
-        formNameInput.value = 'inscription';
-        DOM.registrationForm.appendChild(formNameInput);
-        
-        // Ajout du nom de l'utilisateur dans le sujet de l'email Netlify
-        const nomComplet = `${document.getElementById('prenom').value} ${document.getElementById('nom').value}`;
-        const nomCompletInput = document.createElement('input');
-        nomCompletInput.type = 'hidden';
-        nomCompletInput.name = 'nom_complet';
-        nomCompletInput.value = nomComplet;
-        DOM.registrationForm.appendChild(nomCompletInput);
-        
-        // Ajout du montant total dans les données Netlify
+        // Ajout des données supplémentaires pour Netlify
         const selectedFormations = Array.from(DOM.checkboxes)
             .filter(cb => cb.checked)
-            .map(cb => cb.value);
-        
-        let totalFCfa = 0;
-        selectedFormations.forEach(formation => {
-            totalFCfa += formationPrices[formation];
-        });
-        
+            .map(cb => formationNames[cb.value]);
+            
+        const totalFCfa = Array.from(DOM.checkboxes)
+            .filter(cb => cb.checked)
+            .reduce((sum, cb) => sum + formationPrices[cb.value], 0);
+            
         const totalEur = (totalFCfa / exchangeRate).toFixed(2);
+        
+        // Création des champs cachés pour Netlify
+        const formationsInput = document.createElement('input');
+        formationsInput.type = 'hidden';
+        formationsInput.name = 'formations_selectionnees';
+        formationsInput.value = selectedFormations.join(', ');
+        DOM.registrationForm.appendChild(formationsInput);
         
         const montantTotalInput = document.createElement('input');
         montantTotalInput.type = 'hidden';
-        montantTotalInput.name = 'montant_total_fcfa';
-        montantTotalInput.value = totalFCfa.toLocaleString('fr-FR');
+        montantTotalInput.name = 'montant_total';
+        montantTotalInput.value = `${totalFCfa.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
         DOM.registrationForm.appendChild(montantTotalInput);
         
-        const montantEurInput = document.createElement('input');
-        montantEurInput.type = 'hidden';
-        montantEurInput.name = 'montant_total_eur';
-        montantEurInput.value = totalEur;
-        DOM.registrationForm.appendChild(montantEurInput);
+        const sessionInput = document.createElement('input');
+        sessionInput.type = 'hidden';
+        sessionInput.name = 'session_choisie';
+        sessionInput.value = document.querySelector('input[name="session"]:checked').value;
+        DOM.registrationForm.appendChild(sessionInput);
         
-        // Envoi des données à Netlify
+        const modeInput = document.createElement('input');
+        modeInput.type = 'hidden';
+        modeInput.name = 'mode_formation';
+        modeInput.value = DOM.modeFormationSelect.value;
+        DOM.registrationForm.appendChild(modeInput);
+        
+        const paymentInput = document.createElement('input');
+        paymentInput.type = 'hidden';
+        paymentInput.name = 'methode_paiement';
+        paymentInput.value = document.querySelector('input[name="payment_method"]:checked').value;
+        DOM.registrationForm.appendChild(paymentInput);
+        
+        // Envoi du formulaire à Netlify
         const response = await fetch(DOM.registrationForm.action, {
             method: 'POST',
             body: new FormData(DOM.registrationForm),

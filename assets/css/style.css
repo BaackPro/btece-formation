@@ -1487,3 +1487,18 @@ footer p {
      margin-top: 5px;
      display: none;
 }
+    /* Style pour le conteneur reCAPTCHA */
+    [data-netlify-recaptcha] {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    }
+
+    /* Adaptation pour mobile */
+    @media (max-width: 600px) {
+    [data-netlify-recaptcha] {
+        transform: scale(0.85);
+        transform-origin: left top;
+    }
+}
