@@ -777,12 +777,37 @@ function validateStep1() {
     // Validation des objectifs
     const objectifs = DOM.objectifsTextarea.value.trim();
     const wordCount = countWords(objectifs);
-    if (wordCount > 50) {
-        errorMessages.push('Veuillez limiter vos objectifs à 50 mots maximum');
-        DOM.objectifsTextarea.setAttribute('aria-invalid', 'true');
+    
+    // Correction pour la validation des objectifs généraux
+    if (wordCount < 5) {
+        errorMessages.push('Veuillez décrire vos objectifs (minimum 5 mots)');
+        DOM.objectifsTextarea.classList.add('invalid');
+        DOM.objectifsTextarea.classList.add('error-highlight');
+        document.getElementById('objectifs-error').textContent = "Veuillez décrire vos objectifs (minimum 5 mots)";
+        document.getElementById('objectifs-error').style.display = 'block';
+        document.getElementById('objectifs-error-icon').style.display = 'inline-block';
         isValid = false;
+        
+        setTimeout(() => {
+            DOM.objectifsTextarea.classList.remove('error-highlight');
+        }, 50);
+    } else if (wordCount > 50) {
+        errorMessages.push('Maximum 50 mots autorisés pour les objectifs');
+        DOM.objectifsTextarea.classList.add('invalid');
+        DOM.objectifsTextarea.classList.add('error-highlight');
+        document.getElementById('objectifs-error').textContent = "Maximum 50 mots autorisés";
+        document.getElementById('objectifs-error').style.display = 'block';
+        document.getElementById('objectifs-error-icon').style.display = 'inline-block';
+        isValid = false;
+        
+        setTimeout(() => {
+            DOM.objectifsTextarea.classList.remove('error-highlight');
+        }, 50);
     } else {
-        DOM.objectifsTextarea.setAttribute('aria-invalid', 'false');
+        DOM.objectifsTextarea.classList.remove('invalid');
+        document.getElementById('objectifs-error').style.display = 'none';
+        document.getElementById('objectifs-error-icon').style.display = 'none';
+        DOM.objectifsTextarea.classList.add('valid');
     }
 
     // Validation de l'âge

@@ -1706,11 +1706,11 @@
                     const objectifs = document.getElementById('objectifs');
                     const wordCount = objectifs.value.trim() === '' ? 0 : objectifs.value.trim().split(/\s+/).length;
                     
-                    if (wordCount < 10 || wordCount > 50) {
+                    if (wordCount < 5 || wordCount > 50) {
                         objectifs.classList.add('invalid');
                         objectifs.classList.add('error-highlight');
-                        document.getElementById('objectifs-error').textContent = wordCount < 10 ? 
-                            "Veuillez décrire vos objectifs (minimum 10 mots)" : 
+                        document.getElementById('objectifs-error').textContent = wordCount < 5 ? 
+                            "Veuillez décrire vos objectifs (minimum 5 mots)" : 
                             "Maximum 50 mots autorisés";
                         document.getElementById('objectifs-error').style.display = 'block';
                         document.getElementById('objectifs-error-icon').style.display = 'inline-block';
@@ -1718,7 +1718,7 @@
                         
                         setTimeout(() => {
                             objectifs.classList.remove('error-highlight');
-                        }, 500);
+                        }, 50);
                     } else {
                         objectifs.classList.remove('invalid');
                         document.getElementById('objectifs-error').style.display = 'none';
