@@ -16,7 +16,6 @@
     
     <!-- Polices et styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="canonical" href="https://btece-formation.netlify.app/">
     
@@ -210,16 +209,6 @@
             outline-offset: 2px;
         }
 
-        /* Styles pour le calendrier */
-        #calendar {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
         /* Styles pour les étapes du formulaire */
         .form-step {
             display: none;
@@ -245,38 +234,30 @@
             font-weight: bold;
         }
         
-        /* Correction pour le calendrier */
-        .fc-header-toolbar {
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .fc-button {
-            background-color: #6e48aa;
-            border: none;
-            color: white;
-            padding: 8px 16px;
+        /* Styles pour les messages d'erreur améliorés */
+        .error-message {
+            display: none;
+            color: #d9534f;
+            font-size: 0.9em;
+            margin-top: 5px;
+            padding: 8px;
+            background-color: #f8d7da;
             border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            border-left: 4px solid #d9534f;
         }
         
-        .fc-button:hover {
-            background-color: #5a3a8a;
+        .invalid {
+            border-color: #d9534f !important;
+            background-color: #fff3f3 !important;
         }
         
-        .fc-button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
+        .invalid + .error-message {
+            display: block;
         }
         
-        .fc-button-active {
-            background-color: #4a2c6a;
-        }
-        
-        .fc-daygrid-event {
-            padding: 5px;
-            border-radius: 4px;
+        .required:after {
+            content: " *";
+            color: #d9534f;
         }
     </style>
 </head>
@@ -367,6 +348,7 @@
                 <form id="registration-form" name="inscription" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/success.html">
                     <input type="hidden" name="form-name" value="inscription">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="">
+                    <input type="hidden" id="montant-total" name="montant_total" value="">
                     <p class="hidden" aria-hidden="true">
                         <label>Ne remplissez pas ce champ si vous êtes humain: <input name="bot-field" id="bot-field"></label>
                     </p>
@@ -376,19 +358,19 @@
                         <div class="form-group">
                             <label for="nom" class="required">Nom</label>
                             <input type="text" id="nom" name="nom" required aria-required="true" class="keyboard-support" minlength="2" maxlength="50" pattern="[A-Za-zÀ-ÿ\s\-']+" aria-describedby="nom-error">
-                            <div class="error-message" id="nom-error" role="alert"></div>
+                            <div class="error-message" id="nom-error" role="alert">Veuillez entrer votre nom (minimum 2 caractères, lettres uniquement)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="prenom" class="required">Prénom</label>
                             <input type="text" id="prenom" name="prenom" required aria-required="true" class="keyboard-support" minlength="2" maxlength="50" pattern="[A-Za-zÀ-ÿ\s\-']+" aria-describedby="prenom-error">
-                            <div class="error-message" id="prenom-error" role="alert"></div>
+                            <div class="error-message" id="prenom-error" role="alert">Veuillez entrer votre prénom (minimum 2 caractères, lettres uniquement)</div>
                         </div>
 
                         <div class="form-group">
                             <label for="email" class="required">Email</label>
                             <input type="email" id="email" name="email" required aria-required="true" class="keyboard-support" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" aria-describedby="email-error">
-                            <div class="error-message" id="email-error" role="alert"></div>
+                            <div class="error-message" id="email-error" role="alert">Veuillez entrer une adresse email valide (exemple@domaine.com)</div>
                         </div>
 
                         <div class="form-group">
@@ -400,7 +382,7 @@
                         <div class="form-group">
                             <label for="lieu_naissance" class="required">Lieu de naissance</label>
                             <input type="text" id="lieu_naissance" name="lieu_naissance" required aria-required="true" class="keyboard-support" minlength="2" maxlength="100" aria-describedby="lieu-error">
-                            <div class="error-message" id="lieu-error" role="alert"></div>
+                            <div class="error-message" id="lieu-error" role="alert">Veuillez entrer votre lieu de naissance (minimum 2 caractères)</div>
                         </div>
 
                         <div class="form-group">
@@ -640,7 +622,7 @@
                                     <option value="other">Autre pays</option>
                                 </optgroup>
                             </select>
-                            <div class="error-message" id="pays-error" role="alert"></div>
+                            <div class="error-message" id="pays-error" role="alert">Veuillez sélectionner votre pays</div>
                         </div>
 
                         <div class="form-group">
@@ -651,7 +633,7 @@
                                        pattern="[0-9]{8,10}" title="Numéro de téléphone valide (8 à 10 chiffres)" class="keyboard-support" aria-describedby="telephone-error phone-format">
                             </div>
                             <small id="phone-format" class="phone-format">Format : +229 XX XX XX XX</small>
-                            <div class="error-message" id="telephone-error" role="alert"></div>
+                            <div class="error-message" id="telephone-error" role="alert">Veuillez entrer un numéro de téléphone valide (8 à 10 chiffres)</div>
                         </div>
 
                         <div class="form-group">
@@ -686,14 +668,14 @@
                                     <label for="profession-autre">Autre</label>
                                 </div>
                             </fieldset>
-                            <div class="error-message" id="profession-error" role="alert"></div>
+                            <div class="error-message" id="profession-error" role="alert">Veuillez sélectionner votre profession</div>
                         </div>
 
                         <div class="form-group">
                             <label for="objectifs" class="required">Objectifs principaux</label>
                             <textarea id="objectifs" name="objectifs" rows="3" required aria-required="true" class="keyboard-support" maxlength="500" placeholder="500 caractères maximum" aria-describedby="objectifs-error objectifs-counter"></textarea>
                             <small id="objectifs-counter">0/500 caractères</small>
-                            <div class="error-message" id="objectifs-error" role="alert"></div>
+                            <div class="error-message" id="objectifs-error" role="alert">Veuillez décrire vos objectifs (minimum 10 caractères)</div>
                         </div>
 
                         <div class="form-navigation">
@@ -725,7 +707,7 @@
                                     </div>
                                 </div>
                             </fieldset>
-                            <div class="error-message" id="formations-error" role="alert"></div>
+                            <div class="error-message" id="formations-error" role="alert">Veuillez sélectionner au moins une formation</div>
                         </div>
                         
                         <div id="price-display" class="selected-price">
@@ -771,7 +753,7 @@
                                     <label for="session-decembre">Décembre 2025</label>
                                 </div>
                             </fieldset>
-                            <div class="error-message" id="session-error" role="alert"></div>
+                            <div class="error-message" id="session-error" role="alert">Veuillez sélectionner une session</div>
                         </div>
 
                         <div class="form-group">
@@ -781,7 +763,7 @@
                                 <option value="presentiel">Présentiel à Cotonou (Bénin)</option>
                                 <option value="en-ligne">En ligne (à distance)</option>
                             </select>
-                            <div class="error-message" id="mode-error" role="alert"></div>
+                            <div class="error-message" id="mode-error" role="alert">Veuillez sélectionner un mode de formation</div>
                         </div>
 
                         <div class="form-navigation">
@@ -851,7 +833,7 @@
                                     </div>
                                 </div>
                             </fieldset>
-                            <div class="error-message" id="payment-error" role="alert"></div>
+                            <div class="error-message" id="payment-error" role="alert">Veuillez sélectionner une méthode de paiement</div>
                         </div>
 
                         <div class="form-navigation">
@@ -874,7 +856,7 @@
                             <input type="checkbox" id="consentement" name="consentement" required aria-required="true" class="keyboard-support" aria-describedby="consentement-error">
                             <label for="consentement" class="required">J'accepte les conditions générales</label>
                         </div>
-                        <div class="error-message" id="consentement-error" role="alert"></div>
+                        <div class="error-message" id="consentement-error" role="alert">Veuillez accepter les conditions générales</div>
 
                         <div id="loading" style="display: none;" aria-live="polite">
                             <div class="spinner" aria-hidden="true"></div>
@@ -1064,9 +1046,6 @@
                         </div>
                     </div>
                 </div>
-
-                <h3>Calendrier des sessions</h3>
-                <div id="calendar"></div>
 
                 <h3>Nos formations professionnelles</h3>
 
@@ -1385,7 +1364,6 @@
     </footer>
 
     <!-- Scripts en bas de page pour une meilleure performance -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script>
         // Initialisation au chargement de la page
@@ -1415,6 +1393,10 @@
                     localStorage.setItem('userName', `${prenom} ${nom}`);
                 }
                 
+                // Stockage du montant total dans le champ caché
+                const totalPrice = document.getElementById('total-price-fcfa').textContent;
+                document.getElementById('montant-total').value = totalPrice;
+                
                 return true;
             });
             
@@ -1438,19 +1420,38 @@
                 }
             });
             
-            // Validation côté client améliorée
-            function validateField(field, errorId, validationFn) {
-                const errorElement = document.getElementById(errorId);
-                if (!validationFn(field.value)) {
-                    field.classList.add('invalid');
-                    errorElement.style.display = 'block';
-                    return false;
-                } else {
-                    field.classList.remove('invalid');
-                    errorElement.style.display = 'none';
-                    return true;
-                }
-            }
+            // Compteur de caractères pour les objectifs
+            const objectifsTextarea = document.getElementById('objectifs');
+            const objectifsCounter = document.getElementById('objectifs-counter');
+            
+            objectifsTextarea.addEventListener('input', function() {
+                const count = this.value.length;
+                objectifsCounter.textContent = `${count}/500 caractères`;
+            });
+            
+            // Calcul du prix total
+            const formationCheckboxes = document.querySelectorAll('input[name="formations[]"]');
+            const totalPriceFcfa = document.getElementById('total-price-fcfa');
+            const totalPriceEur = document.getElementById('total-price-eur');
+            
+            const formationPrices = {
+                'plans_archi_elec': 130000,
+                'conception_elec': 150000,
+                'realisation_3d': 120000,
+                'programmation': 200000
+            };
+            
+            formationCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    let total = 0;
+                    document.querySelectorAll('input[name="formations[]"]:checked').forEach(checked => {
+                        total += formationPrices[checked.value];
+                    });
+                    
+                    totalPriceFcfa.textContent = total.toLocaleString('fr-FR');
+                    totalPriceEur.textContent = Math.round(total / 655.957).toLocaleString('fr-FR');
+                });
+            });
             
             // Navigation entre les étapes
             function nextStep(currentStep) {
@@ -1486,19 +1487,95 @@
                 let isValid = true;
                 
                 if (stepNumber === 1) {
-                    isValid = validateField(document.getElementById('nom'), 'nom-error', val => val.length >= 2) && isValid;
-                    isValid = validateField(document.getElementById('prenom'), 'prenom-error', val => val.length >= 2) && isValid;
-                    isValid = validateField(document.getElementById('email'), 'email-error', val => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) && isValid;
-                    isValid = validateField(document.getElementById('date_naissance'), 'age-error', val => {
-                        const birthDate = new Date(val);
+                    // Validation du nom
+                    const nom = document.getElementById('nom');
+                    if (!nom.value || nom.value.length < 2 || !/^[A-Za-zÀ-ÿ\s\-']+$/.test(nom.value)) {
+                        nom.classList.add('invalid');
+                        document.getElementById('nom-error').style.display = 'block';
+                        isValid = false;
+                    } else {
+                        nom.classList.remove('invalid');
+                        document.getElementById('nom-error').style.display = 'none';
+                    }
+                    
+                    // Validation du prénom
+                    const prenom = document.getElementById('prenom');
+                    if (!prenom.value || prenom.value.length < 2 || !/^[A-Za-zÀ-ÿ\s\-']+$/.test(prenom.value)) {
+                        prenom.classList.add('invalid');
+                        document.getElementById('prenom-error').style.display = 'block';
+                        isValid = false;
+                    } else {
+                        prenom.classList.remove('invalid');
+                        document.getElementById('prenom-error').style.display = 'none';
+                    }
+                    
+                    // Validation de l'email
+                    const email = document.getElementById('email');
+                    if (!email.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+                        email.classList.add('invalid');
+                        document.getElementById('email-error').style.display = 'block';
+                        isValid = false;
+                    } else {
+                        email.classList.remove('invalid');
+                        document.getElementById('email-error').style.display = 'none';
+                    }
+                    
+                    // Validation de la date de naissance
+                    const dateNaissance = document.getElementById('date_naissance');
+                    if (!dateNaissance.value) {
+                        dateNaissance.classList.add('invalid');
+                        document.getElementById('age-error').style.display = 'block';
+                        isValid = false;
+                    } else {
+                        const birthDate = new Date(dateNaissance.value);
                         const ageDiff = Date.now() - birthDate.getTime();
                         const ageDate = new Date(ageDiff);
-                        return Math.abs(ageDate.getUTCFullYear() - 1970) >= 13;
-                    }) && isValid;
-                    isValid = validateField(document.getElementById('lieu_naissance'), 'lieu-error', val => val.length >= 2) && isValid;
-                    isValid = validateField(document.getElementById('pays'), 'pays-error', val => val !== '') && isValid;
-                    isValid = validateField(document.getElementById('telephone'), 'telephone-error', val => /^\d{8,10}$/.test(val)) && isValid;
+                        const age = Math.abs(ageDate.getUTCFullYear() - 1970);
+                        
+                        if (age < 13) {
+                            dateNaissance.classList.add('invalid');
+                            document.getElementById('age-error').style.display = 'block';
+                            isValid = false;
+                        } else {
+                            dateNaissance.classList.remove('invalid');
+                            document.getElementById('age-error').style.display = 'none';
+                        }
+                    }
                     
+                    // Validation du lieu de naissance
+                    const lieuNaissance = document.getElementById('lieu_naissance');
+                    if (!lieuNaissance.value || lieuNaissance.value.length < 2) {
+                        lieuNaissance.classList.add('invalid');
+                        document.getElementById('lieu-error').style.display = 'block';
+                        isValid = false;
+                    } else {
+                        lieuNaissance.classList.remove('invalid');
+                        document.getElementById('lieu-error').style.display = 'none';
+                    }
+                    
+                    // Validation du pays
+                    const pays = document.getElementById('pays');
+                    if (!pays.value) {
+                        pays.classList.add('invalid');
+                        document.getElementById('pays-error').style.display = 'block';
+                        isValid = false;
+                    } else {
+                        pays.classList.remove('invalid');
+                        document.getElementById('pays-error').style.display = 'none';
+                    }
+                    
+                    // Validation du téléphone
+                    const telephone = document.getElementById('telephone');
+                    if (!telephone.value || !/^\d{8,10}$/.test(telephone.value)) {
+                        telephone.classList.add('invalid');
+                        document.getElementById('telephone-error').style.display = 'block';
+                        isValid = false;
+                    } else {
+                        telephone.classList.remove('invalid');
+                        document.getElementById('telephone-error').style.display = 'none';
+                    }
+                    
+                    // Validation de la profession
                     const professionSelected = document.querySelector('input[name="profession"]:checked');
                     if (!professionSelected) {
                         document.getElementById('profession-error').style.display = 'block';
@@ -1507,7 +1584,16 @@
                         document.getElementById('profession-error').style.display = 'none';
                     }
                     
-                    isValid = validateField(document.getElementById('objectifs'), 'objectifs-error', val => val.length >= 10) && isValid;
+                    // Validation des objectifs
+                    const objectifs = document.getElementById('objectifs');
+                    if (!objectifs.value || objectifs.value.length < 10) {
+                        objectifs.classList.add('invalid');
+                        document.getElementById('objectifs-error').style.display = 'block';
+                        isValid = false;
+                    } else {
+                        objectifs.classList.remove('invalid');
+                        document.getElementById('objectifs-error').style.display = 'none';
+                    }
                     
                     if (isValid) {
                         nextStep(stepNumber);
@@ -1657,6 +1743,7 @@
                                 <p><strong>Formations :</strong> ${Array.from(document.querySelectorAll('input[name="formations[]"]:checked')).map(cb => cb.nextElementSibling.textContent).join(', ')}</p>
                                 <p><strong>Session :</strong> ${document.querySelector('input[name="session"]:checked').value}</p>
                                 <p><strong>Mode :</strong> ${form['mode-formation'].options[form['mode-formation'].selectedIndex].text}</p>
+                                <p><strong>Montant total :</strong> ${document.getElementById('total-price-fcfa').textContent} FCFA</p>
                             `;
                         }
                     }
@@ -1678,110 +1765,11 @@
                 });
             });
 
-            // Initialisation du calendrier avec corrections
-            const calendarEl = document.getElementById('calendar');
-            if (calendarEl) {
-                const calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    headerToolbar: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                    },
-                    buttonText: {
-                        today: 'Aujourd\'hui',
-                        month: 'Mois',
-                        week: 'Semaine',
-                        day: 'Jour'
-                    },
-                    locale: 'fr',
-                    firstDay: 1, // Lundi comme premier jour de la semaine
-                    navLinks: true, // Permet de cliquer sur les jours/semaines pour les voir en détail
-                    dayMaxEvents: true, // Affiche un indicateur quand il y a trop d'événements
-                    events: [
-                        {
-                            title: 'Session Juillet 2025',
-                            start: '2025-07-07',
-                            end: '2025-08-01',
-                            color: '#6e48aa',
-                            description: 'Formation en présentiel et en ligne'
-                        },
-                        {
-                            title: 'Session Août 2025',
-                            start: '2025-08-04',
-                            end: '2025-08-29',
-                            color: '#9d50bb',
-                            description: 'Formation intensive en week-end'
-                        },
-                        {
-                            title: 'Session Septembre 2025',
-                            start: '2025-09-01',
-                            end: '2025-09-26',
-                            color: '#6e48aa',
-                            description: 'Formation en soirée'
-                        },
-                        {
-                            title: 'Session Octobre 2025',
-                            start: '2025-10-06',
-                            end: '2025-10-31',
-                            color: '#9d50bb',
-                            description: 'Formation en matinée'
-                        },
-                        {
-                            title: 'Session Novembre 2025',
-                            start: '2025-11-03',
-                            end: '2025-11-28',
-                            color: '#6e48aa',
-                            description: 'Formation en soirée'
-                        },
-                        {
-                            title: 'Session Décembre 2025',
-                            start: '2025-12-01',
-                            end: '2025-12-19',
-                            color: '#9d50bb',
-                            description: 'Formation intensive'
-                        }
-                    ],
-                    eventOrder: 'start',
-                    eventDidMount: function(info) {
-                        // Ajouter un effet visuel pour les événements
-                        info.el.style.transition = 'transform 0.3s ease';
-                        info.el.addEventListener('mouseenter', function() {
-                            info.el.style.transform = 'scale(1.05)';
-                        });
-                        info.el.addEventListener('mouseleave', function() {
-                            info.el.style.transform = 'scale(1)';
-                        });
-                        
-                        // Ajouter une infobulle avec la description
-                        if (info.event.extendedProps.description) {
-                            const tooltip = new bootstrap.Tooltip(info.el, {
-                                title: info.event.extendedProps.description,
-                                placement: 'top',
-                                trigger: 'hover',
-                                container: 'body'
-                            });
-                        }
-                    }
-                });
-                
-                // Correction pour les boutons de navigation
-                calendar.render();
-                
-                // Réinitialisation des boutons de navigation si nécessaire
-                setTimeout(() => {
-                    const prevButtons = document.querySelectorAll('.fc-prev-button');
-                    const nextButtons = document.querySelectorAll('.fc-next-button');
-                    
-                    prevButtons.forEach(btn => {
-                        btn.innerHTML = '<span class="fc-icon fc-icon-chevron-left"></span>';
-                    });
-                    
-                    nextButtons.forEach(btn => {
-                        btn.innerHTML = '<span class="fc-icon fc-icon-chevron-right"></span>';
-                    });
-                }, 100);
-            }
+            // Gestion du bouton de soumission
+            document.getElementById('submit-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                validateFinalStep();
+            });
         });
     </script>
     <script src="assets/js/script.js"></script>

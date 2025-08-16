@@ -269,54 +269,6 @@ input:focus, select:focus, textarea:focus {
     margin-right: 0.5rem;
 }
 
-/* Styles spécifiques pour les sessions */
-.session-dates-container {
-    margin: 1rem 0;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border-left: 4px solid #005387;
-}
-
-.session-date-info {
-    display: flex;
-    align-items: center;
-    padding: 0.8rem;
-    margin-bottom: 0.5rem;
-    background-color: white;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    transition: all 0.3s ease;
-}
-
-.session-date-info:hover {
-    border-color: #005387;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.session-date-info input[type="radio"] {
-    margin-right: 1rem;
-}
-
-.session-date-info label {
-    flex-grow: 1;
-    margin-bottom: 0;
-    font-weight: normal;
-    color: #333;
-    cursor: pointer;
-}
-
-.session-date-info input[type="radio"]:checked + label {
-    font-weight: bold;
-    color: #005387;
-}
-
-/* Styles pour les dates de session sélectionnées */
-.session-date-highlight {
-    background-color: #E3F2FD;
-    border-color: #2196F3;
-}
-
 .blinking-certificate {
     animation: blink 2s infinite;
     color: #005387;
@@ -1373,6 +1325,10 @@ footer p {
     
     .confirmation-box {
         padding: 1.5rem;
+    }
+    
+    .details-box {
+        padding: 1rem;
     }
     
     .chat-container {

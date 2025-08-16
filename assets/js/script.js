@@ -1,12 +1,6 @@
 
 console.log('Formulaire trouvé:', document.getElementById('registration-form'));
 
-
-import { Calendar } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import listPlugin from '@fullcalendar/list';
-import interactionPlugin from '@fullcalendar/interaction';
 // Configuration des prix des formations en FCFA
 const formationPrices = {
     'plans_archi_elec': 130000,
@@ -359,19 +353,7 @@ const state = {
         'session3': '9-13 Septembre 2024',
         'session4': '14-18 Octobre 2024'
     },
-    formSubmitted: false,
-    // Configuration du calendrier
-    calendarConfig: {
-        locale: 'fr',
-        format: 'yyyy-mm-dd',
-        weekStart: 1,
-        minDate: new Date(1900, 0, 1),
-        maxDate: new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate()),
-        icons: {
-            previous: '←',
-            next: '→'
-        }
-    }
+    formSubmitted: false
 };
 
 /**
@@ -605,49 +587,6 @@ function displaySessionDates() {
     }
 }
 
-// Initialise le calendrier pour la date de naissance
-function initCalendar() {
-    if (!DOM.dateNaissanceInput) return;
-    
-    // Configuration du calendrier
-    const calendarConfig = {
-        locale: 'fr',
-        format: 'yyyy-mm-dd',
-        weekStart: 1,
-        minDate: new Date(1900, 0, 1),
-        maxDate: new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate()),
-        icons: {
-            previous: '←',
-            next: '→'
-        },
-        onSelect: (date) => {
-            DOM.dateNaissanceInput.value = date;
-            validateAge();
-            autoSave();
-        }
-    };
-    
-    // Initialisation du calendrier
-    const calendar = new Pikaday({
-        field: DOM.dateNaissanceInput,
-        ...calendarConfig
-    });
-    
-    // Correction des icônes de navigation si nécessaire
-    const prevButton = document.querySelector('.pika-prev');
-    const nextButton = document.querySelector('.pika-next');
-    
-    if (prevButton) {
-        prevButton.innerHTML = calendarConfig.icons.previous;
-        prevButton.setAttribute('aria-label', 'Mois précédent');
-    }
-    
-    if (nextButton) {
-        nextButton.innerHTML = calendarConfig.icons.next;
-        nextButton.setAttribute('aria-label', 'Mois suivant');
-    }
-}
-
 // Met à jour la barre de progression
 function updateProgressBar() {
     const progress = ((state.currentStep - 1) / 5) * 100;
@@ -784,13 +723,13 @@ function validateStep1() {
         const value = element.value.trim();
         
         if (!value) {
-            errorMessages.push(`Veuillez remplir le champ "${field.name}"`);
+            errorMessages.push(`Le champ "${field.name}" est obligatoire`);
             element.setAttribute('aria-invalid', 'true');
             isValid = false;
         } else {
             // Validation supplémentaire si des critères sont spécifiés
             if (field.pattern && !new RegExp(field.pattern).test(value)) {
-                errorMessages.push(`Le format du champ "${field.name}" est invalide`);
+                errorMessages.push(`Format invalide pour le champ "${field.name}"`);
                 element.setAttribute('aria-invalid', 'true');
                 isValid = false;
             }
@@ -818,7 +757,7 @@ function validateStep1() {
     const telephone = DOM.telephoneInput.value.trim();
     if (telephone && !validatePhone(telephone, pays)) {
         const config = phoneConfigurations[pays] || phoneConfigurations['other'];
-        errorMessages.push(`Veuillez entrer un numéro de téléphone valide pour votre pays (format: ${config.format})`);
+        errorMessages.push(`Format de téléphone invalide (${config.format})`);
         DOM.telephoneInput.setAttribute('aria-invalid', 'true');
         isValid = false;
     } else if (telephone) {
@@ -1264,7 +1203,7 @@ function displayUserSummary() {
     const getValue = id => sanitizeInput(document.getElementById(id).value);
     const getRadioText = name => sanitizeInput(document.querySelector(`input[name="${name}"]:checked`)?.nextElementSibling?.textContent);
     const getSelectText = id => sanitizeInput(DOM[id].options[DOM[id].selectedIndex]?.text);
-    
+
     const checkedFormations = Array.from(DOM.checkboxes)
         .filter(cb => cb.checked)
         .map(cb => formationNames[cb.value]);
@@ -1424,9 +1363,6 @@ function init() {
     const today = new Date();
     const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
     DOM.dateNaissanceInput.max = maxDate.toISOString().split('T')[0];
-    
-    // Initialisation du calendrier
-    initCalendar();
     
     // Chargement des données sauvegardées
     loadSavedData();
