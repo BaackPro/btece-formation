@@ -716,10 +716,10 @@
 
                         <div class="form-group">
                             <label for="objectifs" class="required">Objectifs principaux</label>
-                            <textarea id="objectifs" name="goals" rows="3" required aria-required="true" class="keyboard-support" maxlength="50" placeholder="50 mots maximum" aria-describedby="objectifs-error objectifs-counter"></textarea>
-                            <small id="objectifs-counter">0/50 mots</small>
+                            <textarea id="objectifs" name="goals" rows="3" required aria-required="true" class="keyboard-support" maxlength="100" placeholder="100 mots maximum" aria-describedby="objectifs-error objectifs-counter"></textarea>
+                            <small id="objectifs-counter">0/100 mots</small>
                             <i class="fas fa-exclamation-circle error-icon" id="objectifs-error-icon" aria-hidden="true"></i>
-                            <div class="error-message" id="objectifs-error" role="alert">Veuillez décrire vos objectifs (5 à 50 mots)</div>
+                            <div class="error-message" id="objectifs-error" role="alert">Veuillez décrire vos objectifs (5 à 100 mots)</div>
                         </div>
 
                         <div class="form-navigation">
@@ -1420,5 +1420,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <!-- Chargement de l'API reCAPTCHA -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!-- Lien vers script JS -->
+    <script src="assets/js/script.js"></script>
 </body>
 </html>

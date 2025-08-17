@@ -633,8 +633,8 @@ class FormApp {
         setTimeout(() => {
           this.elements.objectifsTextarea.classList.remove('error-highlight');
         }, 50);
-      } else if (wordCount > 50) {
-        errorMessages.push('Maximum 50 mots autorisés pour les objectifs');
+      } else if (wordCount > 100) {
+        errorMessages.push('Maximum 100 mots autorisés pour les objectifs');
         this.elements.objectifsTextarea.classList.add('invalid');
         this.elements.objectifsTextarea.classList.add('error-highlight');
         const objectifsError = document.getElementById('objectifs-error');
@@ -873,9 +873,9 @@ class FormApp {
     if (!this.elements.objectifsTextarea || !this.elements.objectifsCounter) return;
     
     const wordCount = this.countWords(this.elements.objectifsTextarea.value);
-    this.elements.objectifsCounter.textContent = `${wordCount}/50 mots`;
+    this.elements.objectifsCounter.textContent = `${wordCount}/100 mots`;
     
-    if (wordCount > 50) {
+    if (wordCount > 100) {
       this.elements.objectifsCounter.style.color = '#e74c3c';
       this.elements.objectifsTextarea.style.borderColor = '#e74c3c';
       this.elements.objectifsTextarea.setAttribute('aria-invalid', 'true');
