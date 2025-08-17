@@ -116,7 +116,7 @@ class FormApp {
       saveStatus: document.getElementById('save-status'),
       userSummary: document.getElementById('user-summary'),
       rappelMessages: document.querySelectorAll('.rappel-message'),
-      rappelContainer: document.querySelector('.rappel-container'),
+      rappelContainer: document.querySelector('.raquel-container'),
       objectifsTextarea: document.getElementById('objectifs'),
       objectifsCounter: document.getElementById('objectifs-counter'),
       dateNaissanceInput: document.getElementById('date_naissance'),
@@ -133,37 +133,56 @@ class FormApp {
   // Initialise les écouteurs d'événements
   initEventListeners() {
     // Gestion du mode de formation
-    this.elements.modeFormationSelect.addEventListener('change', () => {
-      this.elements.onlinePaymentMethods.style.display = 
-        this.elements.modeFormationSelect.value === 'en-ligne' ? 'block' : 'none';
-      this.elements.presentielPaymentMethod.style.display = 
-        this.elements.modeFormationSelect.value === 'presentiel' ? 'block' : 'none';
-      this.autoSave();
-    });
+    if (this.elements.modeFormationSelect) {
+      this.elements.modeFormationSelect.addEventListener('change', () => {
+        this.elements.onlinePaymentMethods.style.display = 
+          this.elements.modeFormationSelect.value === 'en-ligne' ? 'block' : 'none';
+        this.elements.presentielPaymentMethod.style.display = 
+          this.elements.modeFormationSelect.value === 'presentiel' ? 'block' : 'none';
+        this.autoSave();
+      });
+    }
     
     // Gestion du pays et du format de téléphone
-    this.elements.paysSelect.addEventListener('change', () => {
-      const selectedCountry = this.elements.paysSelect.value;
-      const config = this.getPhoneConfig(selectedCountry);
-      
-      this.elements.phonePrefix.textContent = config.code;
-      this.elements.telephoneInput.pattern = config.pattern;
-      this.elements.telephoneInput.title = `Numéro valide (format: ${config.format})`;
-      this.elements.phoneFormat.textContent = `Format: ${config.format}`;
-      this.elements.phoneFormat.style.display = 'block';
-      this.autoSave();
-    });
+    if (this.elements.paysSelect) {
+      this.elements.paysSelect.addEventListener('change', () => {
+        const selectedCountry = this.elements.paysSelect.value;
+        const config = this.getPhoneConfig(selectedCountry);
+        
+        if (this.elements.phonePrefix) {
+          this.elements.phonePrefix.textContent = config.code;
+        }
+        
+        if (this.elements.telephoneInput) {
+          this.elements.telephoneInput.pattern = config.pattern;
+          this.elements.telephoneInput.title = `Numéro valide (format: ${config.format})`;
+        }
+        
+        if (this.elements.phoneFormat) {
+          this.elements.phoneFormat.textContent = `Format: ${config.format}`;
+          this.elements.phoneFormat.style.display = 'block';
+        }
+        
+        this.autoSave();
+      });
+    }
     
     // Calcul du total des formations
-    this.elements.checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', () => this.calculateTotal());
-    });
+    if (this.elements.checkboxes) {
+      this.elements.checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => this.calculateTotal());
+      });
+    }
     
     // Compteur de mots pour les objectifs
-    this.elements.objectifsTextarea.addEventListener('input', () => this.updateWordCounter());
+    if (this.elements.objectifsTextarea) {
+      this.elements.objectifsTextarea.addEventListener('input', () => this.updateWordCounter());
+    }
     
     // Validation de l'âge
-    this.elements.dateNaissanceInput.addEventListener('change', () => this.validateAge());
+    if (this.elements.dateNaissanceInput) {
+      this.elements.dateNaissanceInput.addEventListener('change', () => this.validateAge());
+    }
     
     // Sauvegarde automatique
     document.querySelectorAll('input, select, textarea').forEach(element => {
@@ -178,47 +197,65 @@ class FormApp {
     });
     
     // Soumission du formulaire
-    this.elements.registrationForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.validateFinalStep();
-    });
+    if (this.elements.registrationForm) {
+      this.elements.registrationForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.validateFinalStep();
+      });
+    }
     
     // Gestion de la modal de confirmation
-    this.elements.modalConfirm.addEventListener('click', () => this.sendFormData());
-    this.elements.modalCancel.addEventListener('click', () => { 
-      this.elements.modal.style.display = 'none'; 
-    });
-    this.elements.closeModal.addEventListener('click', () => { 
-      this.elements.modal.style.display = 'none'; 
-    });
+    if (this.elements.modalConfirm) {
+      this.elements.modalConfirm.addEventListener('click', () => this.sendFormData());
+    }
+    if (this.elements.modalCancel) {
+      this.elements.modalCancel.addEventListener('click', () => { 
+        this.elements.modal.style.display = 'none'; 
+      });
+    }
+    if (this.elements.closeModal) {
+      this.elements.closeModal.addEventListener('click', () => { 
+        this.elements.modal.style.display = 'none'; 
+      });
+    }
     
     // Gestion du chat
-    this.elements.chatToggle.addEventListener('click', () => {
-      this.elements.chatContainer.style.display = 
-        this.elements.chatContainer.style.display === 'block' ? 'none' : 'block';
-      if (this.elements.chatContainer.style.display === 'block') {
-        this.elements.chatInput.focus();
-      }
-    });
+    if (this.elements.chatToggle) {
+      this.elements.chatToggle.addEventListener('click', () => {
+        this.elements.chatContainer.style.display = 
+          this.elements.chatContainer.style.display === 'block' ? 'none' : 'block';
+        if (this.elements.chatContainer.style.display === 'block') {
+          this.elements.chatInput.focus();
+        }
+      });
+    }
     
-    this.elements.closeChat.addEventListener('click', () => { 
-      this.elements.chatContainer.style.display = 'none'; 
-    });
-    this.elements.sendMessage.addEventListener('click', () => this.sendChatMessage());
-    this.elements.chatInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') this.sendChatMessage();
-    });
+    if (this.elements.closeChat) {
+      this.elements.closeChat.addEventListener('click', () => { 
+        this.elements.chatContainer.style.display = 'none'; 
+      });
+    }
+    if (this.elements.sendMessage) {
+      this.elements.sendMessage.addEventListener('click', () => this.sendChatMessage());
+    }
+    if (this.elements.chatInput) {
+      this.elements.chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.sendChatMessage();
+      });
+    }
     
     // Boutons précédent/suivant
     document.querySelectorAll('.btn-next').forEach(button => {
-      button.addEventListener('click', () => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
         const currentStep = parseInt(button.closest('.form-step').id.split('-').pop());
-        this.validateStep(currentStep);
+        this.nextStep(currentStep);
       });
     });
 
     document.querySelectorAll('.btn-prev').forEach(button => {
-      button.addEventListener('click', () => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
         const currentStep = parseInt(button.closest('.form-step').id.split('-').pop());
         this.prevStep(currentStep);
       });
@@ -228,9 +265,11 @@ class FormApp {
   // Initialise le formulaire
   initForm() {
     // Configuration de la date maximale pour la date de naissance (13 ans minimum)
-    const today = new Date();
-    const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
-    this.elements.dateNaissanceInput.max = maxDate.toISOString().split('T')[0];
+    if (this.elements.dateNaissanceInput) {
+      const today = new Date();
+      const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+      this.elements.dateNaissanceInput.max = maxDate.toISOString().split('T')[0];
+    }
     
     // Génération du token CSRF
     this.generateCSRFToken();
@@ -244,7 +283,9 @@ class FormApp {
     this.displaySessionDates();
     
     // Rotation des messages du rappel
-    setInterval(() => this.rotateRappelMessages(), 2000);
+    if (this.elements.rappelMessages && this.elements.rappelMessages.length > 0) {
+      setInterval(() => this.rotateRappelMessages(), 2000);
+    }
     
     // Initialisation finale
     this.updateWordCounter();
@@ -253,6 +294,7 @@ class FormApp {
   
   // Fonctions utilitaires
   generateCSRFToken() {
+    if (!this.elements.csrfToken) return;
     const token = window.crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
     this.elements.csrfToken.value = token;
     return token;
@@ -272,6 +314,7 @@ class FormApp {
   }
   
   countWords(text) {
+    if (!text) return 0;
     const trimmedText = text.trim();
     return trimmedText === '' ? 0 : trimmedText.split(/\s+/).length;
   }
@@ -292,6 +335,7 @@ class FormApp {
   }
   
   validatePhone(phone, country) {
+    if (!phone || !country) return false;
     const config = this.getPhoneConfig(country);
     const regex = new RegExp(`^${config.pattern}$`);
     return regex.test(phone);
@@ -299,6 +343,8 @@ class FormApp {
   
   // Gestion des étapes
   showStep(step) {
+    if (!this.elements.formSteps || !this.elements.progressSteps) return;
+    
     this.elements.formSteps.forEach((formStep, index) => {
       formStep.classList.toggle('active', index + 1 === step);
       formStep.setAttribute('aria-hidden', index + 1 !== step);
@@ -342,17 +388,21 @@ class FormApp {
   }
   
   updateProgressBar() {
+    if (!this.elements.progressBar || !this.elements.progressText) return;
+    
     const progress = ((this.state.currentStep - 1) / 5) * 100;
     this.elements.progressBar.style.width = `${progress}%`;
     this.elements.progressText.textContent = `${progress.toFixed(0)}% complété`;
     this.elements.progressBar.setAttribute('aria-valuenow', progress);
     
-    if (this.state.currentStep > 1) {
+    if (this.state.currentStep > 1 && document.querySelector('.progress-container')) {
       document.querySelector('.progress-container').style.display = 'block';
     }
   }
   
   updateTimeEstimation() {
+    if (!this.elements.timeEstimation) return;
+    
     let remainingTime = 0;
     for (let i = this.state.currentStep - 1; i < CONFIG.stepTimes.length; i++) {
       remainingTime += CONFIG.stepTimes[i];
@@ -370,28 +420,30 @@ class FormApp {
   
   // Gestion des données
   autoSave() {
+    if (!this.elements.saveStatus) return;
+    
     this.elements.saveStatus.textContent = "Sauvegarde en cours...";
     this.elements.saveStatus.className = "save-status saving";
     this.elements.saveStatus.style.display = "block";
     
     this.state.formData = {
       step: this.state.currentStep,
-      nom: this.sanitizeInput(document.getElementById('nom').value),
-      prenom: this.sanitizeInput(document.getElementById('prenom').value),
-      email: this.sanitizeInput(document.getElementById('email').value),
-      date_naissance: this.sanitizeInput(this.elements.dateNaissanceInput.value),
-      lieu_naissance: this.sanitizeInput(this.elements.lieuNaissanceInput.value),
-      pays: this.sanitizeInput(this.elements.paysSelect.value),
-      telephone: this.sanitizeInput(this.elements.telephoneInput.value),
+      nom: this.sanitizeInput(document.getElementById('nom')?.value),
+      prenom: this.sanitizeInput(document.getElementById('prenom')?.value),
+      email: this.sanitizeInput(document.getElementById('email')?.value),
+      date_naissance: this.sanitizeInput(this.elements.dateNaissanceInput?.value),
+      lieu_naissance: this.sanitizeInput(this.elements.lieuNaissanceInput?.value),
+      pays: this.sanitizeInput(this.elements.paysSelect?.value),
+      telephone: this.sanitizeInput(this.elements.telephoneInput?.value),
       profession: this.sanitizeInput(document.querySelector('input[name="profession"]:checked')?.value),
-      objectifs: this.sanitizeInput(this.elements.objectifsTextarea.value),
-      formations: Array.from(this.elements.checkboxes)
+      objectifs: this.sanitizeInput(this.elements.objectifsTextarea?.value),
+      formations: Array.from(this.elements.checkboxes || [])
         .filter(cb => cb.checked)
         .map(cb => this.sanitizeInput(cb.value)),
       session: this.sanitizeInput(document.querySelector('input[name="session"]:checked')?.value),
-      modeFormation: this.sanitizeInput(this.elements.modeFormationSelect.value),
+      modeFormation: this.sanitizeInput(this.elements.modeFormationSelect?.value),
       paymentMethod: this.sanitizeInput(document.querySelector('input[name="payment_method"]:checked')?.value),
-      consentement: document.getElementById('consentement').checked
+      consentement: document.getElementById('consentement')?.checked || false
     };
     
     localStorage.setItem('bteceFormData', JSON.stringify(this.state.formData));
@@ -415,7 +467,8 @@ class FormApp {
       
       // Remplit les champs avec les données sauvegardées
       const fillField = (id, value) => {
-        if (value) document.getElementById(id).value = this.sanitizeInput(value);
+        const element = document.getElementById(id);
+        if (element && value) element.value = this.sanitizeInput(value);
       };
       
       const checkRadio = (name, value) => {
@@ -431,7 +484,7 @@ class FormApp {
       fillField('date_naissance', this.state.formData.date_naissance);
       fillField('lieu_naissance', this.state.formData.lieu_naissance);
       
-      if (this.state.formData.pays) {
+      if (this.state.formData.pays && this.elements.paysSelect) {
         this.elements.paysSelect.value = this.state.formData.pays;
         this.elements.paysSelect.dispatchEvent(new Event('change'));
       }
@@ -441,7 +494,7 @@ class FormApp {
       fillField('objectifs', this.state.formData.objectifs);
       
       // Formations
-      if (this.state.formData.formations?.length > 0) {
+      if (this.state.formData.formations?.length > 0 && this.elements.checkboxes) {
         this.state.formData.formations.forEach(formation => {
           const checkbox = document.querySelector(`input[name="selected_courses[]"][value="${this.sanitizeInput(formation)}"]`);
           if (checkbox) checkbox.checked = true;
@@ -453,7 +506,7 @@ class FormApp {
       checkRadio('session', this.state.formData.session);
       
       // Mode de formation
-      if (this.state.formData.modeFormation) {
+      if (this.state.formData.modeFormation && this.elements.modeFormationSelect) {
         this.elements.modeFormationSelect.value = this.state.formData.modeFormation;
         this.elements.modeFormationSelect.dispatchEvent(new Event('change'));
       }
@@ -462,7 +515,7 @@ class FormApp {
       checkRadio('payment_method', this.state.formData.paymentMethod);
       
       // Consentement
-      if (this.state.formData.consentement) {
+      if (this.state.formData.consentement && document.getElementById('consentement')) {
         document.getElementById('consentement').checked = true;
       }
       
@@ -503,6 +556,8 @@ class FormApp {
 
     for (const field of requiredFields) {
       const element = document.getElementById(field.id);
+      if (!element) continue;
+      
       const value = element.value.trim();
       
       if (!value) {
@@ -536,15 +591,17 @@ class FormApp {
     }
 
     // Validation du téléphone
-    const pays = this.elements.paysSelect.value;
-    const telephone = this.elements.telephoneInput.value.trim();
-    if (telephone && !this.validatePhone(telephone, pays)) {
-      const config = this.getPhoneConfig(pays);
-      errorMessages.push(`Format de téléphone invalide (${config.format})`);
-      this.elements.telephoneInput.setAttribute('aria-invalid', 'true');
-      isValid = false;
-    } else if (telephone) {
-      this.elements.telephoneInput.setAttribute('aria-invalid', 'false');
+    if (this.elements.paysSelect && this.elements.telephoneInput) {
+      const pays = this.elements.paysSelect.value;
+      const telephone = this.elements.telephoneInput.value.trim();
+      if (telephone && !this.validatePhone(telephone, pays)) {
+        const config = this.getPhoneConfig(pays);
+        errorMessages.push(`Format de téléphone invalide (${config.format})`);
+        this.elements.telephoneInput.setAttribute('aria-invalid', 'true');
+        isValid = false;
+      } else if (telephone) {
+        this.elements.telephoneInput.setAttribute('aria-invalid', 'false');
+      }
     }
 
     // Validation de la profession
@@ -554,38 +611,58 @@ class FormApp {
     }
 
     // Validation des objectifs
-    const objectifs = this.elements.objectifsTextarea.value.trim();
-    const wordCount = this.countWords(objectifs);
-    
-    if (wordCount < 5) {
-      errorMessages.push('Veuillez décrire vos objectifs (minimum 5 mots)');
-      this.elements.objectifsTextarea.classList.add('invalid');
-      this.elements.objectifsTextarea.classList.add('error-highlight');
-      document.getElementById('objectifs-error').textContent = "Veuillez décrire vos objectifs (minimum 5 mots)";
-      document.getElementById('objectifs-error').style.display = 'block';
-      document.getElementById('objectifs-error-icon').style.display = 'inline-block';
-      isValid = false;
+    if (this.elements.objectifsTextarea) {
+      const objectifs = this.elements.objectifsTextarea.value.trim();
+      const wordCount = this.countWords(objectifs);
       
-      setTimeout(() => {
-        this.elements.objectifsTextarea.classList.remove('error-highlight');
-      }, 50);
-    } else if (wordCount > 50) {
-      errorMessages.push('Maximum 50 mots autorisés pour les objectifs');
-      this.elements.objectifsTextarea.classList.add('invalid');
-      this.elements.objectifsTextarea.classList.add('error-highlight');
-      document.getElementById('objectifs-error').textContent = "Maximum 50 mots autorisés";
-      document.getElementById('objectifs-error').style.display = 'block';
-      document.getElementById('objectifs-error-icon').style.display = 'inline-block';
-      isValid = false;
-      
-      setTimeout(() => {
-        this.elements.objectifsTextarea.classList.remove('error-highlight');
-      }, 50);
-    } else {
-      this.elements.objectifsTextarea.classList.remove('invalid');
-      document.getElementById('objectifs-error').style.display = 'none';
-      document.getElementById('objectifs-error-icon').style.display = 'none';
-      this.elements.objectifsTextarea.classList.add('valid');
+      if (wordCount < 5) {
+        errorMessages.push('Veuillez décrire vos objectifs (minimum 5 mots)');
+        this.elements.objectifsTextarea.classList.add('invalid');
+        this.elements.objectifsTextarea.classList.add('error-highlight');
+        const objectifsError = document.getElementById('objectifs-error');
+        if (objectifsError) {
+          objectifsError.textContent = "Veuillez décrire vos objectifs (minimum 5 mots)";
+          objectifsError.style.display = 'block';
+        }
+        const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
+        if (objectifsErrorIcon) {
+          objectifsErrorIcon.style.display = 'inline-block';
+        }
+        isValid = false;
+        
+        setTimeout(() => {
+          this.elements.objectifsTextarea.classList.remove('error-highlight');
+        }, 50);
+      } else if (wordCount > 50) {
+        errorMessages.push('Maximum 50 mots autorisés pour les objectifs');
+        this.elements.objectifsTextarea.classList.add('invalid');
+        this.elements.objectifsTextarea.classList.add('error-highlight');
+        const objectifsError = document.getElementById('objectifs-error');
+        if (objectifsError) {
+          objectifsError.textContent = "Maximum 50 mots autorisés";
+          objectifsError.style.display = 'block';
+        }
+        const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
+        if (objectifsErrorIcon) {
+          objectifsErrorIcon.style.display = 'inline-block';
+        }
+        isValid = false;
+        
+        setTimeout(() => {
+          this.elements.objectifsTextarea.classList.remove('error-highlight');
+        }, 50);
+      } else {
+        this.elements.objectifsTextarea.classList.remove('invalid');
+        const objectifsError = document.getElementById('objectifs-error');
+        if (objectifsError) {
+          objectifsError.style.display = 'none';
+        }
+        const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
+        if (objectifsErrorIcon) {
+          objectifsErrorIcon.style.display = 'none';
+        }
+        this.elements.objectifsTextarea.classList.add('valid');
+      }
     }
 
     // Validation de l'âge
@@ -622,7 +699,9 @@ class FormApp {
       
       // Insérer le nouveau message d'erreur
       const firstStep = this.elements.formSteps[0];
-      firstStep.insertBefore(errorContainer, firstStep.firstChild);
+      if (firstStep) {
+        firstStep.insertBefore(errorContainer, firstStep.firstChild);
+      }
       
       // Défilement vers le haut pour voir les erreurs
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -632,7 +711,7 @@ class FormApp {
   }
   
   validateStep2() {
-    if (this.elements.checkboxes.length === 0 || 
+    if (!this.elements.checkboxes || 
         !Array.from(this.elements.checkboxes).some(cb => cb.checked)) {
       const errorMessage = document.createElement('div');
       errorMessage.className = 'error-message';
@@ -646,7 +725,9 @@ class FormApp {
       
       // Insérer le nouveau message d'erreur
       const secondStep = this.elements.formSteps[1];
-      secondStep.insertBefore(errorMessage, secondStep.firstChild);
+      if (secondStep) {
+        secondStep.insertBefore(errorMessage, secondStep.firstChild);
+      }
       
       // Défilement vers le haut pour voir les erreurs
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -666,7 +747,7 @@ class FormApp {
       isValid = false;
     }
 
-    if (!this.elements.modeFormationSelect.value) {
+    if (!this.elements.modeFormationSelect?.value) {
       errorMessages.push('Veuillez sélectionner un mode de formation');
       isValid = false;
     }
@@ -693,7 +774,9 @@ class FormApp {
       
       // Insérer le nouveau message d'erreur
       const thirdStep = this.elements.formSteps[2];
-      thirdStep.insertBefore(errorContainer, thirdStep.firstChild);
+      if (thirdStep) {
+        thirdStep.insertBefore(errorContainer, thirdStep.firstChild);
+      }
       
       // Défilement vers le haut pour voir les erreurs
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -716,7 +799,9 @@ class FormApp {
       
       // Insérer le nouveau message d'erreur
       const fourthStep = this.elements.formSteps[3];
-      fourthStep.insertBefore(errorMessage, fourthStep.firstChild);
+      if (fourthStep) {
+        fourthStep.insertBefore(errorMessage, fourthStep.firstChild);
+      }
       
       // Défilement vers le haut pour voir les erreurs
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -728,7 +813,7 @@ class FormApp {
   }
   
   validateFinalStep() {
-    if (!document.getElementById('consentement').checked) {
+    if (!document.getElementById('consentement')?.checked) {
       const errorMessage = document.createElement('div');
       errorMessage.className = 'error-message';
       errorMessage.setAttribute('role', 'alert');
@@ -741,7 +826,9 @@ class FormApp {
       
       // Insérer le nouveau message d'erreur
       const fifthStep = this.elements.formSteps[4];
-      fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
+      if (fifthStep) {
+        fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
+      }
       
       // Défilement vers le haut pour voir les erreurs
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -761,7 +848,9 @@ class FormApp {
       if (oldError) oldError.remove();
       
       const fifthStep = this.elements.formSteps[4];
-      fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
+      if (fifthStep) {
+        fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
+      }
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return false;
@@ -781,6 +870,8 @@ class FormApp {
   
   // Fonctions d'affichage
   updateWordCounter() {
+    if (!this.elements.objectifsTextarea || !this.elements.objectifsCounter) return;
+    
     const wordCount = this.countWords(this.elements.objectifsTextarea.value);
     this.elements.objectifsCounter.textContent = `${wordCount}/50 mots`;
     
@@ -796,12 +887,16 @@ class FormApp {
   }
   
   rotateRappelMessages() {
+    if (!this.elements.rappelMessages || this.elements.rappelMessages.length === 0) return;
+    
     this.elements.rappelMessages.forEach(msg => msg.classList.remove('active'));
     this.elements.rappelMessages[this.state.currentRappelIndex].classList.add('active');
     this.state.currentRappelIndex = (this.state.currentRappelIndex + 1) % this.elements.rappelMessages.length;
   }
   
   validateAge() {
+    if (!this.elements.dateNaissanceInput || !this.elements.ageError) return true;
+    
     const birthDate = this.elements.dateNaissanceInput.value;
     if (!birthDate) return true;
     
@@ -836,11 +931,13 @@ class FormApp {
   }
   
   calculateTotal() {
+    if (!this.elements.checkboxes || !this.elements.priceDisplay || !this.elements.totalPriceFCFA || !this.elements.totalPriceEUR || !this.elements.submitBtn) return;
+    
     let totalFCfa = 0;
     const selectedFormations = Array.from(this.elements.checkboxes)
       .filter(checkbox => checkbox.checked)
       .map(checkbox => {
-        totalFCfa += CONFIG.formationPrices[checkbox.value];
+        totalFCfa += CONFIG.formationPrices[checkbox.value] || 0;
         return checkbox.value;
       });
     
@@ -870,7 +967,9 @@ class FormApp {
   }
   
   showConfirmationModal() {
-    const checkedFormations = Array.from(this.elements.checkboxes).filter(cb => cb.checked);
+    if (!this.elements.modal || !this.elements.modalFormationsList) return;
+    
+    const checkedFormations = Array.from(this.elements.checkboxes || []).filter(cb => cb.checked);
     let total = 0;
     this.elements.modalFormationsList.innerHTML = '';
     
@@ -885,31 +984,56 @@ class FormApp {
     });
 
     // Remplit les informations dans la modal
-    const getValue = id => this.sanitizeInput(document.getElementById(id).value);
+    const getValue = id => this.sanitizeInput(document.getElementById(id)?.value);
     const getRadioValue = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
     const getRadioText = name => this.sanitizeInput(document.querySelector(`input[name="${name}"]:checked`)?.nextElementSibling?.textContent);
-    const getSelectText = id => this.sanitizeInput(this.elements[id].options[this.elements[id].selectedIndex]?.text);
+    const getSelectText = id => this.sanitizeInput(this.elements[id]?.options[this.elements[id]?.selectedIndex]?.text);
 
-    this.elements.modalNomComplet.textContent = `${getValue('prenom')} ${getValue('nom')}`;
-    this.elements.modalEmail.textContent = getValue('email');
-    this.elements.modalDateNaissance.textContent = getValue('date_naissance');
-    this.elements.modalLieuNaissance.textContent = getValue('lieu_naissance');
-    this.elements.modalTelephone.textContent = `${this.elements.phonePrefix.textContent} ${getValue('telephone')}`;
-    this.elements.modalPays.textContent = getSelectText('paysSelect');
-    this.elements.modalProfession.textContent = getRadioText('profession');
-    this.elements.modalObjectifs.textContent = getValue('objectifs');
-    this.elements.modalSessionInfo.textContent = getRadioText('session');
-    this.elements.modalModeInfo.textContent = getSelectText('modeFormationSelect');
+    if (this.elements.modalNomComplet) {
+      this.elements.modalNomComplet.textContent = `${getValue('prenom')} ${getValue('nom')}`;
+    }
+    if (this.elements.modalEmail) {
+      this.elements.modalEmail.textContent = getValue('email');
+    }
+    if (this.elements.modalDateNaissance) {
+      this.elements.modalDateNaissance.textContent = getValue('date_naissance');
+    }
+    if (this.elements.modalLieuNaissance) {
+      this.elements.modalLieuNaissance.textContent = getValue('lieu_naissance');
+    }
+    if (this.elements.modalTelephone && this.elements.phonePrefix) {
+      this.elements.modalTelephone.textContent = `${this.elements.phonePrefix.textContent} ${getValue('telephone')}`;
+    }
+    if (this.elements.modalPays) {
+      this.elements.modalPays.textContent = getSelectText('paysSelect');
+    }
+    if (this.elements.modalProfession) {
+      this.elements.modalProfession.textContent = getRadioText('profession');
+    }
+    if (this.elements.modalObjectifs) {
+      this.elements.modalObjectifs.textContent = getValue('objectifs');
+    }
+    if (this.elements.modalSessionInfo) {
+      this.elements.modalSessionInfo.textContent = getRadioText('session');
+    }
+    if (this.elements.modalModeInfo) {
+      this.elements.modalModeInfo.textContent = getSelectText('modeFormationSelect');
+    }
     
-    const paymentMethod = getRadioValue('payment_method');
-    this.elements.modalPaymentInfo.textContent = CONFIG.paymentMethodNames[paymentMethod] || paymentMethod;
+    if (this.elements.modalPaymentInfo) {
+      const paymentMethod = getRadioValue('payment_method');
+      this.elements.modalPaymentInfo.textContent = CONFIG.paymentMethodNames[paymentMethod] || paymentMethod;
+    }
     
-    const totalEur = (total / CONFIG.exchangeRate).toFixed(2);
-    this.elements.modalTotalPrice.textContent = total.toLocaleString('fr-FR');
-    this.elements.modalTotalPriceEur.textContent = totalEur;
+    if (this.elements.modalTotalPrice && this.elements.modalTotalPriceEur) {
+      const totalEur = (total / CONFIG.exchangeRate).toFixed(2);
+      this.elements.modalTotalPrice.textContent = total.toLocaleString('fr-FR');
+      this.elements.modalTotalPriceEur.textContent = totalEur;
+    }
     
     // Ajout du montant total dans le champ caché pour Netlify
     if (this.elements.montantTotalInput) {
+      const totalEur = (total / CONFIG.exchangeRate).toFixed(2);
       this.elements.montantTotalInput.value = `${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
     }
     
@@ -920,28 +1044,36 @@ class FormApp {
     
     // Focus sur le premier élément interactif de la modal
     this.elements.modal.style.display = 'block';
-    this.elements.modalConfirm.focus();
+    if (this.elements.modalConfirm) {
+      this.elements.modalConfirm.focus();
+    }
   }
   
   // Fonctions d'envoi
   async sendFormData() {
-    if (this.state.isSubmitting || this.state.formSubmitted) return;
+    if (this.state.isSubmitting || this.state.formSubmitted || !this.elements.registrationForm) return;
     this.state.isSubmitting = true;
     this.state.formSubmitted = true;
     
-    this.elements.modal.style.display = 'none';
-    this.elements.loadingIndicator.style.display = 'block';
-    this.elements.submitBtn.disabled = true;
+    if (this.elements.modal) {
+      this.elements.modal.style.display = 'none';
+    }
+    if (this.elements.loadingIndicator) {
+      this.elements.loadingIndicator.style.display = 'block';
+    }
+    if (this.elements.submitBtn) {
+      this.elements.submitBtn.disabled = true;
+    }
     
     try {
       // Ajout des données supplémentaires pour Netlify
-      const selectedFormations = Array.from(this.elements.checkboxes)
+      const selectedFormations = Array.from(this.elements.checkboxes || [])
         .filter(cb => cb.checked)
         .map(cb => CONFIG.formationNames[cb.value]);
         
-      const totalFCfa = Array.from(this.elements.checkboxes)
+      const totalFCfa = Array.from(this.elements.checkboxes || [])
         .filter(cb => cb.checked)
-        .reduce((sum, cb) => sum + CONFIG.formationPrices[cb.value], 0);
+        .reduce((sum, cb) => sum + (CONFIG.formationPrices[cb.value] || 0), 0);
         
       const totalEur = (totalFCfa / CONFIG.exchangeRate).toFixed(2);
       
@@ -961,20 +1093,28 @@ class FormApp {
       const sessionInput = document.createElement('input');
       sessionInput.type = 'hidden';
       sessionInput.name = 'session_choisie';
-      sessionInput.value = document.querySelector('input[name="session"]:checked').value;
-      this.elements.registrationForm.appendChild(sessionInput);
+      const sessionValue = document.querySelector('input[name="session"]:checked')?.value;
+      if (sessionValue) {
+        sessionInput.value = sessionValue;
+        this.elements.registrationForm.appendChild(sessionInput);
+      }
       
       const modeInput = document.createElement('input');
       modeInput.type = 'hidden';
       modeInput.name = 'mode_formation';
-      modeInput.value = this.elements.modeFormationSelect.value;
-      this.elements.registrationForm.appendChild(modeInput);
+      if (this.elements.modeFormationSelect?.value) {
+        modeInput.value = this.elements.modeFormationSelect.value;
+        this.elements.registrationForm.appendChild(modeInput);
+      }
       
       const paymentInput = document.createElement('input');
       paymentInput.type = 'hidden';
       paymentInput.name = 'methode_paiement';
-      paymentInput.value = document.querySelector('input[name="payment_method"]:checked').value;
-      this.elements.registrationForm.appendChild(paymentInput);
+      const paymentValue = document.querySelector('input[name="payment_method"]:checked')?.value;
+      if (paymentValue) {
+        paymentInput.value = paymentValue;
+        this.elements.registrationForm.appendChild(paymentInput);
+      }
       
       // Envoi du formulaire à Netlify
       const response = await fetch(this.elements.registrationForm.action, {
@@ -1002,30 +1142,34 @@ class FormApp {
       this.clearForm();
     } finally {
       this.state.isSubmitting = false;
-      this.elements.loadingIndicator.style.display = 'none';
-      this.elements.submitBtn.disabled = false;
+      if (this.elements.loadingIndicator) {
+        this.elements.loadingIndicator.style.display = 'none';
+      }
+      if (this.elements.submitBtn) {
+        this.elements.submitBtn.disabled = false;
+      }
       this.state.formSubmitted = false;
     }
   }
   
   saveToLocalStorage() {
     const formData = {
-      nom: this.sanitizeInput(document.getElementById('nom').value),
-      prenom: this.sanitizeInput(document.getElementById('prenom').value),
-      email: this.sanitizeInput(document.getElementById('email').value),
-      dateNaissance: this.sanitizeInput(document.getElementById('date_naissance').value),
-      lieuNaissance: this.sanitizeInput(document.getElementById('lieu_naissance').value),
-      pays: this.sanitizeInput(document.getElementById('pays').value),
-      telephone: this.sanitizeInput(document.getElementById('telephone').value),
+      nom: this.sanitizeInput(document.getElementById('nom')?.value),
+      prenom: this.sanitizeInput(document.getElementById('prenom')?.value),
+      email: this.sanitizeInput(document.getElementById('email')?.value),
+      dateNaissance: this.sanitizeInput(document.getElementById('date_naissance')?.value),
+      lieuNaissance: this.sanitizeInput(document.getElementById('lieu_naissance')?.value),
+      pays: this.sanitizeInput(document.getElementById('pays')?.value),
+      telephone: this.sanitizeInput(document.getElementById('telephone')?.value),
       profession: document.querySelector('input[name="profession"]:checked')?.value,
-      objectifs: this.sanitizeInput(document.getElementById('objectifs').value),
-      checkedFormations: Array.from(this.elements.checkboxes)
+      objectifs: this.sanitizeInput(document.getElementById('objectifs')?.value),
+      checkedFormations: Array.from(this.elements.checkboxes || [])
         .filter(cb => cb.checked)
         .map(cb => CONFIG.formationNames[cb.value]),
       session: document.querySelector('input[name="session"]:checked')?.value,
-      modeFormation: this.elements.modeFormationSelect.value,
+      modeFormation: this.elements.modeFormationSelect?.value,
       paymentMethod: document.querySelector('input[name="payment_method"]:checked')?.value,
-      total: this.elements.totalPriceFCFA.textContent,
+      total: this.elements.totalPriceFCFA?.textContent,
       timestamp: new Date().toISOString()
     };
     
@@ -1046,6 +1190,8 @@ class FormApp {
   
   // Fonctions d'affichage des résultats
   showConfirmationPage() {
+    if (!this.elements.mainPage || !this.elements.confirmationPage) return;
+    
     this.elements.mainPage.style.display = 'none';
     this.elements.confirmationPage.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1055,17 +1201,19 @@ class FormApp {
   }
   
   displayUserSummary() {
-    const getValue = id => this.sanitizeInput(document.getElementById(id).value);
+    if (!this.elements.userSummary) return;
+    
+    const getValue = id => this.sanitizeInput(document.getElementById(id)?.value);
     const getRadioText = name => this.sanitizeInput(document.querySelector(`input[name="${name}"]:checked`)?.nextElementSibling?.textContent);
-    const getSelectText = id => this.sanitizeInput(this.elements[id].options[this.elements[id].selectedIndex]?.text);
+    const getSelectText = id => this.sanitizeInput(this.elements[id]?.options[this.elements[id]?.selectedIndex]?.text);
 
-    const checkedFormations = Array.from(this.elements.checkboxes)
+    const checkedFormations = Array.from(this.elements.checkboxes || [])
       .filter(cb => cb.checked)
       .map(cb => CONFIG.formationNames[cb.value]);
     
-    const total = Array.from(this.elements.checkboxes)
+    const total = Array.from(this.elements.checkboxes || [])
       .filter(cb => cb.checked)
-      .reduce((sum, cb) => sum + CONFIG.formationPrices[cb.value], 0);
+      .reduce((sum, cb) => sum + (CONFIG.formationPrices[cb.value] || 0), 0);
     
     const totalEur = (total / CONFIG.exchangeRate).toFixed(2);
     
@@ -1073,10 +1221,10 @@ class FormApp {
       <h4>Récapitulatif de votre inscription</h4>
       <p><strong>Nom complet :</strong> ${getValue('prenom')} ${getValue('nom')}</p>
       <p><strong>Email :</strong> ${getValue('email')}</p>
-      <p><strong>Téléphone :</strong> ${this.elements.phonePrefix.textContent} ${getValue('telephone')}</p>
+      <p><strong>Téléphone :</strong> ${this.elements.phonePrefix?.textContent || ''} ${getValue('telephone')}</p>
       <p><strong>Formations :</strong> ${checkedFormations.join(', ')}</p>
       <p><strong>Session :</strong> ${getRadioText('session')} 2025</p>
-      <p><strong>Mode :</strong> ${this.elements.modeFormationSelect.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
+      <p><strong>Mode :</strong> ${this.elements.modeFormationSelect?.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
       <p><strong>Méthode de paiement :</strong> ${CONFIG.paymentMethodNames[getRadioText('payment_method')] || getRadioText('payment_method')}</p>
       <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
     `;
@@ -1084,6 +1232,7 @@ class FormApp {
   
   simulateTracking() {
     const steps = document.querySelectorAll('.tracking-steps li');
+    if (!steps || steps.length === 0) return;
     
     setTimeout(() => {
       steps[1].classList.add('completed');
@@ -1103,6 +1252,8 @@ class FormApp {
   
   // Fonctions de chat
   sendChatMessage() {
+    if (!this.elements.chatInput || !this.elements.chatMessages) return;
+    
     const message = this.elements.chatInput.value.trim();
     if (!message) return;
     
@@ -1115,6 +1266,8 @@ class FormApp {
   }
   
   addChatMessage(text, sender) {
+    if (!this.elements.chatMessages) return;
+    
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${sender}-message`;
     messageDiv.setAttribute('role', sender === 'user' ? 'status' : 'alert');
@@ -1126,32 +1279,66 @@ class FormApp {
   
   // Nettoyage
   clearForm() {
-    this.elements.registrationForm.reset();
-    this.elements.priceDisplay.style.display = 'none';
-    this.elements.totalPriceFCFA.textContent = '0';
-    this.elements.totalPriceEUR.textContent = '0';
-    this.elements.submitBtn.textContent = "S'inscrire maintenant";
-    this.elements.checkboxes.forEach(checkbox => checkbox.checked = false);
-    this.elements.phonePrefix.textContent = '+229';
-    this.elements.phoneFormat.style.display = 'none';
-    this.elements.objectifsCounter.textContent = '0/50 mots';
-    this.elements.objectifsCounter.style.color = '#666';
-    this.elements.objectifsTextarea.style.borderColor = '#ddd';
-    this.elements.ageError.style.display = 'none';
-    this.elements.dateNaissanceInput.style.borderColor = '#ddd';
-    this.elements.onlinePaymentMethods.style.display = 'none';
-    this.elements.presentielPaymentMethod.style.display = 'none';
-    document.getElementById('consentement').checked = false;
+    if (this.elements.registrationForm) {
+      this.elements.registrationForm.reset();
+    }
+    if (this.elements.priceDisplay) {
+      this.elements.priceDisplay.style.display = 'none';
+    }
+    if (this.elements.totalPriceFCFA) {
+      this.elements.totalPriceFCFA.textContent = '0';
+    }
+    if (this.elements.totalPriceEUR) {
+      this.elements.totalPriceEUR.textContent = '0';
+    }
+    if (this.elements.submitBtn) {
+      this.elements.submitBtn.textContent = "S'inscrire maintenant";
+    }
+    if (this.elements.checkboxes) {
+      this.elements.checkboxes.forEach(checkbox => checkbox.checked = false);
+    }
+    if (this.elements.phonePrefix) {
+      this.elements.phonePrefix.textContent = '+229';
+    }
+    if (this.elements.phoneFormat) {
+      this.elements.phoneFormat.style.display = 'none';
+    }
+    if (this.elements.objectifsCounter) {
+      this.elements.objectifsCounter.textContent = '0/50 mots';
+      this.elements.objectifsCounter.style.color = '#666';
+    }
+    if (this.elements.objectifsTextarea) {
+      this.elements.objectifsTextarea.style.borderColor = '#ddd';
+    }
+    if (this.elements.ageError) {
+      this.elements.ageError.style.display = 'none';
+    }
+    if (this.elements.dateNaissanceInput) {
+      this.elements.dateNaissanceInput.style.borderColor = '#ddd';
+    }
+    if (this.elements.onlinePaymentMethods) {
+      this.elements.onlinePaymentMethods.style.display = 'none';
+    }
+    if (this.elements.presentielPaymentMethod) {
+      this.elements.presentielPaymentMethod.style.display = 'none';
+    }
+    const consentement = document.getElementById('consentement');
+    if (consentement) {
+      consentement.checked = false;
+    }
     document.querySelectorAll('input[name="profession"]').forEach(radio => radio.checked = false);
     document.querySelectorAll('input[name="session"]').forEach(radio => radio.checked = false);
     document.querySelectorAll('input[name="payment_method"]').forEach(radio => radio.checked = false);
-    this.elements.modeFormationSelect.value = '';
-    this.elements.paysSelect.value = '';
+    if (this.elements.modeFormationSelect) {
+      this.elements.modeFormationSelect.value = '';
+    }
+    if (this.elements.paysSelect) {
+      this.elements.paysSelect.value = '';
+    }
   }
 }
 
 // Configuration des numéros de téléphone par pays
-
 const phoneConfigurations = {
     // Afrique
     'DZ': { code: '+213', pattern: '[0-9]{9}', format: '+213 XX XXX XXXX' },
