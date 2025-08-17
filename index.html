@@ -37,7 +37,6 @@
     <meta property="twitter:description" content="Formations certifiantes en conception électronique, programmation, plans architecturaux et électricité bâtiment au Bénin.">
     <meta property="twitter:image" content="https://btece-formation.netlify.app/assets/images/seo/og-imageT.webp">
 
-
     <!-- Données structurées -->
     <script type="application/ld+json">
     {
@@ -296,6 +295,11 @@
             display: flex;
             justify-content: center;
         }
+
+        /* Styles pour le champ caché reCAPTCHA */
+        #g-recaptcha-response {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -387,6 +391,8 @@
                     <input type="hidden" name="form-name" value="registration">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="">
                     <input type="hidden" id="montant-total" name="montant_total" value="">
+                    <!-- Champ reCAPTCHA caché -->
+                    <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response">
                     <p class="hidden" aria-hidden="true">
                         <label>Ne remplissez pas ce champ si vous êtes humain: <input name="bot-field" id="bot-field"></label>
                     </p>
@@ -903,9 +909,14 @@
                             <i class="fas fa-gift" aria-hidden="true"></i> <strong>Bonus exclusif</strong> : Licence des logiciels professionnels offerte pour 5 ans
                         </div>
 
-                        <!-- Intégration sécurisée de reCAPTCHA -->
-                        <div class="g-recaptcha" data-sitekey="<%= process.env.RECAPTCHA_SITE_KEY %>"></div>
-                        <div id="recaptcha-error" class="error-message" style="display: none;" role="alert">Veuillez compléter le reCAPTCHA</div>
+                        <!-- Intégration invisible de reCAPTCHA v3 -->
+                        <div class="g-recaptcha" 
+                             data-sitekey="<%= process.env.RECAPTCHA_SITE_KEY %>" 
+                             data-callback="onRecaptchaSuccess" 
+                             data-size="invisible">
+                        </div>
+                        <input type="hidden" id="recaptcha-token" name="recaptcha-token">
+                        <div id="recaptcha-error" class="error-message" style="display: none;" role="alert">Veuillez compléter la vérification reCAPTCHA</div>
 
                         <div class="checkbox-group">
                             <input type="checkbox" id="consentement" name="terms_accepted" required aria-required="true" class="keyboard-support" aria-describedby="consentement-error">
@@ -1422,8 +1433,9 @@
     <!-- Scripts en bas de page pour une meilleure performance -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <!-- Chargement de l'API reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<%= process.env.RECAPTCHA_SITE_KEY %>" async defer></script>
     <!-- Lien vers script JS -->
     <script src="assets/js/script.js"></script>
+    
 </body>
 </html>
