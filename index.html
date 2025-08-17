@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -23,8 +22,14 @@
     <meta http-equiv="Cache-Control" content="public, max-age=604800, must-revalidate">
     <meta name="google-sheets-api" content="enabled">
     
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self';script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;style-src 'self' 'unsafe-inline';img-src 'self' data:;connect-src 'self';">
-    
+    <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+    font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+    img-src 'self' data:;
+    connect-src 'self';
+    frame-src https://www.google.com;">
     <!-- Métadonnées SEO -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://btece-formation.netlify.app/">
@@ -289,11 +294,32 @@
             background-color: #f9fff9 !important;
         }
 
-        /* Styles pour reCAPTCHA */
+        /* Styles optimisés pour reCAPTCHA */
+        .g-recaptcha-container {
+            margin: 20px auto;
+            max-width: 304px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        
         .g-recaptcha {
-            margin: 20px 0;
-            display: flex;
-            justify-content: center;
+            transform: scale(0.85);
+            transform-origin: 0 0;
+            margin: 0 auto;
+            display: block;
+        }
+        
+        @media (max-width: 400px) {
+            .g-recaptcha {
+                transform: scale(0.77);
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .g-recaptcha {
+                transform: scale(1);
+            }
         }
 
         /* Styles pour le champ caché reCAPTCHA */
@@ -909,13 +935,15 @@
                             <i class="fas fa-gift" aria-hidden="true"></i> <strong>Bonus exclusif</strong> : Licence des logiciels professionnels offerte pour 5 ans
                         </div>
 
-                        <!-- Intégration invisible de reCAPTCHA v3 -->
-                        <div class="g-recaptcha" 
-                             data-sitekey="<%= process.env.RECAPTCHA_SITE_KEY %>" 
-                             data-callback="onRecaptchaSuccess" 
-                             data-size="invisible">
+                        <!-- Intégration optimisée de reCAPTCHA v2 -->
+                        <div class="g-recaptcha-container">
+                            <div class="g-recaptcha" 
+                                 data-sitekey="6LcY3ZEpAAAAAJGcJ8QZQZQZQZQZQZQZQZQZQZQZ" 
+                                 data-callback="onRecaptchaSuccess"
+                                 data-expired-callback="onRecaptchaExpired"
+                                 data-error-callback="onRecaptchaError">
+                            </div>
                         </div>
-                        <input type="hidden" id="recaptcha-token" name="recaptcha-token">
                         <div id="recaptcha-error" class="error-message" style="display: none;" role="alert">Veuillez compléter la vérification reCAPTCHA</div>
 
                         <div class="checkbox-group">
@@ -1433,9 +1461,13 @@
     <!-- Scripts en bas de page pour une meilleure performance -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <!-- Chargement de l'API reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js?render=<%= process.env.RECAPTCHA_SITE_KEY %>" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LcY3ZEpAAAAAJGcJ8QZQZQZQZQZQZQZQZQZQZQZ" async defer></script>
+    <script>
+    window.RECAPTCHA_SITE_KEY = "6LcY3ZEpAAAAAJGcJ8QZQZQZQZQZQZQZQZQZQZQZ";
+    </script>
     <!-- Lien vers script JS -->
     <script src="assets/js/script.js"></script>
     
+
 </body>
 </html>

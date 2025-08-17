@@ -1168,6 +1168,7 @@ class FormApp {
 
       // Valider le token reCAPTCHA côté serveur
       const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+      const recaptchaSiteKey = window.RECAPTCHA_SITE_KEY;
       const recaptchaValidation = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
         headers: {
