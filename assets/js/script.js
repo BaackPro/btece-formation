@@ -62,8 +62,83 @@ class FormApp {
     this.initElements();
     this.initEventListeners();
     this.initForm();
+    this.initEmailJS();
+    this.initGoogleSheets();
+    this.initRecaptcha();
   }
   
+  // Initialisation de reCAPTCHA avec les variables d'environnement
+  initRecaptcha() {
+    const recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY;
+    if (!recaptchaSiteKey) {
+      console.error('Clé reCAPTCHA non configurée');
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    window.grecaptchaReady = () => {
+      grecaptcha.ready(() => {
+        grecaptcha.execute(recaptchaSiteKey, { action: 'submit' })
+          .then(token => {
+            const responseField = document.getElementById('g-recaptcha-response');
+            if (responseField) {
+              responseField.value = token;
+            }
+          })
+          .catch(error => {
+            console.error('Erreur reCAPTCHA:', error);
+          });
+      });
+    };
+  }
+
+  // Initialisation de EmailJS avec les variables d'environnement
+  initEmailJS() {
+    const emailjsUserId = process.env.EMAILJS_USER_ID;
+    const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
+    const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
+    const emailjsAdminTemplateId = process.env.EMAILJS_ADMIN_TEMPLATE_ID;
+
+    if (!emailjsUserId || !emailjsServiceId || !emailjsTemplateId || !emailjsAdminTemplateId) {
+      console.error('Configuration EmailJS incomplète');
+      return;
+    }
+
+    // Charger EmailJS seulement si nécessaire
+    if (typeof emailjs === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+      script.onload = () => {
+        emailjs.init(emailjsUserId);
+      };
+      document.head.appendChild(script);
+    } else {
+      emailjs.init(emailjsUserId);
+    }
+  }
+
+  // Initialisation de la connexion à Google Sheets
+  initGoogleSheets() {
+    // Récupération des variables d'environnement
+    const googleSheetsApiUrl = process.env.GOOGLE_SHEETS_API_URL;
+    const API_KEY = process.env.API_KEY_URL; // Sécurité URL maintenant dans Netlify
+    const API_TOKEN = process.env.API_SECRET_TOKEN;
+    if (!googleSheetsApiUrl) {
+      console.error('URL API Google Sheets non configurée');
+      return;
+    }
+
+    // Vous pouvez utiliser cette URL pour envoyer des données plus tard
+    this.googleSheetsApiUrl = googleSheetsApiUrl;
+    this.API_KEY = API_KEY;
+    this.API_TOKEN = API_TOKEN;
+  }
+
   // Cache les éléments DOM
   initElements() {
     this.elements = {
@@ -116,7 +191,7 @@ class FormApp {
       saveStatus: document.getElementById('save-status'),
       userSummary: document.getElementById('user-summary'),
       rappelMessages: document.querySelectorAll('.rappel-message'),
-      rappelContainer: document.querySelector('.raquel-container'),
+      rappelContainer: document.querySelector('.rappel-container'),
       objectifsTextarea: document.getElementById('objectifs'),
       objectifsCounter: document.getElementById('objectifs-counter'),
       dateNaissanceInput: document.getElementById('date_naissance'),
@@ -126,7 +201,8 @@ class FormApp {
       csrfToken: document.getElementById('csrf_token'),
       sessionDatesContainer: document.getElementById('session-dates-container'),
       honeypotField: document.getElementById('bot-field'),
-      montantTotalInput: document.getElementById('montant-total')
+      montantTotalInput: document.getElementById('montant-total'),
+      recaptchaResponse: document.getElementById('g-recaptcha-response')
     };
   }
   
@@ -135,14 +211,18 @@ class FormApp {
     // Gestion du mode de formation
     if (this.elements.modeFormationSelect) {
       this.elements.modeFormationSelect.addEventListener('change', () => {
-        this.elements.onlinePaymentMethods.style.display = 
-          this.elements.modeFormationSelect.value === 'en-ligne' ? 'block' : 'none';
-        this.elements.presentielPaymentMethod.style.display = 
-          this.elements.modeFormationSelect.value === 'presentiel' ? 'block' : 'none';
+        if (this.elements.onlinePaymentMethods) {
+          this.elements.onlinePaymentMethods.style.display = 
+            this.elements.modeFormationSelect.value === 'en-ligne' ? 'block' : 'none';
+        }
+        if (this.elements.presentielPaymentMethod) {
+          this.elements.presentielPaymentMethod.style.display = 
+            this.elements.modeFormationSelect.value === 'presentiel' ? 'block' : 'none';
+        }
         this.autoSave();
       });
     }
-    
+
     // Gestion du pays et du format de téléphone
     if (this.elements.paysSelect) {
       this.elements.paysSelect.addEventListener('change', () => {
@@ -186,14 +266,16 @@ class FormApp {
     
     // Sauvegarde automatique
     document.querySelectorAll('input, select, textarea').forEach(element => {
-      element.addEventListener('change', () => {
-        clearTimeout(this.state.saveTimeout);
-        this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
-      });
-      element.addEventListener('input', () => {
-        clearTimeout(this.state.saveTimeout);
-        this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
-      });
+      if (element) {
+        element.addEventListener('change', () => {
+          clearTimeout(this.state.saveTimeout);
+          this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
+        });
+        element.addEventListener('input', () => {
+          clearTimeout(this.state.saveTimeout);
+          this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
+        });
+      }
     });
     
     // Soumission du formulaire
@@ -210,29 +292,37 @@ class FormApp {
     }
     if (this.elements.modalCancel) {
       this.elements.modalCancel.addEventListener('click', () => { 
-        this.elements.modal.style.display = 'none'; 
+        if (this.elements.modal) {
+          this.elements.modal.style.display = 'none'; 
+        }
       });
     }
     if (this.elements.closeModal) {
       this.elements.closeModal.addEventListener('click', () => { 
-        this.elements.modal.style.display = 'none'; 
+        if (this.elements.modal) {
+          this.elements.modal.style.display = 'none'; 
+        }
       });
     }
     
     // Gestion du chat
     if (this.elements.chatToggle) {
       this.elements.chatToggle.addEventListener('click', () => {
-        this.elements.chatContainer.style.display = 
-          this.elements.chatContainer.style.display === 'block' ? 'none' : 'block';
-        if (this.elements.chatContainer.style.display === 'block') {
-          this.elements.chatInput.focus();
+        if (this.elements.chatContainer) {
+          this.elements.chatContainer.style.display = 
+            this.elements.chatContainer.style.display === 'block' ? 'none' : 'block';
+          if (this.elements.chatContainer.style.display === 'block' && this.elements.chatInput) {
+            this.elements.chatInput.focus();
+          }
         }
       });
     }
     
     if (this.elements.closeChat) {
       this.elements.closeChat.addEventListener('click', () => { 
-        this.elements.chatContainer.style.display = 'none'; 
+        if (this.elements.chatContainer) {
+          this.elements.chatContainer.style.display = 'none'; 
+        }
       });
     }
     if (this.elements.sendMessage) {
@@ -246,19 +336,23 @@ class FormApp {
     
     // Boutons précédent/suivant
     document.querySelectorAll('.btn-next').forEach(button => {
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        const currentStep = parseInt(button.closest('.form-step').id.split('-').pop());
-        this.nextStep(currentStep);
-      });
+      if (button) {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          const currentStep = parseInt(button.closest('.form-step').id.split('-').pop());
+          this.nextStep(currentStep);
+        });
+      }
     });
 
     document.querySelectorAll('.btn-prev').forEach(button => {
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        const currentStep = parseInt(button.closest('.form-step').id.split('-').pop());
-        this.prevStep(currentStep);
-      });
+      if (button) {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          const currentStep = parseInt(button.closest('.form-step').id.split('-').pop());
+          this.prevStep(currentStep);
+        });
+      }
     });
   }
   
@@ -435,14 +529,14 @@ class FormApp {
       lieu_naissance: this.sanitizeInput(this.elements.lieuNaissanceInput?.value),
       pays: this.sanitizeInput(this.elements.paysSelect?.value),
       telephone: this.sanitizeInput(this.elements.telephoneInput?.value),
-      profession: this.sanitizeInput(document.querySelector('input[name="profession"]:checked')?.value),
+      profession: document.querySelector('input[name="profession"]:checked')?.value,
       objectifs: this.sanitizeInput(this.elements.objectifsTextarea?.value),
       formations: Array.from(this.elements.checkboxes || [])
         .filter(cb => cb.checked)
         .map(cb => this.sanitizeInput(cb.value)),
-      session: this.sanitizeInput(document.querySelector('input[name="session"]:checked')?.value),
+      session: document.querySelector('input[name="session"]:checked')?.value,
       modeFormation: this.sanitizeInput(this.elements.modeFormationSelect?.value),
-      paymentMethod: this.sanitizeInput(document.querySelector('input[name="payment_method"]:checked')?.value),
+      paymentMethod: document.querySelector('input[name="payment_method"]:checked')?.value,
       consentement: document.getElementById('consentement')?.checked || false
     };
     
@@ -544,7 +638,7 @@ class FormApp {
     const requiredFields = [
       { id: 'nom', name: 'Nom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
       { id: 'prenom', name: 'Prénom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
-      { id: 'email', name: 'Email', pattern: '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$' },
+      { id: 'email', name: 'Email', pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$' },
       { id: 'date_naissance', name: 'Date de naissance' },
       { id: 'lieu_naissance', name: 'Lieu de naissance', minLength: 2, maxLength: 100 },
       { id: 'pays', name: 'Pays' },
@@ -1066,80 +1160,60 @@ class FormApp {
     }
     
     try {
-      // Ajout des données supplémentaires pour Netlify
-      const selectedFormations = Array.from(this.elements.checkboxes || [])
-        .filter(cb => cb.checked)
-        .map(cb => CONFIG.formationNames[cb.value]);
-        
-      const totalFCfa = Array.from(this.elements.checkboxes || [])
-        .filter(cb => cb.checked)
-        .reduce((sum, cb) => sum + (CONFIG.formationPrices[cb.value] || 0), 0);
-        
-      const totalEur = (totalFCfa / CONFIG.exchangeRate).toFixed(2);
-      
-      // Création des champs cachés pour Netlify
-      const formationsInput = document.createElement('input');
-      formationsInput.type = 'hidden';
-      formationsInput.name = 'formations_selectionnees';
-      formationsInput.value = selectedFormations.join(', ');
-      this.elements.registrationForm.appendChild(formationsInput);
-      
-      const montantTotalInput = document.createElement('input');
-      montantTotalInput.type = 'hidden';
-      montantTotalInput.name = 'montant_total';
-      montantTotalInput.value = `${totalFCfa.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
-      this.elements.registrationForm.appendChild(montantTotalInput);
-      
-      const sessionInput = document.createElement('input');
-      sessionInput.type = 'hidden';
-      sessionInput.name = 'session_choisie';
-      const sessionValue = document.querySelector('input[name="session"]:checked')?.value;
-      if (sessionValue) {
-        sessionInput.value = sessionValue;
-        this.elements.registrationForm.appendChild(sessionInput);
+      // Récupérer le token reCAPTCHA
+      const recaptchaToken = this.elements.recaptchaResponse?.value;
+      if (!recaptchaToken) {
+        throw new Error('Validation reCAPTCHA manquante');
       }
-      
-      const modeInput = document.createElement('input');
-      modeInput.type = 'hidden';
-      modeInput.name = 'mode_formation';
-      if (this.elements.modeFormationSelect?.value) {
-        modeInput.value = this.elements.modeFormationSelect.value;
-        this.elements.registrationForm.appendChild(modeInput);
-      }
-      
-      const paymentInput = document.createElement('input');
-      paymentInput.type = 'hidden';
-      paymentInput.name = 'methode_paiement';
-      const paymentValue = document.querySelector('input[name="payment_method"]:checked')?.value;
-      if (paymentValue) {
-        paymentInput.value = paymentValue;
-        this.elements.registrationForm.appendChild(paymentInput);
-      }
-      
-      // Envoi du formulaire à Netlify
-      const response = await fetch(this.elements.registrationForm.action, {
+
+      // Valider le token reCAPTCHA côté serveur
+      const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+      const recaptchaValidation = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
-        body: new FormData(this.elements.registrationForm),
         headers: {
-          'Accept': 'application/json'
-        }
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `secret=${recaptchaSecret}&response=${recaptchaToken}`
       });
-      
-      if (!response.ok) {
-        throw new Error('Erreur réseau');
+
+      const recaptchaResult = await recaptchaValidation.json();
+      if (!recaptchaResult.success) {
+        throw new Error('Échec de la validation reCAPTCHA');
       }
-      
-      const data = await response.json();
-      console.log('Succès:', data);
-      
+
+      // Préparer les données pour Google Sheets
+      const formData = new FormData(this.elements.registrationForm);
+      const formDataObj = {};
+      formData.forEach((value, key) => {
+        formDataObj[key] = value;
+      });
+
+      // Envoyer les données à Google Sheets
+      await this.sendToGoogleSheets(formDataObj);
+
+      // Envoyer les emails de confirmation
+      await this.sendConfirmationEmails(formDataObj);
+
+      // Afficher la page de confirmation
       this.showConfirmationPage();
       localStorage.removeItem('bteceFormData');
       this.clearForm();
     } catch (error) {
       console.error('Erreur:', error);
       this.saveToLocalStorage();
-      this.showConfirmationPage();
-      this.clearForm();
+      
+      // Afficher un message d'erreur
+      const errorMessage = document.createElement('div');
+      errorMessage.className = 'error-message';
+      errorMessage.setAttribute('role', 'alert');
+      errorMessage.setAttribute('aria-live', 'assertive');
+      errorMessage.textContent = 'Une erreur est survenue. Veuillez réessayer ou nous contacter si le problème persiste.';
+      
+      const oldError = document.querySelector('.error-message');
+      if (oldError) oldError.remove();
+      
+      document.body.insertBefore(errorMessage, document.body.firstChild);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       this.state.isSubmitting = false;
       if (this.elements.loadingIndicator) {
@@ -1150,6 +1224,89 @@ class FormApp {
       }
       this.state.formSubmitted = false;
     }
+  }
+
+  // Envoi des données à Google Sheets
+  async sendToGoogleSheets(formData) {
+    try {
+      const response = await fetch(`${this.googleSheetsApiUrl}?key=${this.API_KEY}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.API_TOKEN}`,
+          "Content-Type": "application/json",
+          "X-Client-Version": "1.0.0" // Optionnel : suivi des versions
+        },
+        body: JSON.stringify({
+          ...formData,
+          timestamp: new Date().toISOString() // Ajout d'un timestamp
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erreur inconnue");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Erreur d'envoi à Google Sheets:", {
+        error: error.message,
+        formData: formData // Log contrôlé (sans données sensibles)
+      });
+      throw error;
+    }
+  }
+
+  // Envoi des emails de confirmation via EmailJS
+  async sendConfirmationEmails(formData) {
+    if (typeof emailjs === 'undefined') {
+      console.error('EmailJS non chargé');
+      return;
+    }
+
+    const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
+    const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
+    const emailjsAdminTemplateId = process.env.EMAILJS_ADMIN_TEMPLATE_ID;
+
+    if (!emailjsServiceId || !emailjsTemplateId || !emailjsAdminTemplateId) {
+      throw new Error('Configuration EmailJS incomplète');
+    }
+
+    // Email à l'utilisateur
+    const userEmailParams = {
+      to_name: `${formData.prenom} ${formData.nom}`,
+      to_email: formData.email,
+      formations: formData.formations,
+      montant_total: formData.montant_total,
+      session: CONFIG.sessionDates[formData.session] || formData.session,
+      mode_formation: formData.mode_formation === 'en-ligne' ? 'en ligne' : 'en présentiel',
+      payment_method: CONFIG.paymentMethodNames[formData.payment_method] || formData.payment_method
+    };
+
+    await emailjs.send(
+      emailjsServiceId,
+      emailjsTemplateId,
+      userEmailParams
+    );
+
+    // Email à l'admin
+    const adminEmailParams = {
+      nom_complet: `${formData.prenom} ${formData.nom}`,
+      email: formData.email,
+      telephone: `${formData.telephone_prefix || '+229'} ${formData.telephone}`,
+      formations: formData.formations,
+      montant_total: formData.montant_total,
+      session: CONFIG.sessionDates[formData.session] || formData.session,
+      mode_formation: formData.mode_formation === 'en-ligne' ? 'en ligne' : 'en présentiel',
+      payment_method: CONFIG.paymentMethodNames[formData.payment_method] || formData.payment_method,
+      date_inscription: new Date().toLocaleDateString('fr-FR')
+    };
+
+    await emailjs.send(
+      emailjsServiceId,
+      emailjsAdminTemplateId,
+      adminEmailParams
+    );
   }
   
   saveToLocalStorage() {
@@ -1227,6 +1384,10 @@ class FormApp {
       <p><strong>Mode :</strong> ${this.elements.modeFormationSelect?.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
       <p><strong>Méthode de paiement :</strong> ${CONFIG.paymentMethodNames[getRadioText('payment_method')] || getRadioText('payment_method')}</p>
       <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
+      <div class="confirmation-message">
+        <p>Un email de confirmation vous a été envoyé à l'adresse ${getValue('email')}.</p>
+        <p>Veuillez vérifier votre boîte de réception (et vos spams si vous ne trouvez pas l'email).</p>
+      </div>
     `;
   }
   
@@ -1304,7 +1465,7 @@ class FormApp {
       this.elements.phoneFormat.style.display = 'none';
     }
     if (this.elements.objectifsCounter) {
-      this.elements.objectifsCounter.textContent = '0/50 mots';
+      this.elements.objectifsCounter.textContent = '0/100 mots';
       this.elements.objectifsCounter.style.color = '#666';
     }
     if (this.elements.objectifsTextarea) {
