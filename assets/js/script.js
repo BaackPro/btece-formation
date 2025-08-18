@@ -268,9 +268,7 @@ class FormApp {
     // Gestion de la modal de confirmation
     if (this.elements.modalConfirm) {
       this.elements.modalConfirm.addEventListener('click', () => {
-        if (this.validateFinalStep()) {
-          this.sendFormData();
-        }
+        this.sendFormData();
       });
     }
     if (this.elements.modalCancel) {
@@ -1382,62 +1380,94 @@ class FormApp {
   
   // Nettoyage
   clearForm() {
+    // Réinitialiser tous les champs du formulaire
     if (this.elements.registrationForm) {
       this.elements.registrationForm.reset();
     }
+    
+    // Réinitialiser les cases à cocher des formations
+    if (this.elements.checkboxes) {
+      this.elements.checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+      });
+    }
+    
+    // Réinitialiser les boutons radio
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.checked = false;
+    });
+    
+    // Réinitialiser les sélecteurs
+    if (this.elements.paysSelect) {
+      this.elements.paysSelect.selectedIndex = 0;
+      this.elements.paysSelect.dispatchEvent(new Event('change'));
+    }
+    
+    if (this.elements.modeFormationSelect) {
+      this.elements.modeFormationSelect.selectedIndex = 0;
+      this.elements.modeFormationSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Réinitialiser les affichages de prix
     if (this.elements.priceDisplay) {
       this.elements.priceDisplay.style.display = 'none';
     }
+    
     if (this.elements.totalPriceFCFA) {
       this.elements.totalPriceFCFA.textContent = '0';
     }
+    
     if (this.elements.totalPriceEUR) {
       this.elements.totalPriceEUR.textContent = '0';
     }
+    
     if (this.elements.submitBtn) {
       this.elements.submitBtn.textContent = "S'inscrire maintenant";
     }
-    if (this.elements.checkboxes) {
-      this.elements.checkboxes.forEach(checkbox => checkbox.checked = false);
-    }
-    if (this.elements.phonePrefix) {
-      this.elements.phonePrefix.textContent = '+229';
-    }
-    if (this.elements.phoneFormat) {
-      this.elements.phoneFormat.style.display = 'none';
-    }
+    
+    // Réinitialiser le compteur de mots
     if (this.elements.objectifsCounter) {
       this.elements.objectifsCounter.textContent = '0/100 mots';
       this.elements.objectifsCounter.style.color = '#666';
     }
+    
+    // Réinitialiser les styles des champs
     if (this.elements.objectifsTextarea) {
       this.elements.objectifsTextarea.style.borderColor = '#ddd';
+      this.elements.objectifsTextarea.classList.remove('invalid', 'valid');
     }
-    if (this.elements.ageError) {
-      this.elements.ageError.style.display = 'none';
-    }
+    
     if (this.elements.dateNaissanceInput) {
       this.elements.dateNaissanceInput.style.borderColor = '#ddd';
     }
-    if (this.elements.onlinePaymentMethods) {
-      this.elements.onlinePaymentMethods.style.display = 'none';
+    
+    // Réinitialiser les messages d'erreur
+    if (this.elements.ageError) {
+      this.elements.ageError.style.display = 'none';
     }
-    if (this.elements.presentielPaymentMethod) {
-      this.elements.presentielPaymentMethod.style.display = 'none';
+    
+    const objectifsError = document.getElementById('objectifs-error');
+    if (objectifsError) {
+      objectifsError.style.display = 'none';
     }
-    const consentement = document.getElementById('consentement');
-    if (consentement) {
-      consentement.checked = false;
+    
+    const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
+    if (objectifsErrorIcon) {
+      objectifsErrorIcon.style.display = 'none';
     }
-    document.querySelectorAll('input[name="profession"]').forEach(radio => radio.checked = false);
-    document.querySelectorAll('input[name="session"]').forEach(radio => radio.checked = false);
-    document.querySelectorAll('input[name="payment_method"]').forEach(radio => radio.checked = false);
-    if (this.elements.modeFormationSelect) {
-      this.elements.modeFormationSelect.value = '';
+    
+    // Réinitialiser les messages d'erreur globaux
+    const oldError = document.querySelector('.error-message');
+    if (oldError) oldError.remove();
+    
+    // Réinitialiser le statut de sauvegarde
+    if (this.elements.saveStatus) {
+      this.elements.saveStatus.style.display = 'none';
     }
-    if (this.elements.paysSelect) {
-      this.elements.paysSelect.value = '';
-    }
+    
+    // Réinitialiser l'étape courante
+    this.state.currentStep = 1;
+    this.showStep(1);
   }
 }
 
