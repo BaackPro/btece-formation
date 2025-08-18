@@ -267,7 +267,11 @@ class FormApp {
     
     // Gestion de la modal de confirmation
     if (this.elements.modalConfirm) {
-      this.elements.modalConfirm.addEventListener('click', () => this.sendFormData());
+      this.elements.modalConfirm.addEventListener('click', () => {
+        if (this.validateFinalStep()) {
+          this.sendFormData();
+        }
+      });
     }
     if (this.elements.modalCancel) {
       this.elements.modalCancel.addEventListener('click', () => { 
