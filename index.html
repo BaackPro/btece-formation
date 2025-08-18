@@ -295,37 +295,6 @@
             border-color: #5cb85c !important;
             background-color: #f9fff9 !important;
         }
-
-        /* Styles pour reCAPTCHA */
-        .g-recaptcha {
-            margin: 20px 0;
-            display: flex;
-            justify-content: center;
-        }
-
-        /* Styles pour le champ caché reCAPTCHA */
-        #g-recaptcha-response {
-            display: none !important;
-        }
-
-        /* Style pour le conteneur du reCAPTCHA et de la case à cocher */
-        .recaptcha-terms-container {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .recaptcha-container {
-            flex: 1;
-            min-width: 300px;
-        }
-
-        .terms-checkbox {
-            flex: 1;
-            min-width: 300px;
-        }
     </style>
 </head>
 <body>
@@ -417,8 +386,6 @@
                     <input type="hidden" name="form-name" value="registration">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="">
                     <input type="hidden" id="montant-total" name="montant_total" value="">
-                    <!-- Champ reCAPTCHA caché -->
-                    <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response">
                     <p class="hidden" aria-hidden="true">
                         <label>Ne remplissez pas ce champ si vous êtes humain: <input name="bot-field" id="bot-field"></label>
                     </p>
@@ -935,25 +902,13 @@
                             <i class="fas fa-gift" aria-hidden="true"></i> <strong>Bonus exclusif</strong> : Licence des logiciels professionnels offerte pour 5 ans
                         </div>
 
-                        <!-- Conteneur pour reCAPTCHA et case à cocher -->
-                        <div class="recaptcha-terms-container">
-                            <div class="recaptcha-container">
-                                <!-- Intégration de reCAPTCHA v2 visible -->
-                                <div class="g-recaptcha" 
-                                     data-sitekey="6LcY3ZEpAAAAAJGcJ8QZQZQZQZQZQZQZQZQZQZQZ" 
-                                     data-callback="onRecaptchaSuccess">
-                                </div>
-                                <div id="recaptcha-error" class="error-message" style="display: none;" role="alert">Veuillez compléter la vérification reCAPTCHA</div>
+                        <div class="terms-checkbox">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="consentement" name="terms_accepted" required aria-required="true" class="keyboard-support" aria-describedby="consentement-error">
+                                <label for="consentement" class="required">J'accepte les conditions générales</label>
                             </div>
-                            
-                            <div class="terms-checkbox">
-                                <div class="checkbox-group">
-                                    <input type="checkbox" id="consentement" name="terms_accepted" required aria-required="true" class="keyboard-support" aria-describedby="consentement-error">
-                                    <label for="consentement" class="required">J'accepte les conditions générales</label>
-                                </div>
-                                <i class="fas fa-exclamation-circle error-icon" id="consentement-error-icon" aria-hidden="true"></i>
-                                <div class="error-message" id="consentement-error" role="alert">Veuillez accepter les conditions générales</div>
-                            </div>
+                            <i class="fas fa-exclamation-circle error-icon" id="consentement-error-icon" aria-hidden="true"></i>
+                            <div class="error-message" id="consentement-error" role="alert">Veuillez accepter les conditions générales</div>
                         </div>
 
                         <div id="loading" style="display: none;" aria-live="polite">
@@ -1463,8 +1418,6 @@
 
     <!-- Scripts en bas de page pour une meilleure performance -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <!-- Chargement de l'API reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     
     <!-- Lien vers script JS -->
     <script src="assets/js/script.js"></script>

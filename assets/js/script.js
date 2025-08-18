@@ -61,7 +61,6 @@ class FormApp {
     
     // Configuration des variables d'environnement
     this.env = {
-      RECAPTCHA_SITE_KEY: window.RECAPTCHA_SITE_KEY || '',
       EMAILJS_USER_ID: window.EMAILJS_USER_ID || '',
       EMAILJS_SERVICE_ID: window.EMAILJS_SERVICE_ID || '',
       EMAILJS_TEMPLATE_ID: window.EMAILJS_TEMPLATE_ID || '',
@@ -76,48 +75,8 @@ class FormApp {
     this.initForm();
     this.initEmailJS();
     this.initGoogleSheets();
-    this.initRecaptcha();
   }
   
-  // Initialisation de reCAPTCHA avec les variables d'environnement
-  initRecaptcha() {
-    const recaptchaSiteKey = this.env.RECAPTCHA_SITE_KEY;
-    if (!recaptchaSiteKey) {
-      console.error('Clé reCAPTCHA non configurée');
-      return;
-    }
-
-    // Vérifier si reCAPTCHA est déjà chargé
-    if (typeof grecaptcha !== 'undefined') {
-      this.executeRecaptcha(recaptchaSiteKey);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      this.executeRecaptcha(recaptchaSiteKey);
-    };
-    document.head.appendChild(script);
-  }
-
-  executeRecaptcha(siteKey) {
-    grecaptcha.ready(() => {
-      grecaptcha.execute(siteKey, { action: 'submit' })
-        .then(token => {
-          const responseField = document.getElementById('g-recaptcha-response');
-          if (responseField) {
-            responseField.value = token;
-          }
-        })
-        .catch(error => {
-          console.error('Erreur reCAPTCHA:', error);
-        });
-    });
-  }
-
   // Initialisation de EmailJS avec les variables d'environnement
   initEmailJS() {
     const emailjsUserId = this.env.EMAILJS_USER_ID;
@@ -222,8 +181,7 @@ class FormApp {
       csrfToken: document.getElementById('csrf_token'),
       sessionDatesContainer: document.getElementById('session-dates-container'),
       honeypotField: document.getElementById('bot-field'),
-      montantTotalInput: document.getElementById('montant-total'),
-      recaptchaResponse: document.getElementById('g-recaptcha-response')
+      montantTotalInput: document.getElementById('montant-total')
     };
   }
   
@@ -951,26 +909,6 @@ class FormApp {
       return false;
     }
 
-    // Vérification reCAPTCHA
-    if (typeof grecaptcha !== 'undefined' && grecaptcha.getResponse().length === 0) {
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'error-message';
-      errorMessage.setAttribute('role', 'alert');
-      errorMessage.setAttribute('aria-live', 'assertive');
-      errorMessage.textContent = 'Veuillez compléter la vérification reCAPTCHA';
-      
-      const oldError = document.querySelector('.error-message');
-      if (oldError) oldError.remove();
-      
-      const fifthStep = this.elements.formSteps[4];
-      if (fifthStep) {
-        fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
-      }
-      
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return false;
-    }
-
     if (!this.validateAllSteps()) {
       return false;
     }
@@ -1181,27 +1119,6 @@ class FormApp {
     }
     
     try {
-      // Récupérer le token reCAPTCHA
-      const recaptchaToken = this.elements.recaptchaResponse?.value;
-      if (!recaptchaToken) {
-        throw new Error('Validation reCAPTCHA manquante');
-      }
-
-      // Valider le token reCAPTCHA côté serveur
-      const recaptchaSecret = this.env.RECAPTCHA_SITE_KEY;
-      const recaptchaValidation = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `secret=${recaptchaSecret}&response=${recaptchaToken}`
-      });
-
-      const recaptchaResult = await recaptchaValidation.json();
-      if (!recaptchaResult.success) {
-        throw new Error('Échec de la validation reCAPTCHA');
-      }
-
       // Préparer les données pour Google Sheets
       const formData = new FormData(this.elements.registrationForm);
       const formDataObj = {};
