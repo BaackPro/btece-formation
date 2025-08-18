@@ -59,6 +59,18 @@ class FormApp {
       formData: {}
     };
     
+    // Configuration des variables d'environnement
+    this.env = {
+      RECAPTCHA_SITE_KEY: '6LcY3ZEpAAAAAJGcJ8QZQZQZQZQZQZQZQZQZQZQZ',
+      EMAILJS_USER_ID: window.EMAILJS_USER_ID || '',
+      EMAILJS_SERVICE_ID: window.EMAILJS_SERVICE_ID || '',
+      EMAILJS_TEMPLATE_ID: window.EMAILJS_TEMPLATE_ID || '',
+      EMAILJS_ADMIN_TEMPLATE_ID: window.EMAILJS_ADMIN_TEMPLATE_ID || '',
+      GOOGLE_SHEETS_API_URL: window.GOOGLE_SHEETS_API_URL || '',
+      API_KEY: window.API_KEY || '',
+      API_TOKEN: window.API_TOKEN || ''
+    };
+    
     this.initElements();
     this.initEventListeners();
     this.initForm();
@@ -69,9 +81,15 @@ class FormApp {
   
   // Initialisation de reCAPTCHA avec les variables d'environnement
   initRecaptcha() {
-    const recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY;
+    const recaptchaSiteKey = this.env.RECAPTCHA_SITE_KEY;
     if (!recaptchaSiteKey) {
       console.error('Clé reCAPTCHA non configurée');
+      return;
+    }
+
+    // Vérifier si reCAPTCHA est déjà chargé
+    if (typeof grecaptcha !== 'undefined') {
+      this.executeRecaptcha(recaptchaSiteKey);
       return;
     }
 
@@ -79,30 +97,33 @@ class FormApp {
     script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`;
     script.async = true;
     script.defer = true;
-    document.head.appendChild(script);
-
-    window.grecaptchaReady = () => {
-      grecaptcha.ready(() => {
-        grecaptcha.execute(recaptchaSiteKey, { action: 'submit' })
-          .then(token => {
-            const responseField = document.getElementById('g-recaptcha-response');
-            if (responseField) {
-              responseField.value = token;
-            }
-          })
-          .catch(error => {
-            console.error('Erreur reCAPTCHA:', error);
-          });
-      });
+    script.onload = () => {
+      this.executeRecaptcha(recaptchaSiteKey);
     };
+    document.head.appendChild(script);
+  }
+
+  executeRecaptcha(siteKey) {
+    grecaptcha.ready(() => {
+      grecaptcha.execute(siteKey, { action: 'submit' })
+        .then(token => {
+          const responseField = document.getElementById('g-recaptcha-response');
+          if (responseField) {
+            responseField.value = token;
+          }
+        })
+        .catch(error => {
+          console.error('Erreur reCAPTCHA:', error);
+        });
+    });
   }
 
   // Initialisation de EmailJS avec les variables d'environnement
   initEmailJS() {
-    const emailjsUserId = process.env.EMAILJS_USER_ID;
-    const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
-    const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
-    const emailjsAdminTemplateId = process.env.EMAILJS_ADMIN_TEMPLATE_ID;
+    const emailjsUserId = this.env.EMAILJS_USER_ID;
+    const emailjsServiceId = this.env.EMAILJS_SERVICE_ID;
+    const emailjsTemplateId = this.env.EMAILJS_TEMPLATE_ID;
+    const emailjsAdminTemplateId = this.env.EMAILJS_ADMIN_TEMPLATE_ID;
 
     if (!emailjsUserId || !emailjsServiceId || !emailjsTemplateId || !emailjsAdminTemplateId) {
       console.error('Configuration EmailJS incomplète');
@@ -125,9 +146,9 @@ class FormApp {
   // Initialisation de la connexion à Google Sheets
   initGoogleSheets() {
     // Récupération des variables d'environnement
-    const googleSheetsApiUrl = process.env.GOOGLE_SHEETS_API_URL;
-    const API_KEY = process.env.API_KEY_URL; // Sécurité URL maintenant dans Netlify
-    const API_TOKEN = process.env.API_SECRET_TOKEN;
+    const googleSheetsApiUrl = this.env.GOOGLE_SHEETS_API_URL;
+    const API_KEY = this.env.API_KEY;
+    const API_TOKEN = this.env.API_TOKEN;
     if (!googleSheetsApiUrl) {
       console.error('URL API Google Sheets non configurée');
       return;
@@ -1167,8 +1188,7 @@ class FormApp {
       }
 
       // Valider le token reCAPTCHA côté serveur
-      const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
-      const recaptchaSiteKey = window.RECAPTCHA_SITE_KEY;
+      const recaptchaSecret = this.env.RECAPTCHA_SECRET_KEY;
       const recaptchaValidation = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
         headers: {
@@ -1265,9 +1285,9 @@ class FormApp {
       return;
     }
 
-    const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
-    const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
-    const emailjsAdminTemplateId = process.env.EMAILJS_ADMIN_TEMPLATE_ID;
+    const emailjsServiceId = this.env.EMAILJS_SERVICE_ID;
+    const emailjsTemplateId = this.env.EMAILJS_TEMPLATE_ID;
+    const emailjsAdminTemplateId = this.env.EMAILJS_ADMIN_TEMPLATE_ID;
 
     if (!emailjsServiceId || !emailjsTemplateId || !emailjsAdminTemplateId) {
       throw new Error('Configuration EmailJS incomplète');
