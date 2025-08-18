@@ -61,7 +61,7 @@ class FormApp {
     
     // Configuration des variables d'environnement
     this.env = {
-      RECAPTCHA_SITE_KEY: '6LcY3ZEpAAAAAJGcJ8QZQZQZQZQZQZQZQZQZQZQZ',
+      RECAPTCHA_SITE_KEY: window.RECAPTCHA_SITE_KEY || '',
       EMAILJS_USER_ID: window.EMAILJS_USER_ID || '',
       EMAILJS_SERVICE_ID: window.EMAILJS_SERVICE_ID || '',
       EMAILJS_TEMPLATE_ID: window.EMAILJS_TEMPLATE_ID || '',
@@ -1188,7 +1188,7 @@ class FormApp {
       }
 
       // Valider le token reCAPTCHA côté serveur
-      const recaptchaSecret = this.env.RECAPTCHA_SECRET_KEY;
+      const recaptchaSecret = this.env.RECAPTCHA_SITE_KEY;
       const recaptchaValidation = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
         headers: {
