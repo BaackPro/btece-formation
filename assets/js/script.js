@@ -170,7 +170,7 @@ class FormApp {
       saveStatus: document.getElementById('save-status'),
       userSummary: document.getElementById('user-summary'),
       rappelMessages: document.querySelectorAll('.rappel-message'),
-      rappelContainer: document.querySelector('.rappel-container'),
+      rappelContainer: document.querySelector('.raquel-container'),
       objectifsTextarea: document.getElementById('objectifs'),
       objectifsCounter: document.getElementById('objectifs-counter'),
       dateNaissanceInput: document.getElementById('date_naissance'),
@@ -268,7 +268,22 @@ class FormApp {
     // Gestion de la modal de confirmation
     if (this.elements.modalConfirm) {
       this.elements.modalConfirm.addEventListener('click', () => {
-        this.sendFormData();
+        // Validation avant envoi
+        if (this.validateAllSteps()) {
+          this.sendFormData();
+        } else {
+          // Afficher un message d'erreur dans la modal
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-message';
+          errorDiv.textContent = 'Veuillez corriger les erreurs dans le formulaire avant de confirmer.';
+          errorDiv.setAttribute('role', 'alert');
+          
+          // Supprimer les anciens messages d'erreur
+          const existingError = this.elements.modal.querySelector('.error-message');
+          if (existingError) existingError.remove();
+          
+          this.elements.modal.querySelector('.modal-body').prepend(errorDiv);
+        }
       });
     }
     if (this.elements.modalCancel) {
@@ -1143,10 +1158,9 @@ class FormApp {
       // Envoyer les emails de confirmation
       await this.sendConfirmationEmails(formDataObj);
 
-      // Afficher la page de confirmation
-      this.showConfirmationPage();
-      localStorage.removeItem('bteceFormData');
-      this.clearForm();
+      // Soumettre le formulaire à Netlify
+      this.submitToNetlify();
+
     } catch (error) {
       console.error('Erreur:', error);
       this.saveToLocalStorage();
@@ -1173,6 +1187,26 @@ class FormApp {
       }
       this.state.formSubmitted = false;
     }
+  }
+
+  // Soumission du formulaire à Netlify
+  submitToNetlify() {
+    // Créer un clone du formulaire pour la soumission Netlify
+    const netlifyForm = this.elements.registrationForm.cloneNode(true);
+    netlifyForm.style.display = 'none';
+    netlifyForm.id = 'netlify-submit-form';
+    netlifyForm.removeAttribute('data-netlify'); // Éviter les boucles infinies
+    
+    // Ajouter le formulaire au DOM et le soumettre
+    document.body.appendChild(netlifyForm);
+    netlifyForm.submit();
+    
+    // Afficher la page de confirmation après un court délai
+    setTimeout(() => {
+      this.showConfirmationPage();
+      localStorage.removeItem('bteceFormData');
+      this.clearForm();
+    }, 1000);
   }
 
   // Envoi des données à Google Sheets
