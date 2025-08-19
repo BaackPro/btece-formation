@@ -1,4 +1,3 @@
-
 // Configuration des données
 const CONFIG = {
   // Prix des formations en FCFA
@@ -181,7 +180,8 @@ class FormApp {
       csrfToken: document.getElementById('csrf_token'),
       sessionDatesContainer: document.getElementById('session-dates-container'),
       honeypotField: document.getElementById('bot-field'),
-      montantTotalInput: document.getElementById('montant-total')
+      montantTotalInput: document.getElementById('montant-total'),
+      consentementCheckbox: document.getElementById('consentement')
     };
   }
   
@@ -518,7 +518,7 @@ class FormApp {
       session: document.querySelector('input[name="session"]:checked')?.value,
       modeFormation: this.sanitizeInput(this.elements.modeFormationSelect?.value),
       paymentMethod: document.querySelector('input[name="payment_method"]:checked')?.value,
-      consentement: document.getElementById('consentement')?.checked || false
+      consentement: this.elements.consentementCheckbox?.checked || false
     };
     
     localStorage.setItem('bteceFormData', JSON.stringify(this.state.formData));
@@ -590,8 +590,8 @@ class FormApp {
       checkRadio('payment_method', this.state.formData.paymentMethod);
       
       // Consentement
-      if (this.state.formData.consentement && document.getElementById('consentement')) {
-        document.getElementById('consentement').checked = true;
+      if (this.state.formData.consentement && this.elements.consentementCheckbox) {
+        this.elements.consentementCheckbox.checked = true;
       }
       
       // Aller à l'étape sauvegardée
@@ -611,6 +611,7 @@ class FormApp {
       case 2: return this.validateStep2();
       case 3: return this.validateStep3();
       case 4: return this.validateStep4();
+      case 5: return this.validateStep5();
       default: return true;
     }
   }
@@ -714,7 +715,7 @@ class FormApp {
         this.elements.objectifsTextarea.classList.add('error-highlight');
         const objectifsError = document.getElementById('objectifs-error');
         if (objectifsError) {
-          objectifsError.textContent = "Maximum 50 mots autorisés";
+          objectifsError.textContent = "Maximum 100 mots autorisés";
           objectifsError.style.display = 'block';
         }
         const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
@@ -887,8 +888,8 @@ class FormApp {
     return true;
   }
   
-  validateFinalStep() {
-    if (!document.getElementById('consentement')?.checked) {
+  validateStep5() {
+    if (!this.elements.consentementCheckbox?.checked) {
       const errorMessage = document.createElement('div');
       errorMessage.className = 'error-message';
       errorMessage.setAttribute('role', 'alert');
@@ -911,6 +912,10 @@ class FormApp {
       return false;
     }
 
+    return true;
+  }
+  
+  validateFinalStep() {
     if (!this.validateAllSteps()) {
       return false;
     }
@@ -920,7 +925,11 @@ class FormApp {
   }
   
   validateAllSteps() {
-    return this.validateStep1() && this.validateStep2() && this.validateStep3() && this.validateStep4();
+    return this.validateStep1() && 
+           this.validateStep2() && 
+           this.validateStep3() && 
+           this.validateStep4() && 
+           this.validateStep5();
   }
   
   // Fonctions d'affichage
@@ -1069,7 +1078,7 @@ class FormApp {
       this.elements.modalObjectifs.textContent = getValue('objectifs');
     }
     if (this.elements.modalSessionInfo) {
-      this.elements.modalSessionInfo.textContent = getRadioText('session');
+      this.elements.modalSessionInfo.textContent = CONFIG.sessionDates[getRadioValue('session')] || getRadioValue('session');
     }
     if (this.elements.modalModeInfo) {
       this.elements.modalModeInfo.textContent = getSelectText('modeFormationSelect');
@@ -1320,7 +1329,7 @@ class FormApp {
       <p><strong>Email :</strong> ${getValue('email')}</p>
       <p><strong>Téléphone :</strong> ${this.elements.phonePrefix?.textContent || ''} ${getValue('telephone')}</p>
       <p><strong>Formations :</strong> ${checkedFormations.join(', ')}</p>
-      <p><strong>Session :</strong> ${getRadioText('session')} 2025</p>
+      <p><strong>Session :</strong> ${CONFIG.sessionDates[getRadioText('session')] || getRadioText('session')}</p>
       <p><strong>Mode :</strong> ${this.elements.modeFormationSelect?.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
       <p><strong>Méthode de paiement :</strong> ${CONFIG.paymentMethodNames[getRadioText('payment_method')] || getRadioText('payment_method')}</p>
       <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
