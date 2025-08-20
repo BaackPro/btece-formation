@@ -1,3 +1,4 @@
+
 // Configuration des données
 const CONFIG = {
   // Prix des formations en FCFA
@@ -58,12 +59,12 @@ class FormApp {
       formData: {}
     };
     
-    // Configuration des variables d'environnement
+    // Configuration des variables d'environnement avec des valeurs par défaut
     this.env = {
-      EMAILJS_USER_ID: window.EMAILJS_USER_ID || '',
-      EMAILJS_SERVICE_ID: window.EMAILJS_SERVICE_ID || '',
-      EMAILJS_TEMPLATE_ID: window.EMAILJS_TEMPLATE_ID || '',
-      EMAILJS_ADMIN_TEMPLATE_ID: window.EMAILJS_ADMIN_TEMPLATE_ID || '',
+      EMAILJS_USER_ID: window.EMAILJS_USER_ID || 'default_user_id',
+      EMAILJS_SERVICE_ID: window.EMAILJS_SERVICE_ID || 'default_service_id',
+      EMAILJS_TEMPLATE_ID: window.EMAILJS_TEMPLATE_ID || 'default_template_id',
+      EMAILJS_ADMIN_TEMPLATE_ID: window.EMAILJS_ADMIN_TEMPLATE_ID || 'default_admin_template_id',
       GOOGLE_SHEETS_API_URL: window.GOOGLE_SHEETS_API_URL || '',
       API_KEY: window.API_KEY || '',
       API_TOKEN: window.API_TOKEN || ''
@@ -170,7 +171,7 @@ class FormApp {
       saveStatus: document.getElementById('save-status'),
       userSummary: document.getElementById('user-summary'),
       rappelMessages: document.querySelectorAll('.rappel-message'),
-      rappelContainer: document.querySelector('.raquel-container'),
+      rappelContainer: document.querySelector('.rappel-container'),
       objectifsTextarea: document.getElementById('objectifs'),
       objectifsCounter: document.getElementById('objectifs-counter'),
       dateNaissanceInput: document.getElementById('date_naissance'),
@@ -1363,9 +1364,9 @@ class FormApp {
       <p><strong>Email :</strong> ${getValue('email')}</p>
       <p><strong>Téléphone :</strong> ${this.elements.phonePrefix?.textContent || ''} ${getValue('telephone')}</p>
       <p><strong>Formations :</strong> ${checkedFormations.join(', ')}</p>
-      <p><strong>Session :</strong> ${CONFIG.sessionDates[getRadioText('session')] || getRadioText('session')}</p>
+      <p><strong>Session :</strong> ${CONFIG.sessionDates[getRadioValue('session')] || getRadioValue('session')}</p>
       <p><strong>Mode :</strong> ${this.elements.modeFormationSelect?.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
-      <p><strong>Méthode de paiement :</strong> ${CONFIG.paymentMethodNames[getRadioText('payment_method')] || getRadioText('payment_method')}</p>
+      <p><strong>Méthode de paiement :</strong> ${CONFIG.paymentMethodNames[getRadioValue('payment_method')] || getRadioValue('payment_method')}</p>
       <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
       <div class="confirmation-message">
         <p>Un email de confirmation vous a été envoyé à l'adresse ${getValue('email')}.</p>
