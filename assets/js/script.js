@@ -1,1566 +1,19 @@
 
-// Configuration des données
-const CONFIG = {
-  // Prix des formations en FCFA
-  formationPrices: {
+
+// Configuration des prix des formations en FCFA
+const formationPrices = {
     'plans_archi_elec': 130000,
     'conception_elec': 150000,
     'realisation_3d': 120000,
     'programmation': 200000
-  },
-  
-  // Taux de conversion FCFA vers EUR
-  exchangeRate: 655.957,
-  
-  // Temps estimé par étape (en secondes)
-  stepTimes: [60, 30, 30, 30, 30],
-  
-  // Noms des formations pour l'affichage
-  formationNames: {
-    'plans_archi_elec': 'Réalisation de plans architecturaux et électricité',
-    'conception_elec': 'Conception électronique',
-    'realisation_3d': 'Réalisation 3D',
-    'programmation': 'Programmation'
-  },
-  
-  // Noms des méthodes de paiement
-  paymentMethodNames: {
-    'VISA': 'Paiement par carte VISA',
-    'MTN Mobile Money': 'Paiement par MTN Mobile Money',
-    'Moov Africa Mobile Money': 'Paiement par Moov Africa Mobile Money',
-    'Celtiis Mobile Money': 'Paiement par Celtiis Mobile Money',
-    'Orange Money': 'Paiement par Orange Money',
-    'Airtel Money': 'Paiement par Airtel Money',
-    'Wari': 'Paiement par Wari',
-    'Crypto Currency': 'Paiement par Crypto Currency',
-    'Paiement sur place': 'Paiement sur place (espèces/chèque)'
-  },
-  
-  // Sessions disponibles
-  sessionDates: {
-    'juillet': 'Juillet 2025',
-    'aout': 'Août 2025',
-    'septembre': 'Septembre 2025',
-    'octobre': 'Octobre 2025',
-    'novembre': 'Novembre 2025',
-    'decembre': 'Décembre 2025'
-  }
 };
 
-// Initialisation de l'application
-class FormApp {
-  constructor() {
-    this.state = {
-      currentStep: 1,
-      currentRappelIndex: 0,
-      isSubmitting: false,
-      formSubmitted: false,
-      saveTimeout: null,
-      formData: {}
-    };
-    
-    // Configuration des variables d'environnement avec des valeurs par défaut
-    this.env = {
-      EMAILJS_USER_ID: window.EMAILJS_USER_ID || 'default_user_id',
-      EMAILJS_SERVICE_ID: window.EMAILJS_SERVICE_ID || 'default_service_id',
-      EMAILJS_TEMPLATE_ID: window.EMAILJS_TEMPLATE_ID || 'default_template_id',
-      EMAILJS_ADMIN_TEMPLATE_ID: window.EMAILJS_ADMIN_TEMPLATE_ID || 'default_admin_template_id',
-      GOOGLE_SHEETS_API_URL: window.GOOGLE_SHEETS_API_URL || '',
-      API_KEY: window.API_KEY || '',
-      API_TOKEN: window.API_TOKEN || ''
-    };
-    
-    this.initElements();
-    this.initEventListeners();
-    this.initForm();
-    this.initGoogleSheets();
-  }
-  
-  // Initialisation de la connexion à Google Sheets
-  initGoogleSheets() {
-    // Récupération des variables d'environnement
-    const googleSheetsApiUrl = this.env.GOOGLE_SHEETS_API_URL;
-    const API_KEY = this.env.API_KEY;
-    const API_TOKEN = this.env.API_TOKEN;
-    if (!googleSheetsApiUrl) {
-      console.error('URL API Google Sheets non configurée');
-      return;
-    }
+// Taux de conversion FCFA vers EUR
+const exchangeRate = 655.957;
 
-    // Vous pouvez utiliser cette URL pour envoyer des données plus tard
-    this.googleSheetsApiUrl = googleSheetsApiUrl;
-    this.API_KEY = API_KEY;
-    this.API_TOKEN = API_TOKEN;
-  }
+// Temps estimé par étape (en secondes)
+const stepTimes = [60, 30, 30, 30, 30]; // Total: 3 minutes (180 secondes)
 
-  // Cache les éléments DOM
-  initElements() {
-    this.elements = {
-      checkboxes: document.querySelectorAll('input[name="selected_courses[]"]'),
-      priceDisplay: document.getElementById('price-display'),
-      totalPriceFCFA: document.getElementById('total-price-fcfa'),
-      totalPriceEUR: document.getElementById('total-price-eur'),
-      submitBtn: document.getElementById('submit-btn'),
-      loadingIndicator: document.getElementById('loading'),
-      registrationForm: document.getElementById('registration-form'),
-      paysSelect: document.getElementById('pays'),
-      phonePrefix: document.getElementById('phone-prefix'),
-      phoneFormat: document.getElementById('phone-format'),
-      telephoneInput: document.getElementById('telephone'),
-      mainPage: document.getElementById('main-page'),
-      confirmationPage: document.getElementById('confirmation-page'),
-      modal: document.getElementById('confirmation-modal'),
-      modalFormationsList: document.getElementById('modal-formations-list'),
-      modalNomComplet: document.getElementById('modal-nom-complet'),
-      modalEmail: document.getElementById('modal-email'),
-      modalDateNaissance: document.getElementById('modal-date-naissance'),
-      modalLieuNaissance: document.getElementById('modal-lieu-naissance'),
-      modalTelephone: document.getElementById('modal-telephone'),
-      modalPays: document.getElementById('modal-pays'),
-      modalProfession: document.getElementById('modal-profession'),
-      modalObjectifs: document.getElementById('modal-objectifs'),
-      modalSessionInfo: document.getElementById('modal-session-info'),
-      modalModeInfo: document.getElementById('modal-mode-info'),
-      modalPaymentInfo: document.getElementById('modal-payment-info'),
-      modalTotalPrice: document.getElementById('modal-total-price'),
-      modalTotalPriceEur: document.getElementById('modal-total-price-eur'),
-      closeModal: document.querySelector('.close-modal'),
-      modalCancel: document.querySelector('.modal-cancel'),
-      modalConfirm: document.querySelector('.modal-confirm'),
-      chatToggle: document.getElementById('chat-toggle'),
-      chatContainer: document.getElementById('chat-container'),
-      closeChat: document.getElementById('close-chat'),
-      chatMessages: document.getElementById('chat-messages'),
-      chatInput: document.getElementById('chat-input'),
-      sendMessage: document.getElementById('send-message'),
-      modeFormationSelect: document.getElementById('mode-formation'),
-      onlinePaymentMethods: document.getElementById('online-payment-methods'),
-      presentielPaymentMethod: document.getElementById('presentiel-payment-method'),
-      paymentMethodGroup: document.getElementById('payment-method-group'),
-      formSteps: document.querySelectorAll('.form-step'),
-      progressSteps: document.querySelectorAll('.step'),
-      progressBar: document.getElementById('progress-bar'),
-      progressText: document.getElementById('progress-text'),
-      timeEstimation: document.getElementById('time-estimation'),
-      saveStatus: document.getElementById('save-status'),
-      userSummary: document.getElementById('user-summary'),
-      rappelMessages: document.querySelectorAll('.rappel-message'),
-      rappelContainer: document.querySelector('.raquel-container'),
-      objectifsTextarea: document.getElementById('objectifs'),
-      objectifsCounter: document.getElementById('objectifs-counter'),
-      dateNaissanceInput: document.getElementById('date_naissance'),
-      lieuNaissanceInput: document.getElementById('lieu_naissance'),
-      ageError: document.getElementById('age-error'),
-      resendEmailBtn: document.querySelector('.resend-link'),
-      csrfToken: document.getElementById('csrf_token'),
-      sessionDatesContainer: document.getElementById('session-dates-container'),
-      honeypotField: document.getElementById('bot-field'),
-      montantTotalInput: document.getElementById('montant-total'),
-      consentementCheckbox: document.getElementById('consentement')
-    };
-  }
-  
-  // Initialise les écouteurs d'événements avec délégation
-  initEventListeners() {
-    // Utiliser la délégation d'événements pour une meilleure performance
-    document.addEventListener('change', (e) => {
-      // Gestion du mode de formation
-      if (e.target === this.elements.modeFormationSelect) {
-        if (this.elements.onlinePaymentMethods) {
-          this.elements.onlinePaymentMethods.style.display = 
-            e.target.value === 'en-ligne' ? 'block' : 'none';
-        }
-        if (this.elements.presentielPaymentMethod) {
-          this.elements.presentielPaymentMethod.style.display = 
-            e.target.value === 'presentiel' ? 'block' : 'none';
-        }
-        this.autoSave();
-      }
-      
-      // Gestion du pays et du format de téléphone
-      if (e.target === this.elements.paysSelect) {
-        const selectedCountry = e.target.value;
-        const config = this.getPhoneConfig(selectedCountry);
-        
-        if (this.elements.phonePrefix) {
-          this.elements.phonePrefix.textContent = config.code;
-        }
-        
-        if (this.elements.telephoneInput) {
-          this.elements.telephoneInput.pattern = config.pattern;
-          this.elements.telephoneInput.title = `Numéro valide (format: ${config.format})`;
-        }
-        
-        if (this.elements.phoneFormat) {
-          this.elements.phoneFormat.textContent = `Format: ${config.format}`;
-          this.elements.phoneFormat.style.display = 'block';
-        }
-        
-        this.autoSave();
-      }
-      
-      // Calcul du total des formations
-      if (e.target.matches('input[name="selected_courses[]"]')) {
-        this.calculateTotal();
-      }
-      
-      // Validation de l'âge
-      if (e.target === this.elements.dateNaissanceInput) {
-        this.validateAge();
-      }
-      
-      // Compteur de mots pour les objectifs
-      if (e.target === this.elements.objectifsTextarea) {
-        this.updateWordCounter();
-      }
-      
-      // Sauvegarde automatique pour tous les champs de formulaire
-      if (e.target.matches('input, select, textarea')) {
-        clearTimeout(this.state.saveTimeout);
-        this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
-      }
-    });
-    
-    document.addEventListener('input', (e) => {
-      // Sauvegarde automatique pour les champs de texte
-      if (e.target.matches('input, select, textarea')) {
-        clearTimeout(this.state.saveTimeout);
-        this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
-      }
-      
-      // Compteur de mots pour les objectifs
-      if (e.target === this.elements.objectifsTextarea) {
-        this.updateWordCounter();
-      }
-    });
-    
-    // Soumission du formulaire
-    if (this.elements.registrationForm) {
-      this.elements.registrationForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.validateFinalStep();
-      });
-    }
-    
-    // Gestion de la modal de confirmation
-    if (this.elements.modalConfirm) {
-      this.elements.modalConfirm.addEventListener('click', () => {
-        // Validation avant envoi
-        if (this.validateAllSteps()) {
-          this.sendFormData();
-        } else {
-          // Afficher un message d'erreur dans la modal
-          const errorDiv = document.createElement('div');
-          errorDiv.className = 'error-message';
-          errorDiv.textContent = 'Veuillez corriger les erreurs dans le formulaire avant de confirmer.';
-          errorDiv.setAttribute('role', 'alert');
-          
-          // Supprimer les anciens messages d'erreur
-          const existingError = this.elements.modal.querySelector('.error-message');
-          if (existingError) existingError.remove();
-          
-          this.elements.modal.querySelector('.modal-body').prepend(errorDiv);
-        }
-      });
-    }
-    
-    if (this.elements.modalCancel) {
-      this.elements.modalCancel.addEventListener('click', () => { 
-        if (this.elements.modal) {
-          this.elements.modal.style.display = 'none'; 
-        }
-      });
-    }
-    
-    if (this.elements.closeModal) {
-      this.elements.closeModal.addEventListener('click', () => { 
-        if (this.elements.modal) {
-          this.elements.modal.style.display = 'none'; 
-        }
-      });
-    }
-    
-    // Gestion du chat
-    if (this.elements.chatToggle) {
-      this.elements.chatToggle.addEventListener('click', () => {
-        if (this.elements.chatContainer) {
-          this.elements.chatContainer.style.display = 
-            this.elements.chatContainer.style.display === 'block' ? 'none' : 'block';
-          if (this.elements.chatContainer.style.display === 'block' && this.elements.chatInput) {
-            this.elements.chatInput.focus();
-          }
-        }
-      });
-    }
-    
-    if (this.elements.closeChat) {
-      this.elements.closeChat.addEventListener('click', () => { 
-        if (this.elements.chatContainer) {
-          this.elements.chatContainer.style.display = 'none'; 
-        }
-      });
-    }
-    
-    if (this.elements.sendMessage) {
-      this.elements.sendMessage.addEventListener('click', () => this.sendChatMessage());
-    }
-    
-    if (this.elements.chatInput) {
-      this.elements.chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') this.sendChatMessage();
-      });
-    }
-    
-    // Boutons précédent/suivant avec délégation d'événements
-    document.addEventListener('click', (e) => {
-      if (e.target.matches('.btn-next')) {
-        e.preventDefault();
-        const currentStep = parseInt(e.target.closest('.form-step').id.split('-').pop());
-        this.nextStep(currentStep);
-      }
-      
-      if (e.target.matches('.btn-prev')) {
-        e.preventDefault();
-        const currentStep = parseInt(e.target.closest('.form-step').id.split('-').pop());
-        this.prevStep(currentStep);
-      }
-    });
-  }
-  
-  // Initialise le formulaire
-  initForm() {
-    // Configuration de la date maximale pour la date de naissance (13 ans minimum)
-    if (this.elements.dateNaissanceInput) {
-      const today = new Date();
-      const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
-      this.elements.dateNaissanceInput.max = maxDate.toISOString().split('T')[0];
-    }
-    
-    // Génération du token CSRF
-    this.generateCSRFToken();
-    
-    // Chargement des données sauvegardées
-    this.loadSavedData();
-    this.updateProgressBar();
-    this.updateTimeEstimation();
-    
-    // Affichage des dates des sessions
-    this.displaySessionDates();
-    
-    // Rotation des messages du rappel
-    if (this.elements.rappelMessages && this.elements.rappelMessages.length > 0) {
-      setInterval(() => this.rotateRappelMessages(), 2000);
-    }
-    
-    // Initialisation finale
-    this.updateWordCounter();
-    this.calculateTotal();
-  }
-  
-  // Fonctions utilitaires
-  generateCSRFToken() {
-    if (!this.elements.csrfToken) return;
-    const token = window.crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
-    this.elements.csrfToken.value = token;
-    return token;
-  }
-  
-  getPhoneConfig(countryCode) {
-    return phoneConfigurations[countryCode] || phoneConfigurations['BJ'];
-  }
-  
-  sanitizeInput(input) {
-    if (!input) return '';
-    return input.toString()
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-  
-  countWords(text) {
-    if (!text) return 0;
-    const trimmedText = text.trim();
-    return trimmedText === '' ? 0 : trimmedText.split(/\s+/).length;
-  }
-  
-  calculateAge(birthDate) {
-    if (!birthDate) return 0;
-    
-    const today = new Date();
-    const birthDateObj = new Date(birthDate);
-    let age = today.getFullYear() - birthDateObj.getFullYear();
-    const monthDiff = today.getMonth() - birthDateObj.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
-      age--;
-    }
-    
-    return age;
-  }
-  
-  validatePhone(phone, country) {
-    if (!phone || !country) return false;
-    const config = this.getPhoneConfig(country);
-    const regex = new RegExp(`^${config.pattern}$`);
-    return regex.test(phone);
-  }
-  
-  // Gestion des étapes
-  showStep(step) {
-    if (!this.elements.formSteps || !this.elements.progressSteps) return;
-    
-    this.elements.formSteps.forEach((formStep, index) => {
-      formStep.classList.toggle('active', index + 1 === step);
-      formStep.setAttribute('aria-hidden', index + 1 !== step);
-    });
-
-    this.elements.progressSteps.forEach((progressStep, index) => {
-      if (index + 1 < step) {
-        progressStep.classList.add('completed');
-        progressStep.classList.remove('active');
-        progressStep.removeAttribute('aria-current');
-      } else if (index + 1 === step) {
-        progressStep.classList.add('active');
-        progressStep.classList.remove('completed');
-        progressStep.setAttribute('aria-current', 'step');
-      } else {
-        progressStep.classList.remove('active', 'completed');
-        progressStep.removeAttribute('aria-current');
-      }
-    });
-
-    this.state.currentStep = step;
-    this.updateProgressBar();
-    this.updateTimeEstimation();
-    this.autoSave();
-    
-    // Annoncer le changement d'étape pour l'accessibilité
-    this.announceStepChange(step);
-    
-    // Focus sur le premier champ de l'étape pour l'accessibilité
-    const currentStep = document.getElementById(`form-step-${step}`);
-    if (currentStep) {
-      const firstInput = currentStep.querySelector('input, select, textarea');
-      if (firstInput) firstInput.focus();
-    }
-  }
-  
-  // Annoncer le changement d'étape pour les lecteurs d'écran
-  announceStepChange(step) {
-    const announcement = document.createElement('div');
-    announcement.setAttribute('aria-live', 'polite');
-    announcement.setAttribute('aria-atomic', 'true');
-    announcement.className = 'sr-only';
-    announcement.textContent = `Étape ${step} sur 5`;
-    document.body.appendChild(announcement);
-    
-    setTimeout(() => {
-      document.body.removeChild(announcement);
-    }, 100);
-  }
-  
-  nextStep(current) {
-    if (!this.validateStep(current)) return;
-    this.showStep(current + 1);
-  }
-  
-  prevStep(current) {
-    this.showStep(current - 1);
-  }
-  
-  updateProgressBar() {
-    if (!this.elements.progressBar || !this.elements.progressText) return;
-    
-    const progress = ((this.state.currentStep - 1) / 5) * 100;
-    this.elements.progressBar.style.width = `${progress}%`;
-    this.elements.progressText.textContent = `${progress.toFixed(0)}% complété`;
-    this.elements.progressBar.setAttribute('aria-valuenow', progress);
-    
-    if (this.state.currentStep > 1 && document.querySelector('.progress-container')) {
-      document.querySelector('.progress-container').style.display = 'block';
-    }
-  }
-  
-  updateTimeEstimation() {
-    if (!this.elements.timeEstimation) return;
-    
-    let remainingTime = 0;
-    for (let i = this.state.currentStep - 1; i < CONFIG.stepTimes.length; i++) {
-      remainingTime += CONFIG.stepTimes[i];
-    }
-    
-    const minutes = Math.floor(remainingTime / 60);
-    const seconds = remainingTime % 60;
-    
-    if (minutes > 0) {
-      this.elements.timeEstimation.textContent = `Temps estimé : ${minutes} minute${minutes > 1 ? 's' : ''}${seconds > 0 ? ` et ${seconds} seconde${seconds > 1 ? 's' : ''}` : ''}`;
-    } else {
-      this.elements.timeEstimation.textContent = `Temps estimé : ${seconds} seconde${seconds > 1 ? 's' : ''}`;
-    }
-  }
-  
-  // Gestion des données
-  autoSave() {
-    if (!this.elements.saveStatus) return;
-    
-    this.elements.saveStatus.textContent = "Sauvegarde en cours...";
-    this.elements.saveStatus.className = "save-status saving";
-    this.elements.saveStatus.style.display = "block";
-    
-    this.state.formData = {
-      step: this.state.currentStep,
-      nom: this.sanitizeInput(document.getElementById('nom')?.value),
-      prenom: this.sanitizeInput(document.getElementById('prenom')?.value),
-      email: this.sanitizeInput(document.getElementById('email')?.value),
-      date_naissance: this.sanitizeInput(this.elements.dateNaissanceInput?.value),
-      lieu_naissance: this.sanitizeInput(this.elements.lieuNaissanceInput?.value),
-      pays: this.sanitizeInput(this.elements.paysSelect?.value),
-      telephone: this.sanitizeInput(this.elements.telephoneInput?.value),
-      profession: document.querySelector('input[name="profession"]:checked')?.value,
-      objectifs: this.sanitizeInput(this.elements.objectifsTextarea?.value),
-      formations: Array.from(this.elements.checkboxes || [])
-        .filter(cb => cb.checked)
-        .map(cb => this.sanitizeInput(cb.value)),
-      session: document.querySelector('input[name="session"]:checked')?.value,
-      modeFormation: this.sanitizeInput(this.elements.modeFormationSelect?.value),
-      paymentMethod: document.querySelector('input[name="payment_method"]:checked')?.value,
-      consentement: this.elements.consentementCheckbox?.checked || false
-    };
-    
-    localStorage.setItem('bteceFormData', JSON.stringify(this.state.formData));
-    
-    setTimeout(() => {
-      this.elements.saveStatus.textContent = "Données sauvegardées";
-      this.elements.saveStatus.className = "save-status saved";
-      
-      setTimeout(() => {
-        this.elements.saveStatus.style.display = "none";
-      }, 3000);
-    }, 1000);
-  }
-  
-  loadSavedData() {
-    const savedData = localStorage.getItem('bteceFormData');
-    if (!savedData) return;
-    
-    try {
-      this.state.formData = JSON.parse(savedData);
-      
-      // Remplit les champs avec les données sauvegardées
-      const fillField = (id, value) => {
-        const element = document.getElementById(id);
-        if (element && value) element.value = this.sanitizeInput(value);
-      };
-      
-      const checkRadio = (name, value) => {
-        if (value) {
-          const radio = document.querySelector(`input[name="${name}"][value="${this.sanitizeInput(value)}"]`);
-          if (radio) radio.checked = true;
-        }
-      };
-      
-      fillField('nom', this.state.formData.nom);
-      fillField('prenom', this.state.formData.prenom);
-      fillField('email', this.state.formData.email);
-      fillField('date_naissance', this.state.formData.date_naissance);
-      fillField('lieu_naissance', this.state.formData.lieu_naissance);
-      
-      if (this.state.formData.pays && this.elements.paysSelect) {
-        this.elements.paysSelect.value = this.state.formData.pays;
-        this.elements.paysSelect.dispatchEvent(new Event('change'));
-      }
-      
-      fillField('telephone', this.state.formData.telephone);
-      checkRadio('profession', this.state.formData.profession);
-      fillField('objectifs', this.state.formData.objectifs);
-      
-      // Formations
-      if (this.state.formData.formations?.length > 0 && this.elements.checkboxes) {
-        this.state.formData.formations.forEach(formation => {
-          const checkbox = document.querySelector(`input[name="selected_courses[]"][value="${this.sanitizeInput(formation)}"]`);
-          if (checkbox) checkbox.checked = true;
-        });
-        this.calculateTotal();
-      }
-      
-      // Session
-      checkRadio('session', this.state.formData.session);
-      
-      // Mode de formation
-      if (this.state.formData.modeFormation && this.elements.modeFormationSelect) {
-        this.elements.modeFormationSelect.value = this.state.formData.modeFormation;
-        this.elements.modeFormationSelect.dispatchEvent(new Event('change'));
-      }
-      
-      // Méthode de paiement
-      checkRadio('payment_method', this.state.formData.paymentMethod);
-      
-      // Consentement
-      if (this.state.formData.consentement && this.elements.consentementCheckbox) {
-        this.elements.consentementCheckbox.checked = true;
-      }
-      
-      // Aller à l'étape sauvegardée
-      if (this.state.formData.step) {
-        this.showStep(this.state.formData.step);
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des données sauvegardées:', error);
-      localStorage.removeItem('bteceFormData');
-    }
-  }
-  
-  // Validation - décomposée en méthodes plus petites
-  validateStep(step) {
-    switch(step) {
-      case 1: return this.validateStep1();
-      case 2: return this.validateStep2();
-      case 3: return this.validateStep3();
-      case 4: return this.validateStep4();
-      case 5: return this.validateStep5();
-      default: return true;
-    }
-  }
-  
-  validateStep1() {
-    const errors = [];
-    
-    errors.push(...this.validatePersonalInfo());
-    errors.push(...this.validateContactInfo());
-    errors.push(...this.validateObjectives());
-    
-    // Validation de l'âge
-    if (!this.validateAge()) {
-      errors.push('Vous devez avoir au moins 13 ans pour vous inscrire');
-    }
-
-    // Validation du champ honeypot (anti-spam)
-    if (this.elements.honeypotField && this.elements.honeypotField.value.trim() !== '') {
-      errors.push('Erreur de validation du formulaire');
-    }
-
-    return this.displayErrors(errors, 1);
-  }
-  
-  validatePersonalInfo() {
-    const errors = [];
-    const requiredFields = [
-      { id: 'nom', name: 'Nom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
-      { id: 'prenom', name: 'Prénom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
-      { id: 'email', name: 'Email', pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$' },
-      { id: 'date_naissance', name: 'Date de naissance' },
-      { id: 'lieu_naissance', name: 'Lieu de naissance', minLength: 2, maxLength: 100 }
-    ];
-
-    for (const field of requiredFields) {
-      const element = document.getElementById(field.id);
-      if (!element) continue;
-      
-      const value = element.value.trim();
-      
-      if (!value) {
-        errors.push(`Le champ "${field.name}" est obligatoire`);
-        element.setAttribute('aria-invalid', 'true');
-      } else {
-        // Validation supplémentaire si des critères sont spécifiés
-        if (field.pattern && !new RegExp(field.pattern).test(value)) {
-          errors.push(`Format invalide pour le champ "${field.name}"`);
-          element.setAttribute('aria-invalid', 'true');
-        }
-        
-        if (field.minLength && value.length < field.minLength) {
-          errors.push(`Le champ "${field.name}" doit contenir au moins ${field.minLength} caractères`);
-          element.setAttribute('aria-invalid', 'true');
-        }
-        
-        if (field.maxLength && value.length > field.maxLength) {
-          errors.push(`Le champ "${field.name}" ne doit pas dépasser ${field.maxLength} caractères`);
-          element.setAttribute('aria-invalid', 'true');
-        }
-        
-        if (element.getAttribute('aria-invalid') !== 'true') {
-          element.setAttribute('aria-invalid', 'false');
-        }
-      }
-    }
-
-    // Validation de la profession
-    if (!document.querySelector('input[name="profession"]:checked')) {
-      errors.push('Veuillez sélectionner une profession');
-    }
-
-    return errors;
-  }
-  
-  validateContactInfo() {
-    const errors = [];
-    
-    // Validation du pays
-    if (!this.elements.paysSelect?.value) {
-      errors.push('Veuillez sélectionner un pays');
-      if (this.elements.paysSelect) this.elements.paysSelect.setAttribute('aria-invalid', 'true');
-    } else if (this.elements.paysSelect) {
-      this.elements.paysSelect.setAttribute('aria-invalid', 'false');
-    }
-    
-    // Validation du téléphone
-    if (this.elements.paysSelect && this.elements.telephoneInput) {
-      const pays = this.elements.paysSelect.value;
-      const telephone = this.elements.telephoneInput.value.trim();
-      
-      if (!telephone) {
-        errors.push('Le champ "Téléphone" est obligatoire');
-        this.elements.telephoneInput.setAttribute('aria-invalid', 'true');
-      } else if (!this.validatePhone(telephone, pays)) {
-        const config = this.getPhoneConfig(pays);
-        errors.push(`Format de téléphone invalide (${config.format})`);
-        this.elements.telephoneInput.setAttribute('aria-invalid', 'true');
-      } else {
-        this.elements.telephoneInput.setAttribute('aria-invalid', 'false');
-      }
-    }
-
-    return errors;
-  }
-  
-  validateObjectives() {
-    const errors = [];
-    
-    // Validation des objectifs
-    if (this.elements.objectifsTextarea) {
-      const objectifs = this.elements.objectifsTextarea.value.trim();
-      const wordCount = this.countWords(objectifs);
-      
-      if (wordCount < 5) {
-        errors.push('Veuillez décrire vos objectifs (minimum 5 mots)');
-        this.elements.objectifsTextarea.classList.add('invalid');
-        this.elements.objectifsTextarea.classList.add('error-highlight');
-        const objectifsError = document.getElementById('objectifs-error');
-        if (objectifsError) {
-          objectifsError.textContent = "Veuillez décrire vos objectifs (minimum 5 mots)";
-          objectifsError.style.display = 'block';
-        }
-        const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
-        if (objectifsErrorIcon) {
-          objectifsErrorIcon.style.display = 'inline-block';
-        }
-        
-        setTimeout(() => {
-          this.elements.objectifsTextarea.classList.remove('error-highlight');
-        }, 50);
-      } else if (wordCount > 100) {
-        errors.push('Maximum 100 mots autorisés pour les objectifs');
-        this.elements.objectifsTextarea.classList.add('invalid');
-        this.elements.objectifsTextarea.classList.add('error-highlight');
-        const objectifsError = document.getElementById('objectifs-error');
-        if (objectifsError) {
-          objectifsError.textContent = "Maximum 100 mots autorisés";
-          objectifsError.style.display = 'block';
-        }
-        const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
-        if (objectifsErrorIcon) {
-          objectifsErrorIcon.style.display = 'inline-block';
-        }
-        
-        setTimeout(() => {
-          this.elements.objectifsTextarea.classList.remove('error-highlight');
-        }, 50);
-      } else {
-        this.elements.objectifsTextarea.classList.remove('invalid');
-        const objectifsError = document.getElementById('objectifs-error');
-        if (objectifsError) {
-          objectifsError.style.display = 'none';
-        }
-        const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
-        if (objectifsErrorIcon) {
-          objectifsErrorIcon.style.display = 'none';
-        }
-        this.elements.objectifsTextarea.classList.add('valid');
-      }
-    }
-    
-    return errors;
-  }
-  
-  displayErrors(errorMessages, step) {
-    const isValid = errorMessages.length === 0;
-    
-    // Afficher toutes les erreurs en une fois
-    if (!isValid) {
-      const errorContainer = document.createElement('div');
-      errorContainer.className = 'error-message';
-      errorContainer.setAttribute('role', 'alert');
-      errorContainer.setAttribute('aria-live', 'assertive');
-      
-      const errorList = document.createElement('ul');
-      errorMessages.forEach(msg => {
-        const li = document.createElement('li');
-        li.textContent = msg;
-        errorList.appendChild(li);
-      });
-      
-      errorContainer.appendChild(errorList);
-      
-      // Supprimer les anciens messages d'erreur
-      const oldError = document.querySelector('.error-message');
-      if (oldError) oldError.remove();
-      
-      // Insérer le nouveau message d'erreur
-      const stepElement = this.elements.formSteps[step - 1];
-      if (stepElement) {
-        stepElement.insertBefore(errorContainer, stepElement.firstChild);
-      }
-      
-      // Défilement vers le haut pour voir les erreurs
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    return isValid;
-  }
-  
-  validateStep2() {
-    if (!this.elements.checkboxes || 
-        !Array.from(this.elements.checkboxes).some(cb => cb.checked)) {
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'error-message';
-      errorMessage.setAttribute('role', 'alert');
-      errorMessage.setAttribute('aria-live', 'assertive');
-      errorMessage.textContent = 'Veuillez sélectionner au moins une formation';
-      
-      // Supprimer les anciens messages d'erreur
-      const oldError = document.querySelector('.error-message');
-      if (oldError) oldError.remove();
-      
-      // Insérer le nouveau message d'erreur
-      const secondStep = this.elements.formSteps[1];
-      if (secondStep) {
-        secondStep.insertBefore(errorMessage, secondStep.firstChild);
-      }
-      
-      // Défilement vers le haut pour voir les erreurs
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      return false;
-    }
-    
-    return true;
-  }
-  
-  validateStep3() {
-    const errorMessages = [];
-    let isValid = true;
-
-    if (!document.querySelector('input[name="session"]:checked')) {
-      errorMessages.push('Veuillez sélectionner une session');
-      isValid = false;
-    }
-
-    if (!this.elements.modeFormationSelect?.value) {
-      errorMessages.push('Veuillez sélectionner un mode de formation');
-      isValid = false;
-    }
-
-    return this.displayErrors(errorMessages, 3);
-  }
-  
-  validateStep4() {
-    if (!document.querySelector('input[name="payment_method"]:checked')) {
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'error-message';
-      errorMessage.setAttribute('role', 'alert');
-      errorMessage.setAttribute('aria-live', 'assertive');
-      errorMessage.textContent = 'Veuillez sélectionner une méthode de paiement';
-      
-      // Supprimer les anciens messages d'erreur
-      const oldError = document.querySelector('.error-message');
-      if (oldError) oldError.remove();
-      
-      // Insérer le nouveau message d'erreur
-      const fourthStep = this.elements.formSteps[3];
-      if (fourthStep) {
-        fourthStep.insertBefore(errorMessage, fourthStep.firstChild);
-      }
-      
-      // Défilement vers le haut pour voir les erreurs
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      return false;
-    }
-    
-    return true;
-  }
-  
-  validateStep5() {
-    if (!this.elements.consentementCheckbox?.checked) {
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'error-message';
-      errorMessage.setAttribute('role', 'alert');
-      errorMessage.setAttribute('aria-live', 'assertive');
-      errorMessage.textContent = 'Veuillez accepter les conditions générales';
-      
-      // Supprimer les anciens messages d'erreur
-      const oldError = document.querySelector('.error-message');
-      if (oldError) oldError.remove();
-      
-      // Insérer le nouveau message d'erreur
-      const fifthStep = this.elements.formSteps[4];
-      if (fifthStep) {
-        fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
-      }
-      
-      // Défilement vers le haut pour voir les erreurs
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      return false;
-    }
-
-    return true;
-  }
-  
-  validateFinalStep() {
-    if (!this.validateAllSteps()) {
-      return false;
-    }
-
-    this.showConfirmationModal();
-    return true;
-  }
-  
-  validateAllSteps() {
-    return this.validateStep1() && 
-           this.validateStep2() && 
-           this.validateStep3() && 
-           this.validateStep4() && 
-           this.validateStep5();
-  }
-  
-  // Fonctions d'affichage
-  updateWordCounter() {
-    if (!this.elements.objectifsTextarea || !this.elements.objectifsCounter) return;
-    
-    const wordCount = this.countWords(this.elements.objectifsTextarea.value);
-    this.elements.objectifsCounter.textContent = `${wordCount}/100 mots`;
-    
-    if (wordCount > 100) {
-      this.elements.objectifsCounter.style.color = '#e74c3c';
-      this.elements.objectifsTextarea.style.borderColor = '#e74c3c';
-      this.elements.objectifsTextarea.setAttribute('aria-invalid', 'true');
-    } else {
-      this.elements.objectifsCounter.style.color = '#666';
-      this.elements.objectifsTextarea.style.borderColor = '#ddd';
-      this.elements.objectifsTextarea.setAttribute('aria-invalid', 'false');
-    }
-  }
-  
-  rotateRappelMessages() {
-    if (!this.elements.rappelMessages || this.elements.rappelMessages.length === 0) return;
-    
-    this.elements.rappelMessages.forEach(msg => msg.classList.remove('active'));
-    this.elements.rappelMessages[this.state.currentRappelIndex].classList.add('active');
-    this.state.currentRappelIndex = (this.state.currentRappelIndex + 1) % this.elements.rappelMessages.length;
-  }
-  
-  validateAge() {
-    if (!this.elements.dateNaissanceInput || !this.elements.ageError) return true;
-    
-    const birthDate = this.elements.dateNaissanceInput.value;
-    if (!birthDate) return true;
-    
-    const age = this.calculateAge(birthDate);
-    if (age < 13) {
-      this.elements.ageError.style.display = 'block';
-      this.elements.dateNaissanceInput.style.borderColor = '#e74c3c';
-      this.elements.dateNaissanceInput.setAttribute('aria-invalid', 'true');
-      return false;
-    } else {
-      this.elements.ageError.style.display = 'none';
-      this.elements.dateNaissanceInput.style.borderColor = '#ddd';
-      this.elements.dateNaissanceInput.setAttribute('aria-invalid', 'false');
-      return true;
-    }
-  }
-  
-  displaySessionDates() {
-    if (!this.elements.sessionDatesContainer) return;
-    
-    this.elements.sessionDatesContainer.innerHTML = '';
-    
-    for (const [sessionId, dateRange] of Object.entries(CONFIG.sessionDates)) {
-      const sessionElement = document.createElement('div');
-      sessionElement.className = 'session-date-info';
-      sessionElement.innerHTML = `
-        <input type="radio" id="${sessionId}" name="session" value="${sessionId}">
-        <label for="${sessionId}">${dateRange}</label>
-      `;
-      this.elements.sessionDatesContainer.appendChild(sessionElement);
-    }
-  }
-  
-  calculateTotal() {
-    if (!this.elements.checkboxes || !this.elements.priceDisplay || !this.elements.totalPriceFCFA || !this.elements.totalPriceEUR || !this.elements.submitBtn) return;
-    
-    let totalFCfa = 0;
-    const selectedFormations = Array.from(this.elements.checkboxes)
-      .filter(checkbox => checkbox.checked)
-      .map(checkbox => {
-        totalFCfa += CONFIG.formationPrices[checkbox.value] || 0;
-        return checkbox.value;
-      });
-    
-    if (selectedFormations.length > 0) {
-      const totalEur = (totalFCfa / CONFIG.exchangeRate).toFixed(2);
-      
-      this.elements.totalPriceFCFA.textContent = totalFCfa.toLocaleString('fr-FR');
-      this.elements.totalPriceEUR.textContent = totalEur;
-      this.elements.priceDisplay.style.display = 'block';
-      
-      // Mise à jour du champ caché pour Netlify
-      if (this.elements.montantTotalInput) {
-        this.elements.montantTotalInput.value = `${totalFCfa.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
-      }
-      
-      if (selectedFormations.length === 1) {
-        this.elements.submitBtn.textContent = `S'inscrire maintenant (${totalFCfa.toLocaleString('fr-FR')} FCFA / ${totalEur} €)`;
-      } else {
-        this.elements.submitBtn.textContent = `S'inscrire maintenant (${selectedFormations.length} formations - ${totalFCfa.toLocaleString('fr-FR')} FCFA / ${totalEur} €)`;
-      }
-    } else {
-      this.elements.priceDisplay.style.display = 'none';
-      this.elements.submitBtn.textContent = `S'inscrire maintenant`;
-    }
-    
-    this.autoSave();
-  }
-  
-  showConfirmationModal() {
-    if (!this.elements.modal || !this.elements.modalFormationsList) return;
-    
-    const checkedFormations = Array.from(this.elements.checkboxes || []).filter(cb => cb.checked);
-    let total = 0;
-    this.elements.modalFormationsList.innerHTML = '';
-    
-    checkedFormations.forEach(checkbox => {
-      const formationName = CONFIG.formationNames[checkbox.value];
-      const formationPrice = CONFIG.formationPrices[checkbox.value];
-      total += formationPrice;
-      
-      const li = document.createElement('li');
-      li.textContent = `${formationName} - ${formationPrice.toLocaleString('fr-FR')} FCFA`;
-      this.elements.modalFormationsList.appendChild(li);
-    });
-
-    // Remplit les informations dans la modal
-    const getValue = id => this.sanitizeInput(document.getElementById(id)?.value);
-    const getRadioValue = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
-    const getRadioText = name => {
-      const radio = document.querySelector(`input[name="${name}"]:checked`);
-      return radio ? this.sanitizeInput(radio.nextElementSibling?.textContent) : '';
-    };
-    const getSelectText = id => {
-      const select = this.elements[id];
-      return select ? this.sanitizeInput(select.options[select.selectedIndex]?.text) : '';
-    };
-
-    if (this.elements.modalNomComplet) {
-      this.elements.modalNomComplet.textContent = `${getValue('prenom')} ${getValue('nom')}`;
-    }
-    if (this.elements.modalEmail) {
-      this.elements.modalEmail.textContent = getValue('email');
-    }
-    if (this.elements.modalDateNaissance) {
-      this.elements.modalDateNaissance.textContent = getValue('date_naissance');
-    }
-    if (this.elements.modalLieuNaissance) {
-      this.elements.modalLieuNaissance.textContent = getValue('lieu_naissance');
-    }
-    if (this.elements.modalTelephone && this.elements.phonePrefix) {
-      this.elements.modalTelephone.textContent = `${this.elements.phonePrefix.textContent} ${getValue('telephone')}`;
-    }
-    if (this.elements.modalPays) {
-      this.elements.modalPays.textContent = getSelectText('paysSelect');
-    }
-    if (this.elements.modalProfession) {
-      this.elements.modalProfession.textContent = getRadioText('profession');
-    }
-    if (this.elements.modalObjectifs) {
-      this.elements.modalObjectifs.textContent = getValue('objectifs');
-    }
-    if (this.elements.modalSessionInfo) {
-      this.elements.modalSessionInfo.textContent = CONFIG.sessionDates[getRadioValue('session')] || getRadioValue('session');
-    }
-    if (this.elements.modalModeInfo) {
-      this.elements.modalModeInfo.textContent = getSelectText('modeFormationSelect');
-    }
-    
-    if (this.elements.modalPaymentInfo) {
-      const paymentMethod = getRadioValue('payment_method');
-      this.elements.modalPaymentInfo.textContent = CONFIG.paymentMethodNames[paymentMethod] || paymentMethod;
-    }
-    
-    if (this.elements.modalTotalPrice && this.elements.modalTotalPriceEur) {
-      const totalEur = (total / CONFIG.exchangeRate).toFixed(2);
-      this.elements.modalTotalPrice.textContent = total.toLocaleString('fr-FR');
-      this.elements.modalTotalPriceEur.textContent = totalEur;
-    }
-    
-    // Ajout du montant total dans le champ caché pour Netlify
-    if (this.elements.montantTotalInput) {
-      const totalEur = (total / CONFIG.exchangeRate).toFixed(2);
-      this.elements.montantTotalInput.value = `${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
-    }
-    
-    // Ajout des attributs ARIA pour l'accessibilité
-    this.elements.modal.setAttribute('aria-modal', 'true');
-    this.elements.modal.setAttribute('role', 'dialog');
-    this.elements.modal.setAttribute('aria-labelledby', 'modal-title');
-    
-    // Focus sur le premier élément interactif de la modal
-    this.elements.modal.style.display = 'block';
-    if (this.elements.modalConfirm) {
-      this.elements.modalConfirm.focus();
-    }
-  }
-  
-  // Fonctions d'envoi
-  async sendFormData() {
-    if (this.state.isSubmitting || this.state.formSubmitted || !this.elements.registrationForm) return;
-    this.state.isSubmitting = true;
-    this.state.formSubmitted = true;
-    
-    if (this.elements.modal) {
-      this.elements.modal.style.display = 'none';
-    }
-    if (this.elements.loadingIndicator) {
-      this.elements.loadingIndicator.style.display = 'block';
-    }
-    if (this.elements.submitBtn) {
-      this.elements.submitBtn.disabled = true;
-    }
-    
-    try {
-      // Préparer les données pour Google Sheets
-      const formData = new FormData(this.elements.registrationForm);
-      const formDataObj = {};
-      formData.forEach((value, key) => {
-        formDataObj[key] = value;
-      });
-
-      // Envoyer les données à Google Sheets
-      await this.sendToGoogleSheets(formDataObj);
-
-      // Initialiser et envoyer les emails de confirmation
-      await this.initEmailJS();
-      await this.sendConfirmationEmails(formDataObj);
-
-      // Soumettre le formulaire à Netlify
-      this.submitToNetlify();
-
-    } catch (error) {
-      console.error('Erreur:', error);
-      this.saveToLocalStorage();
-      
-      // Afficher un message d'erreur
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'error-message';
-      errorMessage.setAttribute('role', 'alert');
-      errorMessage.setAttribute('aria-live', 'assertive');
-      errorMessage.textContent = 'Une erreur est survenue. Veuillez réessayer ou nous contacter si le problème persiste.';
-      
-      const oldError = document.querySelector('.error-message');
-      if (oldError) oldError.remove();
-      
-      document.body.insertBefore(errorMessage, document.body.firstChild);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } finally {
-      this.state.isSubmitting = false;
-      if (this.elements.loadingIndicator) {
-        this.elements.loadingIndicator.style.display = 'none';
-      }
-      if (this.elements.submitBtn) {
-        this.elements.submitBtn.disabled = false;
-      }
-      this.state.formSubmitted = false;
-      this.state.isSubmitting = false;
-    }
-  }
-
-  // Initialisation de EmailJS avec gestion de promesse
-  async initEmailJS() {
-    if (typeof emailjs !== 'undefined') {
-      emailjs.init(this.env.EMAILJS_USER_ID);
-      return;
-    }
-    
-    return new Promise((resolve, reject) => {
-      const emailjsUserId = this.env.EMAILJS_USER_ID;
-      if (!emailjsUserId) {
-        reject(new Error('Configuration EmailJS incomplète'));
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
-      script.onload = () => {
-        emailjs.init(emailjsUserId);
-        resolve();
-      };
-      script.onerror = () => {
-        reject(new Error('Échec du chargement de EmailJS'));
-      };
-      document.head.appendChild(script);
-    });
-  }
-
-  // Soumission du formulaire à Netlify
-  submitToNetlify() {
-    // Créer un clone du formulaire pour la soumission Netlify
-    const netlifyForm = this.elements.registrationForm.cloneNode(true);
-    netlifyForm.style.display = 'none';
-    netlifyForm.id = 'netlify-submit-form';
-    netlifyForm.removeAttribute('data-netlify'); // Éviter les boucles infinies
-    
-    // Ajouter le formulaire au DOM et le soumettre
-    document.body.appendChild(netlifyForm);
-    netlifyForm.submit();
-    
-    // Afficher la page de confirmation après un court délai
-    setTimeout(() => {
-      this.showConfirmationPage();
-      localStorage.removeItem('bteceFormData');
-      this.clearForm();
-    }, 1000);
-  }
-
-  // Envoi des données à Google Sheets avec gestion d'erreur améliorée
-  async sendToGoogleSheets(formData) {
-    try {
-      const response = await fetch(`${this.googleSheetsApiUrl}?key=${this.API_KEY}`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${this.API_TOKEN}`,
-          "Content-Type": "application/json",
-          "X-Client-Version": "1.0.0" // Optionnel : suivi des versions
-        },
-        body: JSON.stringify({
-          ...formData,
-          timestamp: new Date().toISOString() // Ajout d'un timestamp
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Erreur d'envoi à Google Sheets:", {
-        error: error.message,
-        formData: { ...formData, telephone: 'REDACTED', email: 'REDACTED' } // Log contrôlé (sans données sensibles)
-      });
-      
-      // Sauvegarder pour une nouvelle tentative
-      this.saveForRetry(formData);
-      throw error;
-    }
-  }
-
-  // Sauvegarde des données pour une nouvelle tentative
-  saveForRetry(formData) {
-    const pendingData = {
-      ...formData,
-      timestamp: new Date().toISOString(),
-      retryCount: 0
-    };
-    
-    const existingPending = localStorage.getItem('pendingRegistrations');
-    const pendingRegistrations = existingPending ? JSON.parse(existingPending) : [];
-    pendingRegistrations.push(pendingData);
-    
-    localStorage.setItem('pendingRegistrations', JSON.stringify(pendingRegistrations));
-  }
-
-  // Envoi des emails de confirmation via EmailJS avec gestion d'erreur
-  async sendConfirmationEmails(formData) {
-    const emailjsServiceId = this.env.EMAILJS_SERVICE_ID;
-    const emailjsTemplateId = this.env.EMAILJS_TEMPLATE_ID;
-    const emailjsAdminTemplateId = this.env.EMAILJS_ADMIN_TEMPLATE_ID;
-
-    if (!emailjsServiceId || !emailjsTemplateId || !emailjsAdminTemplateId) {
-      throw new Error('Configuration EmailJS incomplète');
-    }
-
-    try {
-      // Email à l'utilisateur
-      const userEmailParams = {
-        to_name: `${formData.prenom} ${formData.nom}`,
-        to_email: formData.email,
-        formations: formData.formations,
-        montant_total: formData.montant_total,
-        session: CONFIG.sessionDates[formData.session] || formData.session,
-        mode_formation: formData.mode_formation === 'en-ligne' ? 'en ligne' : 'en présentiel',
-        payment_method: CONFIG.paymentMethodNames[formData.payment_method] || formData.payment_method
-      };
-
-      await emailjs.send(
-        emailjsServiceId,
-        emailjsTemplateId,
-        userEmailParams
-      );
-
-      // Email à l'admin
-      const adminEmailParams = {
-        nom_complet: `${formData.prenom} ${formData.nom}`,
-        email: formData.email,
-        telephone: `${formData.telephone_prefix || '+229'} ${formData.telephone}`,
-        formations: formData.formations,
-        montant_total: formData.montant_total,
-        session: CONFIG.sessionDates[formData.session] || formData.session,
-        mode_formation: formData.mode_formation === 'en-ligne' ? 'en ligne' : 'en présentiel',
-        payment_method: CONFIG.paymentMethodNames[formData.payment_method] || formData.payment_method,
-        date_inscription: new Date().toLocaleDateString('fr-FR')
-      };
-
-      await emailjs.send(
-        emailjsServiceId,
-        emailjsAdminTemplateId,
-        adminEmailParams
-      );
-    } catch (error) {
-      console.error("Erreur d'envoi d'email:", error);
-      throw new Error("Impossible d'envoyer les emails de confirmation");
-    }
-  }
-  
-  saveToLocalStorage() {
-    const formData = {
-      nom: this.sanitizeInput(document.getElementById('nom')?.value),
-      prenom: this.sanitizeInput(document.getElementById('prenom')?.value),
-      email: this.sanitizeInput(document.getElementById('email')?.value),
-      dateNaissance: this.sanitizeInput(document.getElementById('date_naissance')?.value),
-      lieuNaissance: this.sanitizeInput(document.getElementById('lieu_naissance')?.value),
-      pays: this.sanitizeInput(document.getElementById('pays')?.value),
-      telephone: this.sanitizeInput(document.getElementById('telephone')?.value),
-      profession: document.querySelector('input[name="profession"]:checked')?.value,
-      objectifs: this.sanitizeInput(document.getElementById('objectifs')?.value),
-      checkedFormations: Array.from(this.elements.checkboxes || [])
-        .filter(cb => cb.checked)
-        .map(cb => CONFIG.formationNames[cb.value]),
-      session: document.querySelector('input[name="session"]:checked')?.value,
-      modeFormation: this.elements.modeFormationSelect?.value,
-      paymentMethod: document.querySelector('input[name="payment_method"]:checked')?.value,
-      total: this.elements.totalPriceFCFA?.textContent,
-      timestamp: new Date().toISOString()
-    };
-    
-    localStorage.setItem('pendingRegistration', JSON.stringify(formData));
-    
-    // Notification accessible
-    const notification = document.createElement('div');
-    notification.className = 'aria-notification';
-    notification.setAttribute('role', 'status');
-    notification.setAttribute('aria-live', 'polite');
-    notification.textContent = 'Votre inscription a été enregistrée localement. Nous essaierons de la soumettre à nouveau lorsque vous serez en ligne.';
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.remove();
-    }, 5000);
-  }
-  
-  // Fonctions d'affichage des résultats
-  showConfirmationPage() {
-    if (!this.elements.mainPage || !this.elements.confirmationPage) return;
-    
-    this.elements.mainPage.style.display = 'none';
-    this.elements.confirmationPage.style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    this.displayUserSummary();
-    this.simulateTracking();
-  }
-  
-  displayUserSummary() {
-    if (!this.elements.userSummary) return;
-    
-    const getValue = id => this.sanitizeInput(document.getElementById(id)?.value);
-    const getRadioValue = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
-    const getRadioText = name => {
-      const radio = document.querySelector(`input[name="${name}"]:checked`);
-      return radio ? this.sanitizeInput(radio.nextElementSibling?.textContent) : '';
-    };
-    const getSelectText = id => {
-      const select = this.elements[id];
-      return select ? this.sanitizeInput(select.options[select.selectedIndex]?.text) : '';
-    };
-
-    const checkedFormations = Array.from(this.elements.checkboxes || [])
-      .filter(cb => cb.checked)
-      .map(cb => CONFIG.formationNames[cb.value]);
-    
-    const total = Array.from(this.elements.checkboxes || [])
-      .filter(cb => cb.checked)
-      .reduce((sum, cb) => sum + (CONFIG.formationPrices[cb.value] || 0), 0);
-    
-    const totalEur = (total / CONFIG.exchangeRate).toFixed(2);
-    
-    this.elements.userSummary.innerHTML = `
-      <h4>Récapitulatif de votre inscription</h4>
-      <p><strong>Nom complet :</strong> ${getValue('prenom')} ${getValue('nom')}</p>
-      <p><strong>Email :</strong> ${getValue('email')}</p>
-      <p><strong>Téléphone :</strong> ${this.elements.phonePrefix?.textContent || ''} ${getValue('telephone')}</p>
-      <p><strong>Formations :</strong> ${checkedFormations.join(', ')}</p>
-      <p><strong>Session :</strong> ${CONFIG.sessionDates[getRadioValue('session')] || getRadioValue('session')}</p>
-      <p><strong>Mode :</strong> ${this.elements.modeFormationSelect?.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
-      <p><strong>Méthode de paiement :</strong> ${CONFIG.paymentMethodNames[getRadioValue('payment_method')] || getRadioValue('payment_method')}</p>
-      <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
-      <div class="confirmation-message">
-        <p>Un email de confirmation vous a été envoyé à l'adresse ${getValue('email')}.</p>
-        <p>Veuillez vérifier votre boîte de réception (and vos spams si vous ne trouvez pas l'email).</p>
-      </div>
-    `;
-  }
-  
-  simulateTracking() {
-    const steps = document.querySelectorAll('.tracking-steps li');
-    if (!steps || steps.length === 0) return;
-    
-    setTimeout(() => {
-      steps[1].classList.add('completed');
-      steps[2].classList.add('active');
-      
-      setTimeout(() => {
-        steps[2].classList.add('completed');
-        steps[3].classList.add('active');
-        
-        setTimeout(() => {
-          steps[3].classList.add('completed');
-          steps[4].classList.add('active');
-        }, 3000);
-      }, 2000);
-    }, 1000);
-  }
-  
-  // Fonctions de chat
-  sendChatMessage() {
-    if (!this.elements.chatInput || !this.elements.chatMessages) return;
-    
-    const message = this.elements.chatInput.value.trim();
-    if (!message) return;
-    
-    this.addChatMessage(message, 'user');
-    this.elements.chatInput.value = '';
-    
-    setTimeout(() => {
-      this.addChatMessage('Merci pour votre message. Veuillez envoyer votre préocupation via notre adresse Mail. Notre équipe vous répondra dans les plus brefs délais.', 'bot');
-    }, 1000);
-  }
-  
-  addChatMessage(text, sender) {
-    if (!this.elements.chatMessages) return;
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `chat-message ${sender}-message`;
-    messageDiv.setAttribute('role', sender === 'user' ? 'status' : 'alert');
-    messageDiv.setAttribute('aria-live', 'polite');
-    messageDiv.innerHTML = `<p>${this.sanitizeInput(text)}</p>`;
-    this.elements.chatMessages.appendChild(messageDiv);
-    this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
-  }
-  
-  // Nettoyage
-  clearForm() {
-    // Réinitialiser tous les champs du formulaire
-    if (this.elements.registrationForm) {
-      this.elements.registrationForm.reset();
-    }
-    
-    // Réinitialiser les cases à cocher des formations
-    if (this.elements.checkboxes) {
-      this.elements.checkboxes.forEach(checkbox => {
-        checkbox.checked = false;
-      });
-    }
-    
-    // Réinitialiser les boutons radio
-    document.querySelectorAll('input[type="radio"]').forEach(radio => {
-      radio.checked = false;
-    });
-    
-    // Réinitialiser les sélecteurs
-    if (this.elements.paysSelect) {
-      this.elements.paysSelect.selectedIndex = 0;
-      this.elements.paysSelect.dispatchEvent(new Event('change'));
-    }
-    
-    if (this.elements.modeFormationSelect) {
-      this.elements.modeFormationSelect.selectedIndex = 0;
-      this.elements.modeFormationSelect.dispatchEvent(new Event('change'));
-    }
-    
-    // Réinitialiser les affichages de prix
-    if (this.elements.priceDisplay) {
-      this.elements.priceDisplay.style.display = 'none';
-    }
-    
-    if (this.elements.totalPriceFCFA) {
-      this.elements.totalPriceFCFA.textContent = '0';
-    }
-    
-    if (this.elements.totalPriceEUR) {
-      this.elements.totalPriceEUR.textContent = '0';
-    }
-    
-    if (this.elements.submitBtn) {
-      this.elements.submitBtn.textContent = "S'inscrire maintenant";
-    }
-    
-    // Réinitialiser le compteur de mots
-    if (this.elements.objectifsCounter) {
-      this.elements.objectifsCounter.textContent = '0/100 mots';
-      this.elements.objectifsCounter.style.color = '#666';
-    }
-    
-    // Réinitialiser les styles des champs
-    if (this.elements.objectifsTextarea) {
-      this.elements.objectifsTextarea.style.borderColor = '#ddd';
-      this.elements.objectifsTextarea.classList.remove('invalid', 'valid');
-    }
-    
-    if (this.elements.dateNaissanceInput) {
-      this.elements.dateNaissanceInput.style.borderColor = '#ddd';
-    }
-    
-    // Réinitialiser les messages d'erreur
-    if (this.elements.ageError) {
-      this.elements.ageError.style.display = 'none';
-    }
-    
-    const objectifsError = document.getElementById('objectifs-error');
-    if (objectifsError) {
-      objectifsError.style.display = 'none';
-    }
-    
-    const objectifsErrorIcon = document.getElementById('objectifs-error-icon');
-    if (objectifsErrorIcon) {
-      objectifsErrorIcon.style.display = 'none';
-    }
-    
-    // Réinitialiser les messages d'erreur globaux
-    const oldError = document.querySelector('.error-message');
-    if (oldError) oldError.remove();
-    
-    // Réinitialiser le statut de sauvegarde
-    if (this.elements.saveStatus) {
-      this.elements.saveStatus.style.display = 'none';
-    }
-    
-    // Réinitialiser l'étape courante
-    this.state.currentStep = 1;
-    this.showStep(1);
-  }
-}
 
 // Configuration des numéros de téléphone par pays
 const phoneConfigurations = {
@@ -1798,13 +251,1143 @@ const phoneConfigurations = {
     'other': { code: '+', pattern: '[0-9]{8,15}', format: '+XXX XXX XXXX' }
 };
 
+
+
+// Noms des formations pour l'affichage
+const formationNames = {
+    'plans_archi_elec': 'Réalisation de plans architecturaux et électricité',
+    'conception_elec': 'Conception électronique',
+    'realisation_3d': 'Réalisation 3D',
+    'programmation': 'Programmation'
+};
+
+// Noms des méthodes de paiement
+const paymentMethodNames = {
+    'VISA': 'Paiement par carte VISA',
+    'MTN Mobile Money': 'Paiement par MTN Mobile Money',
+    'Moov Africa Mobile Money': 'Paiement par Moov Africa Mobile Money',
+    'Celtiis Mobile Money': 'Paiement par Celtiis Mobile Money',
+    'Orange Money': 'Paiement par Orange Money',
+    'Airtel Money': 'Paiement par Airtel Money',
+    'Wari': 'Paiement par Wari',
+    'Crypto Currency': 'Paiement par Crypto Currency',
+    'Paiement sur place': 'Paiement sur place (espèces/chèque)'
+};
+
+// Cache les éléments DOM
+const DOM = {
+    checkboxes: document.querySelectorAll('input[name="selected_courses[]"]'),
+    priceDisplay: document.getElementById('price-display'),
+    totalPriceFCFA: document.getElementById('total-price-fcfa'),
+    totalPriceEUR: document.getElementById('total-price-eur'),
+    submitBtn: document.getElementById('submit-btn'),
+    loadingIndicator: document.getElementById('loading'),
+    registrationForm: document.getElementById('registration-form'),
+    paysSelect: document.getElementById('pays'),
+    phonePrefix: document.getElementById('phone-prefix'),
+    phoneFormat: document.getElementById('phone-format'),
+    telephoneInput: document.getElementById('telephone'),
+    mainPage: document.getElementById('main-page'),
+    confirmationPage: document.getElementById('confirmation-page'),
+    modal: document.getElementById('confirmation-modal'),
+    modalFormationsList: document.getElementById('modal-formations-list'),
+    modalUserInfo: document.getElementById('modal-user-info'),
+    modalSessionInfo: document.getElementById('modal-session-info'),
+    modalModeInfo: document.getElementById('modal-mode-info'),
+    modalPaymentInfo: document.getElementById('modal-payment-info'),
+    modalTotalPrice: document.getElementById('modal-total-price'),
+    modalTotalPriceEur: document.getElementById('modal-total-price-eur'),
+    modalNomComplet: document.getElementById('modal-nom-complet'),
+    modalEmail: document.getElementById('modal-email'),
+    modalDateNaissance: document.getElementById('modal-date-naissance'),
+    modalLieuNaissance: document.getElementById('modal-lieu-naissance'),
+    modalTelephone: document.getElementById('modal-telephone'),
+    modalPays: document.getElementById('modal-pays'),
+    modalProfession: document.getElementById('modal-profession'),
+    modalObjectifs: document.getElementById('modal-objectifs'),
+    closeModal: document.querySelector('.close-modal'),
+    modalCancel: document.querySelector('.modal-cancel'),
+    modalConfirm: document.querySelector('.modal-confirm'),
+    chatToggle: document.getElementById('chat-toggle'),
+    chatContainer: document.getElementById('chat-container'),
+    closeChat: document.getElementById('close-chat'),
+    chatMessages: document.getElementById('chat-messages'),
+    chatInput: document.getElementById('chat-input'),
+    sendMessage: document.getElementById('send-message'),
+    modeFormationSelect: document.getElementById('mode-formation'),
+    onlinePaymentMethods: document.getElementById('online-payment-methods'),
+    presentielPaymentMethod: document.getElementById('presentiel-payment-method'),
+    paymentMethodGroup: document.getElementById('payment-method-group'),
+    formSteps: document.querySelectorAll('.form-step'),
+    progressSteps: document.querySelectorAll('.step'),
+    progressBar: document.getElementById('progress-bar'),
+    progressText: document.getElementById('progress-text'),
+    timeEstimation: document.getElementById('time-estimation'),
+    saveStatus: document.getElementById('save-status'),
+    userSummary: document.getElementById('user-summary'),
+    rappelMessages: document.querySelectorAll('.rappel-message'),
+    rappelContainer: document.querySelector('.rappel-container'),
+    objectifsTextarea: document.getElementById('objectifs'),
+    objectifsCounter: document.getElementById('objectifs-counter'),
+    dateNaissanceInput: document.getElementById('date_naissance'),
+    lieuNaissanceInput: document.getElementById('lieu_naissance'),
+    ageError: document.getElementById('age-error'),
+    resendEmailBtn: document.querySelector('.resend-link'),
+    csrfToken: document.getElementById('csrf_token'),
+    sessionDatesContainer: document.getElementById('session-dates-container'),
+    exportCSVBtn: document.getElementById('export-csv-btn'),
+    honeypotField: document.getElementById('bot-field'),
+    montantTotalInput: document.getElementById('montant-total')
+};
+
+// Variables d'état
+const state = {
+    saveTimeout: null,
+    formData: {},
+    currentStep: 1,
+    currentRappelIndex: 0,
+    isSubmitting: false,
+    touchStartX: 0,
+    touchEndX: 0,
+    emailSent: false,
+    sessionDates: {
+        'juillet': 'Juillet 2025',
+        'aout': 'Août 2025',
+        'septembre': 'Septembre 2025',
+        'octobre': 'Octobre 2025',
+        'novembre': 'Novembre 2025',
+        'decembre': 'Décembre 2025'
+    },
+    formSubmitted: false
+};
+
+/**
+ * Fonctions utilitaires
+ */
+
+// Compte les mots dans un texte
+function countWords(text) {
+    const trimmedText = text.trim();
+    return trimmedText === '' ? 0 : trimmedText.split(/\s+/).length;
+}
+
+// Met à jour le compteur de mots
+function updateWordCounter() {
+    const wordCount = countWords(DOM.objectifsTextarea.value);
+    DOM.objectifsCounter.textContent = `${wordCount}/50 mots`;
+    
+    if (wordCount > 50) {
+        DOM.objectifsCounter.style.color = '#e74c3c';
+        DOM.objectifsTextarea.style.borderColor = '#e74c3c';
+        DOM.objectifsTextarea.setAttribute('aria-invalid', 'true');
+    } else {
+        DOM.objectifsCounter.style.color = '#666';
+        DOM.objectifsTextarea.style.borderColor = '#ddd';
+        DOM.objectifsTextarea.setAttribute('aria-invalid', 'false');
+    }
+}
+
+// Fait défiler les messages du rappel
+function rotateRappelMessages() {
+    DOM.rappelMessages.forEach(msg => msg.classList.remove('active'));
+    DOM.rappelMessages[state.currentRappelIndex].classList.add('active');
+    state.currentRappelIndex = (state.currentRappelIndex + 1) % DOM.rappelMessages.length;
+}
+
+// Calcule l'âge à partir de la date de naissance
+function calculateAge(birthDate) {
+    const today = new Date();
+    const birthDateObj = new Date(birthDate);
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDiff = today.getMonth() - birthDateObj.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+        age--;
+    }
+    
+    return age;
+}
+
+// Valide l'âge minimum (13 ans)
+function validateAge() {
+    const birthDate = DOM.dateNaissanceInput.value;
+    if (!birthDate) return true;
+    
+    const age = calculateAge(birthDate);
+    if (age < 13) {
+        DOM.ageError.style.display = 'block';
+        DOM.dateNaissanceInput.style.borderColor = '#e74c3c';
+        DOM.dateNaissanceInput.setAttribute('aria-invalid', 'true');
+        return false;
+    } else {
+        DOM.ageError.style.display = 'none';
+        DOM.dateNaissanceInput.style.borderColor = '#ddd';
+        DOM.dateNaissanceInput.setAttribute('aria-invalid', 'false');
+        return true;
+    }
+}
+
+// Valide un numéro de téléphone selon le pays
+function validatePhone(phone, country) {
+    const config = phoneConfigurations[country] || phoneConfigurations['BJ'];
+    const regex = new RegExp(`^${config.pattern}$`);
+    return regex.test(phone);
+}
+
+// Nettoie les entrées pour prévenir les attaques XSS
+function sanitizeInput(input) {
+    if (!input) return '';
+    return input.toString()
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+// Efface le contenu du formulaire après soumission
+function clearForm() {
+    DOM.registrationForm.reset();
+    DOM.priceDisplay.style.display = 'none';
+    DOM.totalPriceFCFA.textContent = '0';
+    DOM.totalPriceEUR.textContent = '0';
+    DOM.submitBtn.textContent = "S'inscrire maintenant";
+    DOM.checkboxes.forEach(checkbox => checkbox.checked = false);
+    DOM.phonePrefix.textContent = '+229';
+    DOM.phoneFormat.style.display = 'none';
+    DOM.objectifsCounter.textContent = '0/50 mots';
+    DOM.objectifsCounter.style.color = '#666';
+    DOM.objectifsTextarea.style.borderColor = '#ddd';
+    DOM.ageError.style.display = 'none';
+    DOM.dateNaissanceInput.style.borderColor = '#ddd';
+    DOM.onlinePaymentMethods.style.display = 'none';
+    DOM.presentielPaymentMethod.style.display = 'none';
+    document.getElementById('consentement').checked = false;
+    document.querySelectorAll('input[name="profession"]').forEach(radio => radio.checked = false);
+    document.querySelectorAll('input[name="session"]').forEach(radio => radio.checked = false);
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => radio.checked = false);
+    DOM.modeFormationSelect.value = '';
+    DOM.paysSelect.value = '';
+}
+
+/**
+ * Fonctions de gestion du formulaire
+ */
+
+// Sauvegarde automatique des données du formulaire
+function autoSave() {
+    DOM.saveStatus.textContent = "Sauvegarde en cours...";
+    DOM.saveStatus.className = "save-status saving";
+    DOM.saveStatus.style.display = "block";
+    
+    state.formData = {
+        step: state.currentStep,
+        nom: sanitizeInput(document.getElementById('nom').value),
+        prenom: sanitizeInput(document.getElementById('prenom').value),
+        email: sanitizeInput(document.getElementById('email').value),
+        date_naissance: sanitizeInput(DOM.dateNaissanceInput.value),
+        lieu_naissance: sanitizeInput(DOM.lieuNaissanceInput.value),
+        pays: sanitizeInput(DOM.paysSelect.value),
+        telephone: sanitizeInput(DOM.telephoneInput.value),
+        profession: sanitizeInput(document.querySelector('input[name="profession"]:checked')?.value),
+        objectifs: sanitizeInput(DOM.objectifsTextarea.value),
+        formations: Array.from(DOM.checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => sanitizeInput(cb.value)),
+        session: sanitizeInput(document.querySelector('input[name="session"]:checked')?.value),
+        modeFormation: sanitizeInput(DOM.modeFormationSelect.value),
+        paymentMethod: sanitizeInput(document.querySelector('input[name="payment_method"]:checked')?.value),
+        consentement: document.getElementById('consentement').checked
+    };
+    
+    localStorage.setItem('bteceFormData', JSON.stringify(state.formData));
+    
+    setTimeout(() => {
+        DOM.saveStatus.textContent = "Données sauvegardées";
+        DOM.saveStatus.className = "save-status saved";
+        
+        setTimeout(() => {
+            DOM.saveStatus.style.display = "none";
+        }, 3000);
+    }, 1000);
+}
+
+// Charge les données sauvegardées
+function loadSavedData() {
+    const savedData = localStorage.getItem('bteceFormData');
+    if (!savedData) return;
+    
+    try {
+        state.formData = JSON.parse(savedData);
+        
+        // Remplit les champs avec les données sauvegardées
+        const fillField = (id, value) => value && (document.getElementById(id).value = sanitizeInput(value));
+        const checkRadio = (name, value) => {
+            if (value) {
+                const radio = document.querySelector(`input[name="${name}"][value="${sanitizeInput(value)}"]`);
+                if (radio) radio.checked = true;
+            }
+        };
+        
+        fillField('nom', state.formData.nom);
+        fillField('prenom', state.formData.prenom);
+        fillField('email', state.formData.email);
+        fillField('date_naissance', state.formData.date_naissance);
+        fillField('lieu_naissance', state.formData.lieu_naissance);
+        
+        if (state.formData.pays) {
+            DOM.paysSelect.value = state.formData.pays;
+            DOM.paysSelect.dispatchEvent(new Event('change'));
+        }
+        
+        fillField('telephone', state.formData.telephone);
+        checkRadio('profession', state.formData.profession);
+        fillField('objectifs', state.formData.objectifs);
+        
+        // Formations
+        if (state.formData.formations?.length > 0) {
+            state.formData.formations.forEach(formation => {
+                const checkbox = document.querySelector(`input[name="selected_courses[]"][value="${sanitizeInput(formation)}"]`);
+                if (checkbox) checkbox.checked = true;
+            });
+            calculateTotal();
+        }
+        
+        // Session
+        checkRadio('session', state.formData.session);
+        
+        // Mode de formation
+        if (state.formData.modeFormation) {
+            DOM.modeFormationSelect.value = state.formData.modeFormation;
+            DOM.modeFormationSelect.dispatchEvent(new Event('change'));
+        }
+        
+        // Méthode de paiement
+        checkRadio('payment_method', state.formData.paymentMethod);
+        
+        // Consentement
+        if (state.formData.consentement) {
+            document.getElementById('consentement').checked = true;
+        }
+        
+        // Aller à l'étape sauvegardée
+        if (state.formData.step) {
+            showStep(state.formData.step);
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des données sauvegardées:', error);
+        localStorage.removeItem('bteceFormData');
+    }
+}
+
+// Affiche les dates des sessions
+function displaySessionDates() {
+    if (!DOM.sessionDatesContainer) return;
+    
+    DOM.sessionDatesContainer.innerHTML = '';
+    
+    for (const [sessionId, dateRange] of Object.entries(state.sessionDates)) {
+        const sessionElement = document.createElement('div');
+        sessionElement.className = 'session-date-info';
+        sessionElement.innerHTML = `
+            <input type="radio" id="${sessionId}" name="session" value="${sessionId}">
+            <label for="${sessionId}">${dateRange}</label>
+        `;
+        DOM.sessionDatesContainer.appendChild(sessionElement);
+    }
+}
+
+// Met à jour la barre de progression
+function updateProgressBar() {
+    const progress = ((state.currentStep - 1) / 5) * 100;
+    DOM.progressBar.style.width = `${progress}%`;
+    DOM.progressText.textContent = `${progress.toFixed(0)}% complété`;
+    DOM.progressBar.setAttribute('aria-valuenow', progress);
+    
+    if (state.currentStep > 1) {
+        document.querySelector('.progress-container').style.display = 'block';
+    }
+}
+
+// Met à jour l'estimation du temps restant
+function updateTimeEstimation() {
+    let remainingTime = 0;
+    for (let i = state.currentStep - 1; i < stepTimes.length; i++) {
+        remainingTime += stepTimes[i];
+    }
+    
+    const minutes = Math.floor(remainingTime / 60);
+    const seconds = remainingTime % 60;
+    
+    if (minutes > 0) {
+        DOM.timeEstimation.textContent = `Temps estimé : ${minutes} minute${minutes > 1 ? 's' : ''}${seconds > 0 ? ` et ${seconds} seconde${seconds > 1 ? 's' : ''}` : ''}`;
+    } else {
+        DOM.timeEstimation.textContent = `Temps estimé : ${seconds} seconde${seconds > 1 ? 's' : ''}`;
+    }
+}
+
+// Calcule le total des formations sélectionnées
+function calculateTotal() {
+    let totalFCfa = 0;
+    const selectedFormations = Array.from(DOM.checkboxes)
+        .filter(checkbox => checkbox.checked)
+        .map(checkbox => {
+            totalFCfa += formationPrices[checkbox.value];
+            return checkbox.value;
+        });
+    
+    if (selectedFormations.length > 0) {
+        const totalEur = (totalFCfa / exchangeRate).toFixed(2);
+        
+        DOM.totalPriceFCFA.textContent = totalFCfa.toLocaleString('fr-FR');
+        DOM.totalPriceEUR.textContent = totalEur;
+        DOM.priceDisplay.style.display = 'block';
+        
+        // Mise à jour du champ caché pour Netlify
+        if (DOM.montantTotalInput) {
+            DOM.montantTotalInput.value = `${totalFCfa.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
+        }
+        
+        if (selectedFormations.length === 1) {
+            DOM.submitBtn.textContent = `S'inscrire maintenant (${totalFCfa.toLocaleString('fr-FR')} FCFA / ${totalEur} €)`;
+        } else {
+            DOM.submitBtn.textContent = `S'inscrire maintenant (${selectedFormations.length} formations - ${totalFCfa.toLocaleString('fr-FR')} FCFA / ${totalEur} €)`;
+        }
+    } else {
+        DOM.priceDisplay.style.display = 'none';
+        DOM.submitBtn.textContent = `S'inscrire maintenant`;
+    }
+    
+    autoSave();
+}
+
+// Gère l'affichage des étapes du formulaire
+function showStep(step) {
+    DOM.formSteps.forEach((formStep, index) => {
+        formStep.classList.toggle('active', index + 1 === step);
+        formStep.setAttribute('aria-hidden', index + 1 !== step);
+    });
+
+    DOM.progressSteps.forEach((progressStep, index) => {
+        if (index + 1 < step) {
+            progressStep.classList.add('completed');
+            progressStep.classList.remove('active');
+            progressStep.removeAttribute('aria-current');
+        } else if (index + 1 === step) {
+            progressStep.classList.add('active');
+            progressStep.classList.remove('completed');
+            progressStep.setAttribute('aria-current', 'step');
+        } else {
+            progressStep.classList.remove('active', 'completed');
+            progressStep.removeAttribute('aria-current');
+        }
+    });
+
+    state.currentStep = step;
+    updateProgressBar();
+    updateTimeEstimation();
+    autoSave();
+    
+    // Focus sur le premier champ de l'étape pour l'accessibilité
+    const currentStep = document.getElementById(`form-step-${step}`);
+    if (currentStep) {
+        const firstInput = currentStep.querySelector('input, select, textarea');
+        if (firstInput) firstInput.focus();
+    }
+}
+
+// Passe à l'étape suivante avec validation
+function nextStep(current) {
+    if (!validateStep(current)) return;
+    showStep(current + 1);
+}
+
+// Valide une étape spécifique
+function validateStep(step) {
+    switch(step) {
+        case 1:
+            return validateStep1();
+        case 2:
+            return validateStep2();
+        case 3:
+            return validateStep3();
+        case 4:
+            return validateStep4();
+        default:
+            return true;
+    }
+}
+
+// Valide l'étape 1 (Informations personnelles)
+function validateStep1() {
+    const requiredFields = [
+        { id: 'nom', name: 'Nom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
+        { id: 'prenom', name: 'Prénom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
+        { id: 'email', name: 'Email', pattern: '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$' },
+        { id: 'date_naissance', name: 'Date de naissance' },
+        { id: 'lieu_naissance', name: 'Lieu de naissance', minLength: 2, maxLength: 100 },
+        { id: 'pays', name: 'Pays' },
+        { id: 'telephone', name: 'Téléphone' }
+    ];
+
+    const errorMessages = [];
+    let isValid = true;
+
+    for (const field of requiredFields) {
+        const element = document.getElementById(field.id);
+        const value = element.value.trim();
+        
+        if (!value) {
+            errorMessages.push(`Le champ "${field.name}" est obligatoire`);
+            element.setAttribute('aria-invalid', 'true');
+            isValid = false;
+        } else {
+            // Validation supplémentaire si des critères sont spécifiés
+            if (field.pattern && !new RegExp(field.pattern).test(value)) {
+                errorMessages.push(`Format invalide pour le champ "${field.name}"`);
+                element.setAttribute('aria-invalid', 'true');
+                isValid = false;
+            }
+            
+            if (field.minLength && value.length < field.minLength) {
+                errorMessages.push(`Le champ "${field.name}" doit contenir au moins ${field.minLength} caractères`);
+                element.setAttribute('aria-invalid', 'true');
+                isValid = false;
+            }
+            
+            if (field.maxLength && value.length > field.maxLength) {
+                errorMessages.push(`Le champ "${field.name}" ne doit pas dépasser ${field.maxLength} caractères`);
+                element.setAttribute('aria-invalid', 'true');
+                isValid = false;
+            }
+            
+            if (element.getAttribute('aria-invalid') !== 'true') {
+                element.setAttribute('aria-invalid', 'false');
+            }
+        }
+    }
+
+    // Validation du téléphone
+    const pays = DOM.paysSelect.value;
+    const telephone = DOM.telephoneInput.value.trim();
+    if (telephone && !validatePhone(telephone, pays)) {
+        const config = phoneConfigurations[pays] || phoneConfigurations['BJ'];
+        errorMessages.push(`Format de téléphone invalide (${config.format})`);
+        DOM.telephoneInput.setAttribute('aria-invalid', 'true');
+        isValid = false;
+    } else if (telephone) {
+        DOM.telephoneInput.setAttribute('aria-invalid', 'false');
+    }
+
+    // Validation de la profession
+    if (!document.querySelector('input[name="profession"]:checked')) {
+        errorMessages.push('Veuillez sélectionner une profession');
+        isValid = false;
+    }
+
+    // Validation des objectifs
+    const objectifs = DOM.objectifsTextarea.value.trim();
+    const wordCount = countWords(objectifs);
+    
+    if (wordCount < 5) {
+        errorMessages.push('Veuillez décrire vos objectifs (minimum 5 mots)');
+        DOM.objectifsTextarea.classList.add('invalid');
+        DOM.objectifsTextarea.classList.add('error-highlight');
+        document.getElementById('objectifs-error').textContent = "Veuillez décrire vos objectifs (minimum 5 mots)";
+        document.getElementById('objectifs-error').style.display = 'block';
+        document.getElementById('objectifs-error-icon').style.display = 'inline-block';
+        isValid = false;
+        
+        setTimeout(() => {
+            DOM.objectifsTextarea.classList.remove('error-highlight');
+        }, 50);
+    } else if (wordCount > 50) {
+        errorMessages.push('Maximum 50 mots autorisés pour les objectifs');
+        DOM.objectifsTextarea.classList.add('invalid');
+        DOM.objectifsTextarea.classList.add('error-highlight');
+        document.getElementById('objectifs-error').textContent = "Maximum 50 mots autorisés";
+        document.getElementById('objectifs-error').style.display = 'block';
+        document.getElementById('objectifs-error-icon').style.display = 'inline-block';
+        isValid = false;
+        
+        setTimeout(() => {
+            DOM.objectifsTextarea.classList.remove('error-highlight');
+        }, 50);
+    } else {
+        DOM.objectifsTextarea.classList.remove('invalid');
+        document.getElementById('objectifs-error').style.display = 'none';
+        document.getElementById('objectifs-error-icon').style.display = 'none';
+        DOM.objectifsTextarea.classList.add('valid');
+    }
+
+    // Validation de l'âge
+    if (!validateAge()) {
+        errorMessages.push('Vous devez avoir au moins 13 ans pour vous inscrire');
+        isValid = false;
+    }
+
+    // Validation du champ honeypot (anti-spam)
+    if (DOM.honeypotField && DOM.honeypotField.value.trim() !== '') {
+        errorMessages.push('Erreur de validation du formulaire');
+        isValid = false;
+    }
+
+    // Afficher toutes les erreurs en une fois
+    if (errorMessages.length > 0) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.setAttribute('role', 'alert');
+        errorContainer.setAttribute('aria-live', 'assertive');
+        
+        const errorList = document.createElement('ul');
+        errorMessages.forEach(msg => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            errorList.appendChild(li);
+        });
+        
+        errorContainer.appendChild(errorList);
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const firstStep = DOM.formSteps[0];
+        firstStep.insertBefore(errorContainer, firstStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    return isValid;
+}
+
+// Valide l'étape 2 (Formations)
+function validateStep2() {
+    if (DOM.checkboxes.length === 0 || !Array.from(DOM.checkboxes).some(cb => cb.checked)) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.setAttribute('aria-live', 'assertive');
+        errorMessage.textContent = 'Veuillez sélectionner au moins une formation';
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const secondStep = DOM.formSteps[1];
+        secondStep.insertBefore(errorMessage, secondStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        return false;
+    }
+    
+    return true;
+}
+
+// Valide l'étape 3 (Session & Mode)
+function validateStep3() {
+    const errorMessages = [];
+    let isValid = true;
+
+    if (!document.querySelector('input[name="session"]:checked')) {
+        errorMessages.push('Veuillez sélectionner une session');
+        isValid = false;
+    }
+
+    if (!DOM.modeFormationSelect.value) {
+        errorMessages.push('Veuillez sélectionner un mode de formation');
+        isValid = false;
+    }
+
+    // Afficher toutes les erreurs en une fois
+    if (errorMessages.length > 0) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.setAttribute('role', 'alert');
+        errorContainer.setAttribute('aria-live', 'assertive');
+        
+        const errorList = document.createElement('ul');
+        errorMessages.forEach(msg => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            errorList.appendChild(li);
+        });
+        
+        errorContainer.appendChild(errorList);
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const thirdStep = DOM.formSteps[2];
+        thirdStep.insertBefore(errorContainer, thirdStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    return isValid;
+}
+
+// Valide l'étape 4 (Paiement)
+function validateStep4() {
+    if (!document.querySelector('input[name="payment_method"]:checked')) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.setAttribute('aria-live', 'assertive');
+        errorMessage.textContent = 'Veuillez sélectionner une méthode de paiement';
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const fourthStep = DOM.formSteps[3];
+        fourthStep.insertBefore(errorMessage, fourthStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        return false;
+    }
+    
+    return true;
+}
+
+// Retourne à l'étape précédente
+function prevStep(current) {
+    showStep(current - 1);
+}
+
+// Valide l'étape finale avant soumission
+function validateFinalStep() {
+    if (!document.getElementById('consentement').checked) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.setAttribute('aria-live', 'assertive');
+        errorMessage.textContent = 'Veuillez accepter les conditions générales';
+        
+        // Supprimer les anciens messages d'erreur
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        // Insérer le nouveau message d'erreur
+        const fifthStep = DOM.formSteps[4];
+        fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
+        
+        // Défilement vers le haut pour voir les erreurs
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        return false;
+    }
+
+    // Vérification reCAPTCHA
+    if (typeof grecaptcha !== 'undefined' && grecaptcha.getResponse().length === 0) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.setAttribute('aria-live', 'assertive');
+        errorMessage.textContent = 'Veuillez compléter la vérification reCAPTCHA';
+        
+        const oldError = document.querySelector('.error-message');
+        if (oldError) oldError.remove();
+        
+        const fifthStep = DOM.formSteps[4];
+        fifthStep.insertBefore(errorMessage, fifthStep.firstChild);
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return false;
+    }
+
+    if (!validateAllSteps()) {
+        return false;
+    }
+
+    showConfirmationModal();
+    return true;
+}
+
+// Valide toutes les étapes
+function validateAllSteps() {
+    return validateStep1() && validateStep2() && validateStep3() && validateStep4();
+}
+
+// Affiche la modal de confirmation
+function showConfirmationModal() {
+    const checkedFormations = Array.from(DOM.checkboxes).filter(cb => cb.checked);
+    let total = 0;
+    DOM.modalFormationsList.innerHTML = '';
+    
+    checkedFormations.forEach(checkbox => {
+        const formationName = formationNames[checkbox.value];
+        const formationPrice = formationPrices[checkbox.value];
+        total += formationPrice;
+        
+        const li = document.createElement('li');
+        li.textContent = `${formationName} - ${formationPrice.toLocaleString('fr-FR')} FCFA`;
+        DOM.modalFormationsList.appendChild(li);
+    });
+
+    // Remplit les informations dans la modal
+    const getValue = id => sanitizeInput(document.getElementById(id).value);
+    const getRadioValue = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
+    const getRadioText = name => sanitizeInput(document.querySelector(`input[name="${name}"]:checked`)?.nextElementSibling?.textContent);
+    const getSelectText = id => sanitizeInput(DOM[id].options[DOM[id].selectedIndex]?.text);
+
+    DOM.modalNomComplet.textContent = `${getValue('prenom')} ${getValue('nom')}`;
+    DOM.modalEmail.textContent = getValue('email');
+    DOM.modalDateNaissance.textContent = getValue('date_naissance');
+    DOM.modalLieuNaissance.textContent = getValue('lieu_naissance');
+    DOM.modalTelephone.textContent = `${DOM.phonePrefix.textContent} ${getValue('telephone')}`;
+    DOM.modalPays.textContent = getSelectText('paysSelect');
+    DOM.modalProfession.textContent = getRadioText('profession');
+    DOM.modalObjectifs.textContent = getValue('objectifs');
+    DOM.modalSessionInfo.textContent = getRadioText('session');
+    DOM.modalModeInfo.textContent = getSelectText('modeFormationSelect');
+    
+    const paymentMethod = getRadioValue('payment_method');
+    DOM.modalPaymentInfo.textContent = paymentMethodNames[paymentMethod] || paymentMethod;
+    
+    const totalEur = (total / exchangeRate).toFixed(2);
+    DOM.modalTotalPrice.textContent = total.toLocaleString('fr-FR');
+    DOM.modalTotalPriceEur.textContent = totalEur;
+    
+    // Ajout du montant total dans le champ caché pour Netlify
+    if (DOM.montantTotalInput) {
+        DOM.montantTotalInput.value = `${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
+    }
+    
+    // Ajout des attributs ARIA pour l'accessibilité
+    DOM.modal.setAttribute('aria-modal', 'true');
+    DOM.modal.setAttribute('role', 'dialog');
+    DOM.modal.setAttribute('aria-labelledby', 'modal-title');
+    
+    // Focus sur le premier élément interactif de la modal
+    DOM.modal.style.display = 'block';
+    DOM.modalConfirm.focus();
+}
+
+// Envoie les données du formulaire
+async function sendFormData() {
+    if (state.isSubmitting || state.formSubmitted) return;
+    state.isSubmitting = true;
+    state.formSubmitted = true;
+    
+    DOM.modal.style.display = 'none';
+    DOM.loadingIndicator.style.display = 'block';
+    DOM.submitBtn.disabled = true;
+    
+    try {
+        // Ajout des données supplémentaires pour Netlify
+        const selectedFormations = Array.from(DOM.checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => formationNames[cb.value]);
+            
+        const totalFCfa = Array.from(DOM.checkboxes)
+            .filter(cb => cb.checked)
+            .reduce((sum, cb) => sum + formationPrices[cb.value], 0);
+            
+        const totalEur = (totalFCfa / exchangeRate).toFixed(2);
+        
+        // Création des champs cachés pour Netlify
+        const formationsInput = document.createElement('input');
+        formationsInput.type = 'hidden';
+        formationsInput.name = 'formations_selectionnees';
+        formationsInput.value = selectedFormations.join(', ');
+        DOM.registrationForm.appendChild(formationsInput);
+        
+        const montantTotalInput = document.createElement('input');
+        montantTotalInput.type = 'hidden';
+        montantTotalInput.name = 'montant_total';
+        montantTotalInput.value = `${totalFCfa.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)`;
+        DOM.registrationForm.appendChild(montantTotalInput);
+        
+        const sessionInput = document.createElement('input');
+        sessionInput.type = 'hidden';
+        sessionInput.name = 'session_choisie';
+        sessionInput.value = document.querySelector('input[name="session"]:checked').value;
+        DOM.registrationForm.appendChild(sessionInput);
+        
+        const modeInput = document.createElement('input');
+        modeInput.type = 'hidden';
+        modeInput.name = 'mode_formation';
+        modeInput.value = DOM.modeFormationSelect.value;
+        DOM.registrationForm.appendChild(modeInput);
+        
+        const paymentInput = document.createElement('input');
+        paymentInput.type = 'hidden';
+        paymentInput.name = 'methode_paiement';
+        paymentInput.value = document.querySelector('input[name="payment_method"]:checked').value;
+        DOM.registrationForm.appendChild(paymentInput);
+        
+        // Envoi du formulaire à Netlify
+        const response = await fetch(DOM.registrationForm.action, {
+            method: 'POST',
+            body: new FormData(DOM.registrationForm),
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        
+        const data = await response.json();
+        console.log('Succès:', data);
+        
+        showConfirmationPage();
+        localStorage.removeItem('bteceFormData');
+        clearForm();
+    } catch (error) {
+        console.error('Erreur:', error);
+        saveToLocalStorage();
+        showConfirmationPage();
+        clearForm();
+    } finally {
+        state.isSubmitting = false;
+        DOM.loadingIndicator.style.display = 'none';
+        DOM.submitBtn.disabled = false;
+        state.formSubmitted = false;
+    }
+}
+
+// Sauvegarde locale en cas d'échec
+function saveToLocalStorage() {
+    const formData = {
+        nom: sanitizeInput(document.getElementById('nom').value),
+        prenom: sanitizeInput(document.getElementById('prenom').value),
+        email: sanitizeInput(document.getElementById('email').value),
+        dateNaissance: sanitizeInput(document.getElementById('date_naissance').value),
+        lieuNaissance: sanitizeInput(document.getElementById('lieu_naissance').value),
+        pays: sanitizeInput(document.getElementById('pays').value),
+        telephone: sanitizeInput(document.getElementById('telephone').value),
+        profession: document.querySelector('input[name="profession"]:checked')?.value,
+        objectifs: sanitizeInput(document.getElementById('objectifs').value),
+        checkedFormations: Array.from(DOM.checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => formationNames[cb.value]),
+        session: document.querySelector('input[name="session"]:checked')?.value,
+        modeFormation: DOM.modeFormationSelect.value,
+        paymentMethod: document.querySelector('input[name="payment_method"]:checked')?.value,
+        total: DOM.totalPriceFCFA.textContent,
+        timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem('pendingRegistration', JSON.stringify(formData));
+    
+    // Notification accessible
+    const notification = document.createElement('div');
+    notification.className = 'aria-notification';
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
+    notification.textContent = 'Votre inscription a été enregistrée localement. Nous essaierons de la soumettre à nouveau lorsque vous serez en ligne.';
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+// Affiche la page de confirmation
+function showConfirmationPage() {
+    DOM.mainPage.style.display = 'none';
+    DOM.confirmationPage.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    displayUserSummary();
+    simulateTracking();
+}
+
+// Affiche le résumé des informations
+function displayUserSummary() {
+    const getValue = id => sanitizeInput(document.getElementById(id).value);
+    const getRadioText = name => sanitizeInput(document.querySelector(`input[name="${name}"]:checked`)?.nextElementSibling?.textContent);
+    const getSelectText = id => sanitizeInput(DOM[id].options[DOM[id].selectedIndex]?.text);
+
+    const checkedFormations = Array.from(DOM.checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => formationNames[cb.value]);
+    
+    const total = Array.from(DOM.checkboxes)
+        .filter(cb => cb.checked)
+        .reduce((sum, cb) => sum + formationPrices[cb.value], 0);
+    
+    const totalEur = (total / exchangeRate).toFixed(2);
+    
+    DOM.userSummary.innerHTML = `
+        <h4>Récapitulatif de votre inscription</h4>
+        <p><strong>Nom complet :</strong> ${getValue('prenom')} ${getValue('nom')}</p>
+        <p><strong>Email :</strong> ${getValue('email')}</p>
+        <p><strong>Téléphone :</strong> ${DOM.phonePrefix.textContent} ${getValue('telephone')}</p>
+        <p><strong>Formations :</strong> ${checkedFormations.join(', ')}</p>
+        <p><strong>Session :</strong> ${getRadioText('session')} 2025</p>
+        <p><strong>Mode :</strong> ${DOM.modeFormationSelect.value === 'presentiel' ? 'Présentiel à Cotonou' : 'En ligne'}</p>
+        <p><strong>Méthode de paiement :</strong> ${paymentMethodNames[getRadioText('payment_method')] || getRadioText('payment_method')}</p>
+        <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
+    `;
+}
+
+// Simule le suivi de l'inscription
+function simulateTracking() {
+    const steps = document.querySelectorAll('.tracking-steps li');
+    
+    setTimeout(() => {
+        steps[1].classList.add('completed');
+        steps[2].classList.add('active');
+        
+        setTimeout(() => {
+            steps[2].classList.add('completed');
+            steps[3].classList.add('active');
+            
+            setTimeout(() => {
+                steps[3].classList.add('completed');
+                steps[4].classList.add('active');
+            }, 3000);
+        }, 2000);
+    }, 1000);
+}
+
+// Gestion du chat
+function sendChatMessage() {
+    const message = DOM.chatInput.value.trim();
+    if (!message) return;
+    
+    addChatMessage(message, 'user');
+    DOM.chatInput.value = '';
+    
+    setTimeout(() => {
+        addChatMessage('Merci pour votre message. Veuillez envoyer votre préocupation via notre adresse Mail. Notre équipe vous répondra dans les plus brefs délais.', 'bot');
+    }, 1000);
+}
+
+function addChatMessage(text, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}-message`;
+    messageDiv.setAttribute('role', sender === 'user' ? 'status' : 'alert');
+    messageDiv.setAttribute('aria-live', 'polite');
+    messageDiv.innerHTML = `<p>${sanitizeInput(text)}</p>`;
+    DOM.chatMessages.appendChild(messageDiv);
+    DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
+}
+
+// Gestion des gestes tactiles
+function handleSwipe() {
+    const threshold = 50;
+    
+    if (state.touchEndX < state.touchStartX - threshold && state.currentStep < 5) {
+        nextStep(state.currentStep);
+    } else if (state.touchEndX > state.touchStartX + threshold && state.currentStep > 1) {
+        prevStep(state.currentStep);
+    }
+}
+
+// Initialisation
+function init() {
+    // Configuration de la date maximale pour la date de naissance (13 ans minimum)
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+    DOM.dateNaissanceInput.max = maxDate.toISOString().split('T')[0];
+    
+    // Chargement des données sauvegardées
+    loadSavedData();
+    updateProgressBar();
+    updateTimeEstimation();
+    
+    // Affichage des dates des sessions
+    displaySessionDates();
+    
+    // Rotation des messages du rappel
+    setInterval(rotateRappelMessages, 2000);
+    
+    // Gestion du mode de formation
+    DOM.modeFormationSelect.addEventListener('change', function() {
+        DOM.onlinePaymentMethods.style.display = this.value === 'en-ligne' ? 'block' : 'none';
+        DOM.presentielPaymentMethod.style.display = this.value === 'presentiel' ? 'block' : 'none';
+        autoSave();
+    });
+    
+    // Gestion du pays et du format de téléphone
+    DOM.paysSelect.addEventListener('change', function() {
+        const selectedCountry = this.value;
+        const config = phoneConfigurations[selectedCountry] || phoneConfigurations['BJ'];
+        
+        DOM.phonePrefix.textContent = config.code;
+        DOM.telephoneInput.pattern = config.pattern;
+        DOM.telephoneInput.title = `Numéro valide (format: ${config.format})`;
+        DOM.phoneFormat.textContent = `Format: ${config.format}`;
+        DOM.phoneFormat.style.display = 'block';
+        autoSave();
+    });
+    
+    // Calcul du total des formations
+    DOM.checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calculateTotal);
+    });
+    
+    // Compteur de mots pour les objectifs
+    DOM.objectifsTextarea.addEventListener('input', updateWordCounter);
+    
+    // Validation de l'âge
+    DOM.dateNaissanceInput.addEventListener('change', validateAge);
+    
+    // Sauvegarde automatique
+    document.querySelectorAll('input, select, textarea').forEach(element => {
+        element.addEventListener('change', () => {
+            clearTimeout(state.saveTimeout);
+            state.saveTimeout = setTimeout(autoSave, 1000);
+        });
+        element.addEventListener('input', () => {
+            clearTimeout(state.saveTimeout);
+            state.saveTimeout = setTimeout(autoSave, 1000);
+        });
+    });
+    
+    // Soumission du formulaire
+    DOM.registrationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Vérification du champ honeypot (anti-spam)
+        if (DOM.honeypotField && DOM.honeypotField.value.trim() !== '') {
+            console.log('Tentative de spam détectée');
+            return false;
+        }
+        
+        validateFinalStep();
+    });
+    
+    // Gestion de la modal de confirmation
+    DOM.modalConfirm.addEventListener('click', sendFormData);
+    DOM.modalCancel.addEventListener('click', () => { DOM.modal.style.display = 'none'; });
+    DOM.closeModal.addEventListener('click', () => { DOM.modal.style.display = 'none'; });
+    
+    // Gestion du chat
+    DOM.chatToggle.addEventListener('click', () => {
+        DOM.chatContainer.style.display = DOM.chatContainer.style.display === 'block' ? 'none' : 'block';
+        if (DOM.chatContainer.style.display === 'block') DOM.chatInput.focus();
+    });
+    
+    DOM.closeChat.addEventListener('click', () => { DOM.chatContainer.style.display = 'none'; });
+    DOM.sendMessage.addEventListener('click', sendChatMessage);
+    DOM.chatInput.addEventListener('keypress', e => e.key === 'Enter' && sendChatMessage());
+    
+    // Initialisation finale
+    updateWordCounter();
+    calculateTotal();
+}
+
 // Lance l'application lorsque le DOM est chargé
-document.addEventListener('DOMContentLoaded', () => {
-  const app = new FormApp();
-  
-  // Exposer les fonctions nécessaires globalement
-  window.validateStep = (step) => app.validateStep(step);
-  window.prevStep = (current) => app.prevStep(current);
-  window.nextStep = (current) => app.nextStep(current);
-  window.validateFinalStep = () => app.validateFinalStep();
-});
+document.addEventListener('DOMContentLoaded', init);
+
+// Gestion des boutons précédent/suivant
+window.validateStep = validateStep;
+window.prevStep = prevStep;
+window.nextStep = nextStep;
+window.validateFinalStep = validateFinalStep;
