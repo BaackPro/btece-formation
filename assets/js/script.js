@@ -145,7 +145,7 @@ class FormApp {
       saveStatus: document.getElementById('save-status'),
       userSummary: document.getElementById('user-summary'),
       rappelMessages: document.querySelectorAll('.rappel-message'),
-      rappelContainer: document.querySelector('.rappel-container'),
+      rappelContainer: document.querySelector('.raquel-container'),
       objectifsTextarea: document.getElementById('objectifs'),
       objectifsCounter: document.getElementById('objectifs-counter'),
       dateNaissanceInput: document.getElementById('date_naissance'),
@@ -1181,6 +1181,7 @@ class FormApp {
         this.elements.submitBtn.disabled = false;
       }
       this.state.formSubmitted = false;
+      this.state.isSubmitting = false;
     }
   }
 
@@ -1416,7 +1417,7 @@ class FormApp {
       <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
       <div class="confirmation-message">
         <p>Un email de confirmation vous a été envoyé à l'adresse ${getValue('email')}.</p>
-        <p>Veuillez vérifier votre boîte de réception (et vos spams si vous ne trouvez pas l'email).</p>
+        <p>Veuillez vérifier votre boîte de réception (and vos spams si vous ne trouvez pas l'email).</p>
       </div>
     `;
   }
