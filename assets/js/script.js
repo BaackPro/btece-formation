@@ -73,35 +73,9 @@ class FormApp {
     this.initElements();
     this.initEventListeners();
     this.initForm();
-    this.initEmailJS();
     this.initGoogleSheets();
   }
   
-  // Initialisation de EmailJS avec les variables d'environnement
-  initEmailJS() {
-    const emailjsUserId = this.env.EMAILJS_USER_ID;
-    const emailjsServiceId = this.env.EMAILJS_SERVICE_ID;
-    const emailjsTemplateId = this.env.EMAILJS_TEMPLATE_ID;
-    const emailjsAdminTemplateId = this.env.EMAILJS_ADMIN_TEMPLATE_ID;
-
-    if (!emailjsUserId || !emailjsServiceId || !emailjsTemplateId || !emailjsAdminTemplateId) {
-      console.error('Configuration EmailJS incomplète');
-      return;
-    }
-
-    // Charger EmailJS seulement si nécessaire
-    if (typeof emailjs === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
-      script.onload = () => {
-        emailjs.init(emailjsUserId);
-      };
-      document.head.appendChild(script);
-    } else {
-      emailjs.init(emailjsUserId);
-    }
-  }
-
   // Initialisation de la connexion à Google Sheets
   initGoogleSheets() {
     // Récupération des variables d'environnement
@@ -186,27 +160,26 @@ class FormApp {
     };
   }
   
-  // Initialise les écouteurs d'événements
+  // Initialise les écouteurs d'événements avec délégation
   initEventListeners() {
-    // Gestion du mode de formation
-    if (this.elements.modeFormationSelect) {
-      this.elements.modeFormationSelect.addEventListener('change', () => {
+    // Utiliser la délégation d'événements pour une meilleure performance
+    document.addEventListener('change', (e) => {
+      // Gestion du mode de formation
+      if (e.target === this.elements.modeFormationSelect) {
         if (this.elements.onlinePaymentMethods) {
           this.elements.onlinePaymentMethods.style.display = 
-            this.elements.modeFormationSelect.value === 'en-ligne' ? 'block' : 'none';
+            e.target.value === 'en-ligne' ? 'block' : 'none';
         }
         if (this.elements.presentielPaymentMethod) {
           this.elements.presentielPaymentMethod.style.display = 
-            this.elements.modeFormationSelect.value === 'presentiel' ? 'block' : 'none';
+            e.target.value === 'presentiel' ? 'block' : 'none';
         }
         this.autoSave();
-      });
-    }
-
-    // Gestion du pays et du format de téléphone
-    if (this.elements.paysSelect) {
-      this.elements.paysSelect.addEventListener('change', () => {
-        const selectedCountry = this.elements.paysSelect.value;
+      }
+      
+      // Gestion du pays et du format de téléphone
+      if (e.target === this.elements.paysSelect) {
+        const selectedCountry = e.target.value;
         const config = this.getPhoneConfig(selectedCountry);
         
         if (this.elements.phonePrefix) {
@@ -224,37 +197,40 @@ class FormApp {
         }
         
         this.autoSave();
-      });
-    }
+      }
+      
+      // Calcul du total des formations
+      if (e.target.matches('input[name="selected_courses[]"]')) {
+        this.calculateTotal();
+      }
+      
+      // Validation de l'âge
+      if (e.target === this.elements.dateNaissanceInput) {
+        this.validateAge();
+      }
+      
+      // Compteur de mots pour les objectifs
+      if (e.target === this.elements.objectifsTextarea) {
+        this.updateWordCounter();
+      }
+      
+      // Sauvegarde automatique pour tous les champs de formulaire
+      if (e.target.matches('input, select, textarea')) {
+        clearTimeout(this.state.saveTimeout);
+        this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
+      }
+    });
     
-    // Calcul du total des formations
-    if (this.elements.checkboxes) {
-      this.elements.checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => this.calculateTotal());
-      });
-    }
-    
-    // Compteur de mots pour les objectifs
-    if (this.elements.objectifsTextarea) {
-      this.elements.objectifsTextarea.addEventListener('input', () => this.updateWordCounter());
-    }
-    
-    // Validation de l'âge
-    if (this.elements.dateNaissanceInput) {
-      this.elements.dateNaissanceInput.addEventListener('change', () => this.validateAge());
-    }
-    
-    // Sauvegarde automatique
-    document.querySelectorAll('input, select, textarea').forEach(element => {
-      if (element) {
-        element.addEventListener('change', () => {
-          clearTimeout(this.state.saveTimeout);
-          this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
-        });
-        element.addEventListener('input', () => {
-          clearTimeout(this.state.saveTimeout);
-          this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
-        });
+    document.addEventListener('input', (e) => {
+      // Sauvegarde automatique pour les champs de texte
+      if (e.target.matches('input, select, textarea')) {
+        clearTimeout(this.state.saveTimeout);
+        this.state.saveTimeout = setTimeout(() => this.autoSave(), 1000);
+      }
+      
+      // Compteur de mots pour les objectifs
+      if (e.target === this.elements.objectifsTextarea) {
+        this.updateWordCounter();
       }
     });
     
@@ -287,6 +263,7 @@ class FormApp {
         }
       });
     }
+    
     if (this.elements.modalCancel) {
       this.elements.modalCancel.addEventListener('click', () => { 
         if (this.elements.modal) {
@@ -294,6 +271,7 @@ class FormApp {
         }
       });
     }
+    
     if (this.elements.closeModal) {
       this.elements.closeModal.addEventListener('click', () => { 
         if (this.elements.modal) {
@@ -322,33 +300,29 @@ class FormApp {
         }
       });
     }
+    
     if (this.elements.sendMessage) {
       this.elements.sendMessage.addEventListener('click', () => this.sendChatMessage());
     }
+    
     if (this.elements.chatInput) {
       this.elements.chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') this.sendChatMessage();
       });
     }
     
-    // Boutons précédent/suivant
-    document.querySelectorAll('.btn-next').forEach(button => {
-      if (button) {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          const currentStep = parseInt(button.closest('.form-step').id.split('-').pop());
-          this.nextStep(currentStep);
-        });
+    // Boutons précédent/suivant avec délégation d'événements
+    document.addEventListener('click', (e) => {
+      if (e.target.matches('.btn-next')) {
+        e.preventDefault();
+        const currentStep = parseInt(e.target.closest('.form-step').id.split('-').pop());
+        this.nextStep(currentStep);
       }
-    });
-
-    document.querySelectorAll('.btn-prev').forEach(button => {
-      if (button) {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          const currentStep = parseInt(button.closest('.form-step').id.split('-').pop());
-          this.prevStep(currentStep);
-        });
+      
+      if (e.target.matches('.btn-prev')) {
+        e.preventDefault();
+        const currentStep = parseInt(e.target.closest('.form-step').id.split('-').pop());
+        this.prevStep(currentStep);
       }
     });
   }
@@ -461,12 +435,29 @@ class FormApp {
     this.updateTimeEstimation();
     this.autoSave();
     
+    // Annoncer le changement d'étape pour l'accessibilité
+    this.announceStepChange(step);
+    
     // Focus sur le premier champ de l'étape pour l'accessibilité
     const currentStep = document.getElementById(`form-step-${step}`);
     if (currentStep) {
       const firstInput = currentStep.querySelector('input, select, textarea');
       if (firstInput) firstInput.focus();
     }
+  }
+  
+  // Annoncer le changement d'étape pour les lecteurs d'écran
+  announceStepChange(step) {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.textContent = `Étape ${step} sur 5`;
+    document.body.appendChild(announcement);
+    
+    setTimeout(() => {
+      document.body.removeChild(announcement);
+    }, 100);
   }
   
   nextStep(current) {
@@ -620,7 +611,7 @@ class FormApp {
     }
   }
   
-  // Validation
+  // Validation - décomposée en méthodes plus petites
   validateStep(step) {
     switch(step) {
       case 1: return this.validateStep1();
@@ -633,18 +624,34 @@ class FormApp {
   }
   
   validateStep1() {
+    const errors = [];
+    
+    errors.push(...this.validatePersonalInfo());
+    errors.push(...this.validateContactInfo());
+    errors.push(...this.validateObjectives());
+    
+    // Validation de l'âge
+    if (!this.validateAge()) {
+      errors.push('Vous devez avoir au moins 13 ans pour vous inscrire');
+    }
+
+    // Validation du champ honeypot (anti-spam)
+    if (this.elements.honeypotField && this.elements.honeypotField.value.trim() !== '') {
+      errors.push('Erreur de validation du formulaire');
+    }
+
+    return this.displayErrors(errors, 1);
+  }
+  
+  validatePersonalInfo() {
+    const errors = [];
     const requiredFields = [
       { id: 'nom', name: 'Nom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
       { id: 'prenom', name: 'Prénom', pattern: '[A-Za-zÀ-ÿ\\s\\-\']+', minLength: 2, maxLength: 50 },
       { id: 'email', name: 'Email', pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$' },
       { id: 'date_naissance', name: 'Date de naissance' },
-      { id: 'lieu_naissance', name: 'Lieu de naissance', minLength: 2, maxLength: 100 },
-      { id: 'pays', name: 'Pays' },
-      { id: 'telephone', name: 'Téléphone' }
+      { id: 'lieu_naissance', name: 'Lieu de naissance', minLength: 2, maxLength: 100 }
     ];
-
-    const errorMessages = [];
-    let isValid = true;
 
     for (const field of requiredFields) {
       const element = document.getElementById(field.id);
@@ -653,27 +660,23 @@ class FormApp {
       const value = element.value.trim();
       
       if (!value) {
-        errorMessages.push(`Le champ "${field.name}" est obligatoire`);
+        errors.push(`Le champ "${field.name}" est obligatoire`);
         element.setAttribute('aria-invalid', 'true');
-        isValid = false;
       } else {
         // Validation supplémentaire si des critères sont spécifiés
         if (field.pattern && !new RegExp(field.pattern).test(value)) {
-          errorMessages.push(`Format invalide pour le champ "${field.name}"`);
+          errors.push(`Format invalide pour le champ "${field.name}"`);
           element.setAttribute('aria-invalid', 'true');
-          isValid = false;
         }
         
         if (field.minLength && value.length < field.minLength) {
-          errorMessages.push(`Le champ "${field.name}" doit contenir au moins ${field.minLength} caractères`);
+          errors.push(`Le champ "${field.name}" doit contenir au moins ${field.minLength} caractères`);
           element.setAttribute('aria-invalid', 'true');
-          isValid = false;
         }
         
         if (field.maxLength && value.length > field.maxLength) {
-          errorMessages.push(`Le champ "${field.name}" ne doit pas dépasser ${field.maxLength} caractères`);
+          errors.push(`Le champ "${field.name}" ne doit pas dépasser ${field.maxLength} caractères`);
           element.setAttribute('aria-invalid', 'true');
-          isValid = false;
         }
         
         if (element.getAttribute('aria-invalid') !== 'true') {
@@ -682,33 +685,55 @@ class FormApp {
       }
     }
 
+    // Validation de la profession
+    if (!document.querySelector('input[name="profession"]:checked')) {
+      errors.push('Veuillez sélectionner une profession');
+    }
+
+    return errors;
+  }
+  
+  validateContactInfo() {
+    const errors = [];
+    
+    // Validation du pays
+    if (!this.elements.paysSelect?.value) {
+      errors.push('Veuillez sélectionner un pays');
+      if (this.elements.paysSelect) this.elements.paysSelect.setAttribute('aria-invalid', 'true');
+    } else if (this.elements.paysSelect) {
+      this.elements.paysSelect.setAttribute('aria-invalid', 'false');
+    }
+    
     // Validation du téléphone
     if (this.elements.paysSelect && this.elements.telephoneInput) {
       const pays = this.elements.paysSelect.value;
       const telephone = this.elements.telephoneInput.value.trim();
-      if (telephone && !this.validatePhone(telephone, pays)) {
-        const config = this.getPhoneConfig(pays);
-        errorMessages.push(`Format de téléphone invalide (${config.format})`);
+      
+      if (!telephone) {
+        errors.push('Le champ "Téléphone" est obligatoire');
         this.elements.telephoneInput.setAttribute('aria-invalid', 'true');
-        isValid = false;
-      } else if (telephone) {
+      } else if (!this.validatePhone(telephone, pays)) {
+        const config = this.getPhoneConfig(pays);
+        errors.push(`Format de téléphone invalide (${config.format})`);
+        this.elements.telephoneInput.setAttribute('aria-invalid', 'true');
+      } else {
         this.elements.telephoneInput.setAttribute('aria-invalid', 'false');
       }
     }
 
-    // Validation de la profession
-    if (!document.querySelector('input[name="profession"]:checked')) {
-      errorMessages.push('Veuillez sélectionner une profession');
-      isValid = false;
-    }
-
+    return errors;
+  }
+  
+  validateObjectives() {
+    const errors = [];
+    
     // Validation des objectifs
     if (this.elements.objectifsTextarea) {
       const objectifs = this.elements.objectifsTextarea.value.trim();
       const wordCount = this.countWords(objectifs);
       
       if (wordCount < 5) {
-        errorMessages.push('Veuillez décrire vos objectifs (minimum 5 mots)');
+        errors.push('Veuillez décrire vos objectifs (minimum 5 mots)');
         this.elements.objectifsTextarea.classList.add('invalid');
         this.elements.objectifsTextarea.classList.add('error-highlight');
         const objectifsError = document.getElementById('objectifs-error');
@@ -720,13 +745,12 @@ class FormApp {
         if (objectifsErrorIcon) {
           objectifsErrorIcon.style.display = 'inline-block';
         }
-        isValid = false;
         
         setTimeout(() => {
           this.elements.objectifsTextarea.classList.remove('error-highlight');
         }, 50);
       } else if (wordCount > 100) {
-        errorMessages.push('Maximum 100 mots autorisés pour les objectifs');
+        errors.push('Maximum 100 mots autorisés pour les objectifs');
         this.elements.objectifsTextarea.classList.add('invalid');
         this.elements.objectifsTextarea.classList.add('error-highlight');
         const objectifsError = document.getElementById('objectifs-error');
@@ -738,7 +762,6 @@ class FormApp {
         if (objectifsErrorIcon) {
           objectifsErrorIcon.style.display = 'inline-block';
         }
-        isValid = false;
         
         setTimeout(() => {
           this.elements.objectifsTextarea.classList.remove('error-highlight');
@@ -756,21 +779,15 @@ class FormApp {
         this.elements.objectifsTextarea.classList.add('valid');
       }
     }
-
-    // Validation de l'âge
-    if (!this.validateAge()) {
-      errorMessages.push('Vous devez avoir au moins 13 ans pour vous inscrire');
-      isValid = false;
-    }
-
-    // Validation du champ honeypot (anti-spam)
-    if (this.elements.honeypotField && this.elements.honeypotField.value.trim() !== '') {
-      errorMessages.push('Erreur de validation du formulaire');
-      isValid = false;
-    }
-
+    
+    return errors;
+  }
+  
+  displayErrors(errorMessages, step) {
+    const isValid = errorMessages.length === 0;
+    
     // Afficher toutes les erreurs en une fois
-    if (errorMessages.length > 0) {
+    if (!isValid) {
       const errorContainer = document.createElement('div');
       errorContainer.className = 'error-message';
       errorContainer.setAttribute('role', 'alert');
@@ -790,9 +807,9 @@ class FormApp {
       if (oldError) oldError.remove();
       
       // Insérer le nouveau message d'erreur
-      const firstStep = this.elements.formSteps[0];
-      if (firstStep) {
-        firstStep.insertBefore(errorContainer, firstStep.firstChild);
+      const stepElement = this.elements.formSteps[step - 1];
+      if (stepElement) {
+        stepElement.insertBefore(errorContainer, stepElement.firstChild);
       }
       
       // Défilement vers le haut pour voir les erreurs
@@ -844,37 +861,7 @@ class FormApp {
       isValid = false;
     }
 
-    // Afficher toutes les erreurs en une fois
-    if (errorMessages.length > 0) {
-      const errorContainer = document.createElement('div');
-      errorContainer.className = 'error-message';
-      errorContainer.setAttribute('role', 'alert');
-      errorContainer.setAttribute('aria-live', 'assertive');
-      
-      const errorList = document.createElement('ul');
-      errorMessages.forEach(msg => {
-        const li = document.createElement('li');
-        li.textContent = msg;
-        errorList.appendChild(li);
-      });
-      
-      errorContainer.appendChild(errorList);
-      
-      // Supprimer les anciens messages d'erreur
-      const oldError = document.querySelector('.error-message');
-      if (oldError) oldError.remove();
-      
-      // Insérer le nouveau message d'erreur
-      const thirdStep = this.elements.formSteps[2];
-      if (thirdStep) {
-        thirdStep.insertBefore(errorContainer, thirdStep.firstChild);
-      }
-      
-      // Défilement vers le haut pour voir les erreurs
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    return isValid;
+    return this.displayErrors(errorMessages, 3);
   }
   
   validateStep4() {
@@ -1066,8 +1053,14 @@ class FormApp {
     // Remplit les informations dans la modal
     const getValue = id => this.sanitizeInput(document.getElementById(id)?.value);
     const getRadioValue = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
-    const getRadioText = name => this.sanitizeInput(document.querySelector(`input[name="${name}"]:checked`)?.nextElementSibling?.textContent);
-    const getSelectText = id => this.sanitizeInput(this.elements[id]?.options[this.elements[id]?.selectedIndex]?.text);
+    const getRadioText = name => {
+      const radio = document.querySelector(`input[name="${name}"]:checked`);
+      return radio ? this.sanitizeInput(radio.nextElementSibling?.textContent) : '';
+    };
+    const getSelectText = id => {
+      const select = this.elements[id];
+      return select ? this.sanitizeInput(select.options[select.selectedIndex]?.text) : '';
+    };
 
     if (this.elements.modalNomComplet) {
       this.elements.modalNomComplet.textContent = `${getValue('prenom')} ${getValue('nom')}`;
@@ -1156,7 +1149,8 @@ class FormApp {
       // Envoyer les données à Google Sheets
       await this.sendToGoogleSheets(formDataObj);
 
-      // Envoyer les emails de confirmation
+      // Initialiser et envoyer les emails de confirmation
+      await this.initEmailJS();
       await this.sendConfirmationEmails(formDataObj);
 
       // Soumettre le formulaire à Netlify
@@ -1190,6 +1184,33 @@ class FormApp {
     }
   }
 
+  // Initialisation de EmailJS avec gestion de promesse
+  async initEmailJS() {
+    if (typeof emailjs !== 'undefined') {
+      emailjs.init(this.env.EMAILJS_USER_ID);
+      return;
+    }
+    
+    return new Promise((resolve, reject) => {
+      const emailjsUserId = this.env.EMAILJS_USER_ID;
+      if (!emailjsUserId) {
+        reject(new Error('Configuration EmailJS incomplète'));
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+      script.onload = () => {
+        emailjs.init(emailjsUserId);
+        resolve();
+      };
+      script.onerror = () => {
+        reject(new Error('Échec du chargement de EmailJS'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   // Soumission du formulaire à Netlify
   submitToNetlify() {
     // Créer un clone du formulaire pour la soumission Netlify
@@ -1210,7 +1231,7 @@ class FormApp {
     }, 1000);
   }
 
-  // Envoi des données à Google Sheets
+  // Envoi des données à Google Sheets avec gestion d'erreur améliorée
   async sendToGoogleSheets(formData) {
     try {
       const response = await fetch(`${this.googleSheetsApiUrl}?key=${this.API_KEY}`, {
@@ -1227,27 +1248,40 @@ class FormApp {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erreur inconnue");
+        const errorText = await response.text();
+        throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
       }
 
       return await response.json();
     } catch (error) {
       console.error("Erreur d'envoi à Google Sheets:", {
         error: error.message,
-        formData: formData // Log contrôlé (sans données sensibles)
+        formData: { ...formData, telephone: 'REDACTED', email: 'REDACTED' } // Log contrôlé (sans données sensibles)
       });
+      
+      // Sauvegarder pour une nouvelle tentative
+      this.saveForRetry(formData);
       throw error;
     }
   }
 
-  // Envoi des emails de confirmation via EmailJS
-  async sendConfirmationEmails(formData) {
-    if (typeof emailjs === 'undefined') {
-      console.error('EmailJS non chargé');
-      return;
-    }
+  // Sauvegarde des données pour une nouvelle tentative
+  saveForRetry(formData) {
+    const pendingData = {
+      ...formData,
+      timestamp: new Date().toISOString(),
+      retryCount: 0
+    };
+    
+    const existingPending = localStorage.getItem('pendingRegistrations');
+    const pendingRegistrations = existingPending ? JSON.parse(existingPending) : [];
+    pendingRegistrations.push(pendingData);
+    
+    localStorage.setItem('pendingRegistrations', JSON.stringify(pendingRegistrations));
+  }
 
+  // Envoi des emails de confirmation via EmailJS avec gestion d'erreur
+  async sendConfirmationEmails(formData) {
     const emailjsServiceId = this.env.EMAILJS_SERVICE_ID;
     const emailjsTemplateId = this.env.EMAILJS_TEMPLATE_ID;
     const emailjsAdminTemplateId = this.env.EMAILJS_ADMIN_TEMPLATE_ID;
@@ -1256,41 +1290,46 @@ class FormApp {
       throw new Error('Configuration EmailJS incomplète');
     }
 
-    // Email à l'utilisateur
-    const userEmailParams = {
-      to_name: `${formData.prenom} ${formData.nom}`,
-      to_email: formData.email,
-      formations: formData.formations,
-      montant_total: formData.montant_total,
-      session: CONFIG.sessionDates[formData.session] || formData.session,
-      mode_formation: formData.mode_formation === 'en-ligne' ? 'en ligne' : 'en présentiel',
-      payment_method: CONFIG.paymentMethodNames[formData.payment_method] || formData.payment_method
-    };
+    try {
+      // Email à l'utilisateur
+      const userEmailParams = {
+        to_name: `${formData.prenom} ${formData.nom}`,
+        to_email: formData.email,
+        formations: formData.formations,
+        montant_total: formData.montant_total,
+        session: CONFIG.sessionDates[formData.session] || formData.session,
+        mode_formation: formData.mode_formation === 'en-ligne' ? 'en ligne' : 'en présentiel',
+        payment_method: CONFIG.paymentMethodNames[formData.payment_method] || formData.payment_method
+      };
 
-    await emailjs.send(
-      emailjsServiceId,
-      emailjsTemplateId,
-      userEmailParams
-    );
+      await emailjs.send(
+        emailjsServiceId,
+        emailjsTemplateId,
+        userEmailParams
+      );
 
-    // Email à l'admin
-    const adminEmailParams = {
-      nom_complet: `${formData.prenom} ${formData.nom}`,
-      email: formData.email,
-      telephone: `${formData.telephone_prefix || '+229'} ${formData.telephone}`,
-      formations: formData.formations,
-      montant_total: formData.montant_total,
-      session: CONFIG.sessionDates[formData.session] || formData.session,
-      mode_formation: formData.mode_formation === 'en-ligne' ? 'en ligne' : 'en présentiel',
-      payment_method: CONFIG.paymentMethodNames[formData.payment_method] || formData.payment_method,
-      date_inscription: new Date().toLocaleDateString('fr-FR')
-    };
+      // Email à l'admin
+      const adminEmailParams = {
+        nom_complet: `${formData.prenom} ${formData.nom}`,
+        email: formData.email,
+        telephone: `${formData.telephone_prefix || '+229'} ${formData.telephone}`,
+        formations: formData.formations,
+        montant_total: formData.montant_total,
+        session: CONFIG.sessionDates[formData.session] || formData.session,
+        mode_formation: formData.mode_formation === 'en-ligne' ? 'en ligne' : 'en présentiel',
+        payment_method: CONFIG.paymentMethodNames[formData.payment_method] || formData.payment_method,
+        date_inscription: new Date().toLocaleDateString('fr-FR')
+      };
 
-    await emailjs.send(
-      emailjsServiceId,
-      emailjsAdminTemplateId,
-      adminEmailParams
-    );
+      await emailjs.send(
+        emailjsServiceId,
+        emailjsAdminTemplateId,
+        adminEmailParams
+      );
+    } catch (error) {
+      console.error("Erreur d'envoi d'email:", error);
+      throw new Error("Impossible d'envoyer les emails de confirmation");
+    }
   }
   
   saveToLocalStorage() {
@@ -1345,8 +1384,15 @@ class FormApp {
     if (!this.elements.userSummary) return;
     
     const getValue = id => this.sanitizeInput(document.getElementById(id)?.value);
-    const getRadioText = name => this.sanitizeInput(document.querySelector(`input[name="${name}"]:checked`)?.nextElementSibling?.textContent);
-    const getSelectText = id => this.sanitizeInput(this.elements[id]?.options[this.elements[id]?.selectedIndex]?.text);
+    const getRadioValue = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
+    const getRadioText = name => {
+      const radio = document.querySelector(`input[name="${name}"]:checked`);
+      return radio ? this.sanitizeInput(radio.nextElementSibling?.textContent) : '';
+    };
+    const getSelectText = id => {
+      const select = this.elements[id];
+      return select ? this.sanitizeInput(select.options[select.selectedIndex]?.text) : '';
+    };
 
     const checkedFormations = Array.from(this.elements.checkboxes || [])
       .filter(cb => cb.checked)

@@ -33,11 +33,24 @@
   [headers.values]
     Content-Type = "text/plain"
 
-# Redirections SPA
+# Redirections SPA - EXCLURE le traitement des formulaires
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  conditions = {Language = ["en"], Country = ["US"], Role = ["admin"]}
+
+# Exclure le endpoint de soumission de formulaire de la redirection SPA
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+  force = false
 
 # Protection contre les scans
 [[redirects]]
@@ -64,3 +77,17 @@
   to = "https://btece-formation.netlify.app/:splat"
   status = 301
   force = true
+
+# Configuration spécifique pour le traitement des formulaires Netlify
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+
+# Désactiver la redirection SPA pour les soumissions de formulaire
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+  conditions = {Path = ["/"]}
+  force = false
