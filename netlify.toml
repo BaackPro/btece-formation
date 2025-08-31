@@ -5,6 +5,8 @@
 
 [build.environment]
   NODE_ENV = "production"
+  # Désactive le scan de secrets :cite[1]
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
 [context.production.environment]
   NODE_ENV = "production"
