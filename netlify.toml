@@ -14,12 +14,20 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://api.emailjs.com; frame-ancestors 'none'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://api.emailjs.com https://*.netlify.app; frame-ancestors 'none'; form-action 'self' https://*.netlify.app"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
+
+# Headers pour les fonctions Netlify (formulaires)
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "POST, GET, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
 
 # Optimisation du cache
 [[headers]]
@@ -35,22 +43,16 @@
 
 # Redirections SPA - EXCLURE le traitement des formulaires
 [[redirects]]
-  from = "/"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  conditions = {Language = ["en"], Country = ["US"], Role = ["admin"]}
+  conditions = {Path = ["!/.netlify/functions/*", "!/assets/*"]}
 
-# Exclure le endpoint de soumission de formulaire de la redirection SPA
+# Traitement des formulaires Netlify
 [[redirects]]
-  from = "/"
-  to = "/index.html"
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
   status = 200
-  force = false
 
 # Protection contre les scans
 [[redirects]]
@@ -77,17 +79,3 @@
   to = "https://btece-formation.netlify.app/:splat"
   status = 301
   force = true
-
-# Configuration spécifique pour le traitement des formulaires Netlify
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-
-# Désactiver la redirection SPA pour les soumissions de formulaire
-[[redirects]]
-  from = "/"
-  to = "/index.html"
-  status = 200
-  conditions = {Path = ["/"]}
-  force = false
