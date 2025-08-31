@@ -1136,6 +1136,7 @@ class FormApp {
     }
     if (this.elements.submitBtn) {
       this.elements.submitBtn.disabled = true;
+      this.elements.submitBtn.textContent = "Envoi en cours...";
     }
     
     try {
@@ -1172,16 +1173,18 @@ class FormApp {
       
       document.body.insertBefore(errorMessage, document.body.firstChild);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Réactiver le bouton
+      if (this.elements.submitBtn) {
+        this.elements.submitBtn.disabled = false;
+        this.elements.submitBtn.textContent = "S'inscrire maintenant";
+      }
     } finally {
       this.state.isSubmitting = false;
       if (this.elements.loadingIndicator) {
         this.elements.loadingIndicator.style.display = 'none';
       }
-      if (this.elements.submitBtn) {
-        this.elements.submitBtn.disabled = false;
-      }
       this.state.formSubmitted = false;
-      this.state.isSubmitting = false;
     }
   }
 
@@ -1813,3 +1816,4 @@ document.addEventListener('DOMContentLoaded', () => {
   window.nextStep = (current) => app.nextStep(current);
   window.validateFinalStep = () => app.validateFinalStep();
 });
+    
