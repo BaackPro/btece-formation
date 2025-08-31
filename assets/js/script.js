@@ -1417,7 +1417,7 @@ class FormApp {
       <p><strong>Montant total :</strong> ${total.toLocaleString('fr-FR')} FCFA (≈ ${totalEur} €)</p>
       <div class="confirmation-message">
         <p>Un email de confirmation vous a été envoyé à l'adresse ${getValue('email')}.</p>
-        <p>Veuillez vérifier votre boîte de réception (and vos spams si vous ne trouvez pas l'email).</p>
+        <p>Veuillez vérifier votre boîte de réception (et vos spams si vous ne trouvez pas l'email).</p>
       </div>
     `;
   }
@@ -1559,6 +1559,11 @@ class FormApp {
     // Réinitialiser l'étape courante
     this.state.currentStep = 1;
     this.showStep(1);
+    
+    // Supprimer toutes les données sauvegardées
+    localStorage.removeItem('bteceFormData');
+    localStorage.removeItem('pendingRegistration');
+    localStorage.removeItem('pendingRegistrations');
   }
 }
 
