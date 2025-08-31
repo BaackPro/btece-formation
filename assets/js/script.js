@@ -1816,4 +1816,3 @@ document.addEventListener('DOMContentLoaded', () => {
   window.nextStep = (current) => app.nextStep(current);
   window.validateFinalStep = () => app.validateFinalStep();
 });
-    
